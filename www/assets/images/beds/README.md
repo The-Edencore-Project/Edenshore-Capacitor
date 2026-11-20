@@ -1,0 +1,1 @@
+This is the beds folder
