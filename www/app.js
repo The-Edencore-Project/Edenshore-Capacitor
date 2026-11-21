@@ -6,7 +6,6 @@ let save = loadSave();
 let brain = new Brain(save);
 let lastTime = 0;
 
-// Added Formation Targets
 const FORMATIONS = {
     NORMAL: null,
     HUDDLE: [[0.5, 0.6], [0.45, 0.65], [0.55, 0.65], [0.48, 0.55], [0.52, 0.55]],
@@ -43,18 +42,17 @@ function spawnBubble(speaker, text) {
     const rect = el.getBoundingClientRect();
     const cx = rect.left + (rect.width / 2);
     
-    let spawnY = rect.top - 60; 
-    if (spawnY < 80) spawnY = rect.bottom + 20; 
+    let spawnY = rect.top - 40; 
+    if (spawnY < 100) spawnY = rect.bottom + 20; 
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
     bubble.innerText = text; 
     
-    // No more dynamic width, let CSS handle it!
+    // THE TEXT FIX: Center it perfectly without forcing width
     bubble.style.left = `${cx}px`; 
     bubble.style.top = `${spawnY}px`; 
-    // Center the bubble exactly
-    bubble.style.transform = `translateX(-50%)`;
+    bubble.style.transform = `translateX(-50%)`; // CSS handles width dynamically now
     
     document.body.appendChild(bubble);
 
@@ -73,13 +71,12 @@ function updateBubbles(now) {
         if (progress < 0.1) alpha = progress / 0.1;
         if (progress > 0.7) alpha = (1.0 - progress) / 0.3;
         
-        // Keep it centered while floating up
+        // Float up while keeping the X-center
         b.el.style.transform = `translate(-50%, -${progress * 50}px)`;
         b.el.style.opacity = alpha;
     }
 }
 
-// Choreography Logic
 function updateFormation(newMood) {
     if (newMood === "CRISIS") currentFormation = "HUDDLE";
     else if (newMood === "SLEEPY") currentFormation = "QUEUE";
@@ -133,7 +130,7 @@ function triggerMilestoneBurst() {
             p.style.animationDuration = `${Math.random() * 2 + 1}s`;
             layer.appendChild(p);
             setTimeout(() => p.remove(), 3000);
-        }, i * 50); // Staggered spawn
+        }, i * 50);
     }
 }
 
@@ -194,8 +191,6 @@ function animate(time) {
 
     let newScene = brain.update(dt);
     if (newScene) queueScene(newScene);
-
-    // Update formation based on current mood
     updateFormation(brain.currentMood);
 
     if (speechQueue.length > 0) {
@@ -218,17 +213,14 @@ function animate(time) {
         let targetX = c.x;
         let targetY = c.y;
 
-        // Apply formation targets
         if (FORMATIONS[currentFormation]) {
             targetX = FORMATIONS[currentFormation][index][0];
             targetY = FORMATIONS[currentFormation][index][1];
         }
 
-        // Smoothly move towards target (handled by CSS transition now)
         el.style.left = `${targetX * 100}%`;
         el.style.top = `${targetY * 100}%`;
         
-        // Add floating drift
         const driftX = Math.sin((now * c.speed) + c.phase) * 10;
         const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 5;
         el.style.transform = `translate(${driftX}px, ${driftY}px)`;
