@@ -6,35 +6,26 @@
     <title>Edenshore</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="biome-lagoon">
-    <!-- Parallax Backgrounds -->
-    <div id="bg-gradient" class="biome-lagoon">
-        <div id="mountains" class="parallax-layer"></div>
-        <div id="pillars" class="parallax-layer"></div>
-        <div id="dunes" class="parallax-layer"></div>
-        <div id="grass" class="parallax-layer"></div>
-    </div>
+<body>
+    <div id="bg-gradient" class="biome-lagoon"></div>
 
-    <!-- Top UI -->
     <div id="ui-layer">
         <div id="bond-text">BOND: 0 - Stranger</div>
-        <div id="dialogue-box">Hello there.</div>
+        <div id="dialogue-box">...</div>
     </div>
 
-    <!-- Creatures -->
     <div id="creature-layer">
-        <div id="solon-group">
-            <img id="solonLeftFin" src="assets/images/solon_left_fin_1.png">
-            <img id="solon" class="creature" src="assets/images/solon.png">
-            <img id="solonRightFin" src="assets/images/solon_right_fin_1.png">
-        </div>
+        <img id="solon" class="creature" src="assets/images/solon.png">
         <img id="prism" class="creature" src="assets/images/prism.png">
-        <img id="ripple" class="creature" src="assets/images/ripple.png">
         <img id="lumen" class="creature" src="assets/images/lumen.png">
+        <img id="ripple" class="creature" src="assets/images/ripple.png">
         <img id="vertex" class="creature" src="assets/images/vertex.png">
     </div>
 
-    <!-- Biomes -->
+    <div id="controls">
+        <button id="feed-btn" class="action-btn">FEED</button>
+    </div>
+
     <div id="biome-controls">
         <button id="lagoonBtn" class="biome-btn active">Lagoon</button>
         <button id="shoreBtn" class="biome-btn">Shore</button>
