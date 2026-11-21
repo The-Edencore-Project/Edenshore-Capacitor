@@ -1,127 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Edenshore</title>
-
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edenshore</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- Bond Display -->
+<div id="top-bar">
+    <div id="bond-text">BOND: 0 - Stranger</div>
+</div>
 
-    <div id="bondLabel" class="bond-bar">
-        BOND: 0 - Stranger
-    </div>
+<div id="dialogue-box">
+    Welcome to Edenshore.
+</div>
 
-    <!-- Dialogue Display -->
+<div id="scene">
 
-    <div id="dialogueBox" class="dialogue-box">
-        Welcome to Edenshore.
-    </div>
+    <div id="bg-gradient" class="biome-lagoon"></div>
 
-    <!-- Main Stage -->
+    <img id="pillars" class="parallax" src="assets/images/pillars.png">
+    <img id="mountains" class="parallax" src="assets/images/mountains.png">
+    <img id="dunes" class="parallax" src="assets/images/sand_dunes.png">
+    <img id="grass" class="parallax" src="assets/images/grass.png">
 
-    <div id="terrarium">
+    <div id="creature-layer">
 
-        <img
-            id="background"
-            class="background"
-            src="assets/images/ocean_background.png"
-            alt="Ocean Background"
-        >
+        <img id="solon"
+             class="creature"
+             src="assets/images/solon.png"
+             alt="Solon">
 
-        <!-- Solon -->
+        <img id="prism"
+             class="creature"
+             src="assets/images/prism.png"
+             alt="Prism">
 
-        <img
-            id="solon"
-            class="creature turtle"
-            src="assets/images/turtle.png"
-            alt="Solon"
-        >
+        <img id="ripple"
+             class="creature"
+             src="assets/images/ripple.png"
+             alt="Ripple">
 
-        <!-- Prism -->
+        <img id="lumen"
+             class="creature"
+             src="assets/images/lumen.png"
+             alt="Lumen">
 
-        <img
-            id="prism"
-            class="creature fish"
-            src="assets/images/fish.png"
-            alt="Prism"
-        >
-
-        <!-- Lumen -->
-
-        <img
-            id="lumen"
-            class="creature jellyfish"
-            src="assets/images/jellyfish.png"
-            alt="Lumen"
-        >
-
-        <!-- Ripple -->
-
-        <img
-            id="ripple"
-            class="creature seahorse"
-            src="assets/images/seahorse.png"
-            alt="Ripple"
-        >
-
-        <!-- Vertex -->
-
-        <img
-            id="vertex"
-            class="creature crab"
-            src="assets/images/crab.png"
-            alt="Vertex"
-        >
+        <img id="vertex"
+             class="creature"
+             src="assets/images/vertex.png"
+             alt="Vertex">
 
     </div>
 
-    <!-- Navigation -->
+</div>
 
-    <div class="zone-bar">
+<div id="bottom-bar">
 
-        <button
-            id="lagoonBtn"
-            class="zone-button"
-        >
-            LAGOON
-        </button>
+    <button id="lagoonBtn" class="biome-btn active">LAGOON</button>
+    <button id="shoreBtn" class="biome-btn">SHORE</button>
+    <button id="twilightBtn" class="biome-btn">TWILIGHT</button>
+    <button id="deepBtn" class="biome-btn">DEEP</button>
 
-        <button
-            id="shoreBtn"
-            class="zone-button"
-        >
-            SHORE
-        </button>
+</div>
 
-        <button
-            id="twilightBtn"
-            class="zone-button"
-        >
-            TWILIGHT
-        </button>
-
-        <button
-            id="deepBtn"
-            class="zone-button"
-        >
-            DEEP
-        </button>
-
-    </div>
-
-    <script type="module" src="save.js"></script>
-    <script type="module" src="bond.js"></script>
-    <script type="module" src="dialogue.js"></script>
-    <script type="module" src="app.js"></script>
+<script type="module" src="app.js"></script>
 
 </body>
 </html>
