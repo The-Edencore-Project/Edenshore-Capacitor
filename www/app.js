@@ -1,4 +1,5 @@
 import { loadSave } from "./save.js";
+import { saveData } from "./save.js";
 import { addBond } from "./bond.js";
 import { getDialogue } from "./dialogue.js";
 
@@ -6,23 +7,23 @@ let save = loadSave();
 
 function updateBondDisplay() {
 
-    const bondLabel =
-        document.getElementById("bondLabel");
+    const bond =
+        document.getElementById("bond-text");
 
-    if (!bondLabel) return;
+    if (!bond) return;
 
-    bondLabel.textContent =
+    bond.textContent =
         `BOND: ${save.bond} - ${save.title}`;
 }
 
 function showDialogue(text) {
 
-    const dialogueBox =
-        document.getElementById("dialogueBox");
+    const box =
+        document.getElementById("dialogue-box");
 
-    if (!dialogueBox) return;
+    if (!box) return;
 
-    dialogueBox.textContent = text;
+    box.textContent = text;
 }
 
 function creatureTapped(creature) {
@@ -33,13 +34,21 @@ function creatureTapped(creature) {
 
     updateBondDisplay();
 
-    const text =
-        getDialogue(creature);
+    showDialogue(
+        getDialogue(creature)
+    );
+}
 
-    showDialogue(text);
+function bindCreature(id) {
 
-    console.log(
-        `${creature} tapped. Bond = ${save.bond}`
+    const el =
+        document.getElementById(id);
+
+    if (!el) return;
+
+    el.addEventListener(
+        "click",
+        () => creatureTapped(id)
     );
 }
 
@@ -47,48 +56,16 @@ window.addEventListener(
     "DOMContentLoaded",
     () => {
 
-        save.visits += 1;
+        save.visits++;
+
+        saveData(save);
 
         updateBondDisplay();
 
-        const turtle =
-            document.getElementById("solon");
-
-        const crab =
-            document.getElementById("vertex");
-
-        const seahorse =
-            document.getElementById("ripple");
-
-        const fish =
-            document.getElementById("prism");
-
-        const jellyfish =
-            document.getElementById("lumen");
-
-        turtle?.addEventListener(
-            "click",
-            () => creatureTapped("solon")
-        );
-
-        crab?.addEventListener(
-            "click",
-            () => creatureTapped("vertex")
-        );
-
-        seahorse?.addEventListener(
-            "click",
-            () => creatureTapped("ripple")
-        );
-
-        fish?.addEventListener(
-            "click",
-            () => creatureTapped("prism")
-        );
-
-        jellyfish?.addEventListener(
-            "click",
-            () => creatureTapped("lumen")
-        );
+        bindCreature("solon");
+        bindCreature("vertex");
+        bindCreature("ripple");
+        bindCreature("prism");
+        bindCreature("lumen");
     }
 );
