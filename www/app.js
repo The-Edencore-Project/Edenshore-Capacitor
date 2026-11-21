@@ -2,101 +2,68 @@ import { loadSave, saveData } from "./save.js";
 import { addBond } from "./bond.js";
 import { getDialogue } from "./dialogue.js";
 import { audio } from "./audio.js";
+import { CREATURES } from "./creatures.js";
 
 let save = loadSave();
 
-const creatures = {
+let solonFrame = 1;
+let solonFrameTimer = 0;
 
-    solon:{
-        x:0.30,
-        y:0.55,
-        drift:40,
-        buoyancy:10,
-        speed:0.6,
-        phase:0
-    },
+function updateBond(){
 
-    prism:{
-        x:0.70,
-        y:0.55,
-        drift:55,
-        buoyancy:12,
-        speed:1.1,
-        phase:2
-    },
-
-    lumen:{
-        x:0.20,
-        y:0.35,
-        drift:22,
-        buoyancy:12,
-        speed:0.5,
-        phase:1
-    },
-
-    ripple:{
-        x:0.75,
-        y:0.35,
-        drift:14,
-        buoyancy:18,
-        speed:0.8,
-        phase:3
-    },
-
-    vertex:{
-        x:0.50,
-        y:0.15,
-        drift:8,
-        buoyancy:4,
-        speed:0.4,
-        phase:4
-    }
-};
-
-function updateBond() {
-
-    const bond =
+    const el =
         document.getElementById(
             "bond-text"
         );
 
-    if (!bond) return;
+    if(!el) return;
 
-    bond.textContent =
+    el.textContent =
         `BOND: ${save.bond} - ${save.title}`;
 }
 
-function showDialogue(text) {
+function activateTalk(name){
+
+    if(!CREATURES[name]) return;
+
+    CREATURES[name].talking = true;
+
+    CREATURES[name].talkTimer = 2.5;
+}
+
+function showDialogue(text){
 
     const box =
         document.getElementById(
             "dialogue-box"
         );
 
-    if (!box) return;
-
-    box.textContent = text;
+    if(box){
+        box.textContent = text;
+    }
 }
 
-function tapCreature(id) {
+function tapCreature(name){
 
-    save.lastCreature = id;
+    save.lastCreature = name;
 
     save =
         addBond(save,1);
 
     saveData(save);
 
-    audio.sting(id);
-
     updateBond();
 
+    activateTalk(name);
+
     showDialogue(
-        getDialogue(id)
+        getDialogue(name)
     );
+
+    audio.sting(name);
 }
 
-function hookCreature(id){
+function bindCreature(id){
 
     const el =
         document.getElementById(id);
@@ -105,113 +72,176 @@ function hookCreature(id){
 
     el.addEventListener(
         "click",
-        () => tapCreature(id)
+        ()=>tapCreature(id)
     );
 }
 
-function setBiome(name){
+function updateState(name,dt){
 
-    const bg =
-        document.getElementById(
-            "bg-gradient"
-        );
+    const c = CREATURES[name];
 
-    bg.className = name;
+    c.blinkTimer -= dt;
 
-    document
-        .querySelectorAll(
-            ".biome-btn"
-        )
-        .forEach(
-            b => b.classList.remove(
-                "active"
-            )
-        );
-}
+    if(
+        !c.talking &&
+        c.blinkTimer <= 0 &&
+        !c.blinking
+    ){
+        c.blinking = true;
 
-function loop(time){
+        c.blinkTimer =
+            c.blinkDuration;
+    }
 
-    const t =
-        time / 1000;
+    if(
+        c.blinking &&
+        c.blinkTimer <= 0
+    ){
+        c.blinking = false;
 
-    Object.entries(creatures)
-    .forEach(
-        ([id,c]) => {
+        c.blinkTimer =
+            c.blinkCooldown;
+    }
 
-            const el =
-                document.getElementById(id);
+    if(c.talking){
 
-            if(!el) return;
+        c.talkTimer -= dt;
 
-            const x =
-                Math.sin(
-                    (t*c.speed)+c.phase
-                ) * c.drift;
+        if(c.talkTimer <= 0){
 
-            const y =
-                Math.cos(
-                    (t*c.speed*1.4)+c.phase
-                ) * c.buoyancy;
-
-            el.style.transform =
-                `translate(${x}px,${y}px)`;
+            c.talking = false;
         }
+    }
+}
+
+function updateSprite(name){
+
+    const c = CREATURES[name];
+
+    const sprite =
+        document.getElementById(
+            name
+        );
+
+    if(!sprite) return;
+
+    if(c.talking){
+
+        sprite.src =
+        `assets/images/${c.talk}.png`;
+
+        return;
+    }
+
+    if(c.blinking){
+
+        sprite.src =
+        `assets/images/${c.blink}.png`;
+
+        return;
+    }
+
+    sprite.src =
+    `assets/images/${c.base}.png`;
+}
+
+function updateSolonFins(dt){
+
+    solonFrameTimer += dt;
+
+    if(solonFrameTimer < 0.12){
+        return;
+    }
+
+    solonFrameTimer = 0;
+
+    solonFrame++;
+
+    if(solonFrame > 5){
+        solonFrame = 1;
+    }
+
+    const left =
+        document.getElementById(
+            "solonLeftFin"
+        );
+
+    const right =
+        document.getElementById(
+            "solonRightFin"
+        );
+
+    if(left){
+
+        left.src =
+        `assets/images/solon_left_fin_${solonFrame}.png`;
+    }
+
+    if(right){
+
+        right.src =
+        `assets/images/solon_right_fin_${solonFrame}.png`;
+    }
+}
+
+let lastTime = 0;
+
+function animate(time){
+
+    const now =
+        time * 0.001;
+
+    const dt =
+        now - lastTime;
+
+    lastTime = now;
+
+    Object.entries(CREATURES)
+    .forEach(([id,c])=>{
+
+        updateState(
+            id,
+            dt
+        );
+
+        updateSprite(id);
+
+        const el =
+            document.getElementById(
+                id
+            );
+
+        if(!el) return;
+
+        const driftX =
+            Math.sin(
+                now*c.speed+
+                c.phase
+            )*
+            c.drift;
+
+        const driftY =
+            Math.cos(
+                now*c.speed*
+                1.4+
+                c.phase
+            )*
+            c.buoyancy;
+
+        el.style.transform =
+            `translate(${driftX}px,${driftY}px)`;
+    });
+
+    updateSolonFins(dt);
+
+    requestAnimationFrame(
+        animate
     );
-
-    const mtn =
-        document.getElementById(
-            "mountains"
-        );
-
-    const pill =
-        document.getElementById(
-            "pillars"
-        );
-
-    const dune =
-        document.getElementById(
-            "dunes"
-        );
-
-    const grass =
-        document.getElementById(
-            "grass"
-        );
-
-    if(mtn){
-        mtn.style.transform =
-            `translateX(${
-                -(t*6)%900
-            }px)`;
-    }
-
-    if(pill){
-        pill.style.transform =
-            `translateX(${
-                -(t*8)%1200
-            }px)`;
-    }
-
-    if(dune){
-        dune.style.transform =
-            `translateX(${
-                -(t*18)%1200
-            }px)`;
-    }
-
-    if(grass){
-        grass.style.transform =
-            `translateX(${
-                -(t*30)%1600
-            }px)`;
-    }
-
-    requestAnimationFrame(loop);
 }
 
 window.addEventListener(
     "DOMContentLoaded",
-    () => {
+    ()=>{
 
         save.visits++;
 
@@ -219,86 +249,14 @@ window.addEventListener(
 
         updateBond();
 
-        hookCreature("solon");
-        hookCreature("prism");
-        hookCreature("ripple");
-        hookCreature("lumen");
-        hookCreature("vertex");
-
-        document
-            .getElementById(
-                "lagoonBtn"
-            )
-            ?.addEventListener(
-                "click",
-                () => {
-
-                    setBiome(
-                        "biome-lagoon"
-                    );
-
-                    lagoonBtn.classList.add(
-                        "active"
-                    );
-                }
-            );
-
-        document
-            .getElementById(
-                "shoreBtn"
-            )
-            ?.addEventListener(
-                "click",
-                () => {
-
-                    setBiome(
-                        "biome-shore"
-                    );
-
-                    shoreBtn.classList.add(
-                        "active"
-                    );
-                }
-            );
-
-        document
-            .getElementById(
-                "twilightBtn"
-            )
-            ?.addEventListener(
-                "click",
-                () => {
-
-                    setBiome(
-                        "biome-twilight"
-                    );
-
-                    twilightBtn.classList.add(
-                        "active"
-                    );
-                }
-            );
-
-        document
-            .getElementById(
-                "deepBtn"
-            )
-            ?.addEventListener(
-                "click",
-                () => {
-
-                    setBiome(
-                        "biome-deep"
-                    );
-
-                    deepBtn.classList.add(
-                        "active"
-                    );
-                }
-            );
+        bindCreature("solon");
+        bindCreature("prism");
+        bindCreature("ripple");
+        bindCreature("lumen");
+        bindCreature("vertex");
 
         requestAnimationFrame(
-            loop
+            animate
         );
     }
 );
