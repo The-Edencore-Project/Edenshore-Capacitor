@@ -6,257 +6,358 @@ import { CREATURES } from "./creatures.js";
 
 let save = loadSave();
 
-let solonFrame = 1;
-let solonFrameTimer = 0;
+let finFrame = 1;
+let finTimer = 0;
+let lastTime = 0;
 
-function updateBond(){
+function updateBondDisplay(){
 
-    const el =
-        document.getElementById(
-            "bond-text"
-        );
+const el =
+document.getElementById(
+"bond-text"
+);
 
-    if(!el) return;
+if(!el) return;
 
-    el.textContent =
-        `BOND: ${save.bond} - ${save.title}`;
-}
-
-function activateTalk(name){
-
-    if(!CREATURES[name]) return;
-
-    CREATURES[name].talking = true;
-
-    CREATURES[name].talkTimer = 2.5;
+el.textContent =
+`BOND: ${save.bond} - ${save.title}`;
 }
 
 function showDialogue(text){
 
-    const box =
-        document.getElementById(
-            "dialogue-box"
-        );
+const box =
+document.getElementById(
+"dialogue-box"
+);
 
-    if(box){
-        box.textContent = text;
-    }
+if(box){
+box.textContent = text;
+}
 }
 
-function tapCreature(name){
+function activateTalk(id){
 
-    save.lastCreature = name;
+if(!CREATURES[id]) return;
 
-    save =
-        addBond(save,1);
+CREATURES[id].talkTimer =
+Math.max(
+1.5,
+Math.min(
+4,
+getDialogue(id).length*.08
+)
+);
+}
 
-    saveData(save);
+function tapCreature(id){
 
-    updateBond();
+save.lastCreature = id;
 
-    activateTalk(name);
+save =
+addBond(
+save,
+1
+);
 
-    showDialogue(
-        getDialogue(name)
-    );
+saveData(save);
 
-    audio.sting(name);
+const dialogue =
+getDialogue(id);
+
+showDialogue(
+dialogue
+);
+
+CREATURES[id].talkTimer =
+Math.max(
+1.5,
+Math.min(
+4,
+dialogue.length*.08
+)
+);
+
+audio.sting(id);
+
+updateBondDisplay();
 }
 
 function bindCreature(id){
 
-    const el =
-        document.getElementById(id);
+const el =
+document.getElementById(id);
 
-    if(!el) return;
+if(!el) return;
 
-    el.addEventListener(
-        "click",
-        ()=>tapCreature(id)
-    );
+el.addEventListener(
+"click",
+()=>tapCreature(id)
+);
 }
 
-function updateState(name,dt){
+function updateBlinkState(c,dt){
 
-    const c = CREATURES[name];
+if(c.talkTimer>0){
 
-    c.blinkTimer -= dt;
+c.talkTimer -= dt;
 
-    if(
-        !c.talking &&
-        c.blinkTimer <= 0 &&
-        !c.blinking
-    ){
-        c.blinking = true;
-
-        c.blinkTimer =
-            c.blinkDuration;
-    }
-
-    if(
-        c.blinking &&
-        c.blinkTimer <= 0
-    ){
-        c.blinking = false;
-
-        c.blinkTimer =
-            c.blinkCooldown;
-    }
-
-    if(c.talking){
-
-        c.talkTimer -= dt;
-
-        if(c.talkTimer <= 0){
-
-            c.talking = false;
-        }
-    }
+return;
 }
 
-function updateSprite(name){
+c.blinkTimer -= dt;
 
-    const c = CREATURES[name];
+if(
+!c.blinking &&
+c.blinkTimer <= 0
+){
 
-    const sprite =
-        document.getElementById(
-            name
-        );
+c.blinking = true;
 
-    if(!sprite) return;
+c.blinkTimer =
+c.blinkLength;
+}
+else if(
+c.blinking &&
+c.blinkTimer <= 0
+){
 
-    if(c.talking){
+c.blinking = false;
 
-        sprite.src =
-        `assets/images/${c.talk}.png`;
+c.blinkTimer =
+c.blinkCooldown;
+}
+}
 
-        return;
-    }
+function updateSprite(c){
 
-    if(c.blinking){
+const img =
+document.getElementById(
+c.id
+);
 
-        sprite.src =
-        `assets/images/${c.blink}.png`;
+if(!img) return;
 
-        return;
-    }
+if(c.talkTimer > 0){
 
-    sprite.src =
-    `assets/images/${c.base}.png`;
+img.src = c.talk;
+
+return;
+}
+
+if(c.blinking){
+
+img.src = c.blink;
+
+return;
+}
+
+img.src = c.base;
 }
 
 function updateSolonFins(dt){
 
-    solonFrameTimer += dt;
+finTimer += dt;
 
-    if(solonFrameTimer < 0.12){
-        return;
-    }
-
-    solonFrameTimer = 0;
-
-    solonFrame++;
-
-    if(solonFrame > 5){
-        solonFrame = 1;
-    }
-
-    const left =
-        document.getElementById(
-            "solonLeftFin"
-        );
-
-    const right =
-        document.getElementById(
-            "solonRightFin"
-        );
-
-    if(left){
-
-        left.src =
-        `assets/images/solon_left_fin_${solonFrame}.png`;
-    }
-
-    if(right){
-
-        right.src =
-        `assets/images/solon_right_fin_${solonFrame}.png`;
-    }
+if(finTimer < .12){
+return;
 }
 
-let lastTime = 0;
+finTimer = 0;
+
+finFrame++;
+
+if(finFrame > 5){
+finFrame = 1;
+}
+
+const left =
+document.getElementById(
+"solonLeftFin"
+);
+
+const right =
+document.getElementById(
+"solonRightFin"
+);
+
+if(left){
+left.src =
+`assets/images/solon_left_fin_${finFrame}.png`;
+}
+
+if(right){
+right.src =
+`assets/images/solon_right_fin_${finFrame}.png`;
+}
+}
+
+function updateParallax(t){
+
+const mountains =
+document.getElementById(
+"mountains"
+);
+
+const pillars =
+document.getElementById(
+"pillars"
+);
+
+const dunes =
+document.getElementById(
+"dunes"
+);
+
+const grass =
+document.getElementById(
+"grass"
+);
+
+if(mountains){
+mountains.style.transform =
+`translateX(${-(t*5)%1200}px)`;
+}
+
+if(pillars){
+pillars.style.transform =
+`translateX(${-(t*8)%1400}px)`;
+}
+
+if(dunes){
+dunes.style.transform =
+`translateX(${-(t*18)%1800}px)`;
+}
+
+if(grass){
+grass.style.transform =
+`translateX(${-(t*32)%2200}px)`;
+}
+}
 
 function animate(time){
 
-    const now =
-        time * 0.001;
+const now =
+time*.001;
 
-    const dt =
-        now - lastTime;
+const dt =
+now-lastTime;
 
-    lastTime = now;
+lastTime = now;
 
-    Object.entries(CREATURES)
-    .forEach(([id,c])=>{
+Object.values(CREATURES)
+.forEach(c=>{
 
-        updateState(
-            id,
-            dt
-        );
+updateBlinkState(
+c,
+dt
+);
 
-        updateSprite(id);
+updateSprite(c);
 
-        const el =
-            document.getElementById(
-                id
-            );
+const sprite =
+document.getElementById(
+c.id
+);
 
-        if(!el) return;
+if(!sprite) return;
 
-        const driftX =
-            Math.sin(
-                now*c.speed+
-                c.phase
-            )*
-            c.drift;
+const driftX =
+Math.sin(
+(now*c.speed)+
+c.phase
+)*
+c.drift;
 
-        const driftY =
-            Math.cos(
-                now*c.speed*
-                1.4+
-                c.phase
-            )*
-            c.buoyancy;
+const driftY =
+Math.cos(
+(now*c.speed*1.5)+
+c.phase
+)*
+c.buoyancy;
 
-        el.style.transform =
-            `translate(${driftX}px,${driftY}px)`;
-    });
+sprite.style.transform =
+`translate(${driftX}px,${driftY}px)`;
+});
 
-    updateSolonFins(dt);
+updateSolonFins(dt);
 
-    requestAnimationFrame(
-        animate
-    );
+updateParallax(now);
+
+requestAnimationFrame(
+animate
+);
+}
+
+function initBiomes(){
+
+const bg =
+document.getElementById(
+"bg-gradient"
+);
+
+const map = {
+lagoonBtn:"biome-lagoon",
+shoreBtn:"biome-shore",
+twilightBtn:"biome-twilight",
+deepBtn:"biome-deep"
+};
+
+Object.entries(map)
+.forEach(
+([id,cls])=>{
+
+document
+.getElementById(id)
+?.addEventListener(
+"click",
+()=>{
+
+bg.className = cls;
+
+document
+.querySelectorAll(
+".biome-btn"
+)
+.forEach(
+btn =>
+btn.classList.remove(
+"active"
+)
+);
+
+document
+.getElementById(id)
+.classList.add(
+"active"
+);
+
+}
+);
+
+}
+);
 }
 
 window.addEventListener(
-    "DOMContentLoaded",
-    ()=>{
+"DOMContentLoaded",
+()=>{
 
-        save.visits++;
+save.visits++;
 
-        saveData(save);
+saveData(save);
 
-        updateBond();
+updateBondDisplay();
 
-        bindCreature("solon");
-        bindCreature("prism");
-        bindCreature("ripple");
-        bindCreature("lumen");
-        bindCreature("vertex");
+bindCreature("solon");
+bindCreature("prism");
+bindCreature("ripple");
+bindCreature("lumen");
+bindCreature("vertex");
 
-        requestAnimationFrame(
-            animate
-        );
-    }
+initBiomes();
+
+requestAnimationFrame(
+animate
+);
+}
 );
