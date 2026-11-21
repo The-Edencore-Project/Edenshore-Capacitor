@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- TAP TO START OVERLAY (Fixes Audio Autoplay block) -->
+    <div id="start-overlay">
+        <h1>EDENSHORE</h1>
+        <p>Tap anywhere to enter</p>
+    </div>
+
     <!-- Parallax Background Layers -->
     <div id="bg-gradient" class="biome-lagoon">
         <div id="layer-mountains" class="parallax-layer"></div>
@@ -20,18 +26,18 @@
     </div>
 
     <div id="creature-layer">
-        <!-- Solon Group (Body + Fins) -->
-        <div id="solon-group">
+        <!-- Solon Group -->
+        <div id="solon-group" style="width: 150px; height: 150px;">
             <img id="solonLeftFin" src="assets/images/solon_left_fin_1.png">
             <img id="solon" class="creature" src="assets/images/solon_body.png" data-base="assets/images/solon_body.png" data-blink="assets/images/solon_body_blink.png" data-talk="assets/images/solon_body_talk.png">
             <img id="solonRightFin" src="assets/images/solon_right_fin_1.png">
         </div>
 
-        <!-- Other Creatures -->
-        <img id="prism" class="creature" src="assets/images/prism.png" data-base="assets/images/prism.png" data-blink="assets/images/prism_blink.png" data-talk="assets/images/prism_talk.png">
-        <img id="lumen" class="creature" src="assets/images/lumen.png" data-base="assets/images/lumen.png" data-blink="assets/images/lumen_blink.png" data-talk="assets/images/lumen_talk.png">
-        <img id="ripple" class="creature" src="assets/images/ripple.png" data-base="assets/images/ripple.png" data-blink="assets/images/ripple_blink.png" data-talk="assets/images/ripple_talk.png">
-        <img id="vertex" class="creature" src="assets/images/vertex.png" data-base="assets/images/vertex.png" data-blink="assets/images/vertex_blink.png" data-talk="assets/images/vertex_talk.png">
+        <!-- Other Creatures (Scale applied via CSS to match Golden Code) -->
+        <img id="prism" class="creature" src="assets/images/prism.png" data-base="assets/images/prism.png" data-blink="assets/images/prism_blink.png" data-talk="assets/images/prism_talk.png" style="width: 180px;">
+        <img id="lumen" class="creature" src="assets/images/lumen.png" data-base="assets/images/lumen.png" data-blink="assets/images/lumen_blink.png" data-talk="assets/images/lumen_talk.png" style="width: 130px;">
+        <img id="ripple" class="creature" src="assets/images/ripple.png" data-base="assets/images/ripple.png" data-blink="assets/images/ripple_blink.png" data-talk="assets/images/ripple_talk.png" style="width: 100px;">
+        <img id="vertex" class="creature" src="assets/images/vertex.png" data-base="assets/images/vertex.png" data-blink="assets/images/vertex_blink.png" data-talk="assets/images/vertex_talk.png" style="width: 120px;">
     </div>
 
     <div id="controls">
