@@ -1,97 +1,59 @@
-import { loadSave, saveData } from "./save.js";
-import { addBond } from "./bond.js";
-import { getDialogue } from "./dialogue.js";
-import { audio } from "./audio.js";
-import { CREATURES } from "./creatures.js";
+import { loadSave, saveData, addBond, getStatus } from './save.js';
+import { Brain } from './brain.js';
+import { audio } from './audio.js';
 
 let save = loadSave();
-let finFrame = 1;
-let finTimer = 0;
+let brain = new Brain(save);
 let lastTime = 0;
 
-function updateBondDisplay() {
+const CREATURES = [
+    { id: "solon", x: 0.30, y: 0.55, speed: 0.5, phase: 0, talkTimer: 0 },
+    { id: "prism", x: 0.70, y: 0.55, speed: 1.2, phase: 1.5, talkTimer: 0 },
+    { id: "lumen", x: 0.20, y: 0.35, speed: 0.8, phase: 2.0, talkTimer: 0 },
+    { id: "ripple", x: 0.75, y: 0.35, speed: 0.6, phase: 3.0, talkTimer: 0 },
+    { id: "vertex", x: 0.50, y: 0.15, speed: 1.0, phase: 4.0, talkTimer: 0 }
+];
+
+let speechQueue = [];
+let speechTimer = 0;
+
+function updateUI() {
     const el = document.getElementById("bond-text");
-    if (!el) return;
-    el.textContent = `BOND: ${save.bond} - ${save.title}`;
+    if (el) el.textContent = getStatus(save);
 }
 
-function showDialogue(text) {
+function showDialogue(speaker, text) {
     const box = document.getElementById("dialogue-box");
-    if (box) box.textContent = text;
+    if (box) box.innerHTML = `<strong>${speaker}:</strong> ${text}`;
 }
 
 function tapCreature(id) {
-    if (!CREATURES[id]) return;
+    if (!CREATURES.find(c => c.id === id)) return;
+    let milestone = addBond(save, 1);
+    if (milestone) showDialogue("SYSTEM", "MILESTONE REACHED!");
     
-    save.lastCreature = id;
-    save = addBond(save, 1);
-    saveData(save);
-
-    const dialogue = getDialogue(id);
-    showDialogue(dialogue);
-
-    CREATURES[id].talkTimer = Math.max(1.5, Math.min(4, dialogue.length * 0.08));
+    let scene = brain.onTap();
+    if (scene) queueScene(scene);
+    
+    let c = CREATURES.find(c => c.id === id);
+    c.talkTimer = 2.0;
+    
+    updateUI();
     audio.sting(id);
-    updateBondDisplay();
 }
 
-function bindCreature(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener("click", () => tapCreature(id));
+function queueScene(scene) {
+    if (!scene) return;
+    scene.forEach(line => {
+        speechQueue.push({ speaker: line[0], text: line[1], delay: 2.5 });
+    });
 }
 
-function updateBlinkState(c, dt) {
-    if (c.talkTimer > 0) {
-        c.talkTimer -= dt;
-        return;
-    }
-    c.blinkTimer -= dt;
-    if (!c.blinking && c.blinkTimer <= 0) {
-        c.blinking = true;
-        c.blinkTimer = c.blinkLength;
-    } else if (c.blinking && c.blinkTimer <= 0) {
-        c.blinking = false;
-        c.blinkTimer = c.blinkCooldown;
-    }
-}
-
-function updateSprite(c) {
-    const img = document.getElementById(c.id);
-    if (!img) return;
-    if (c.talkTimer > 0) {
-        img.src = c.talk;
-        return;
-    }
-    if (c.blinking) {
-        img.src = c.blink;
-        return;
-    }
-    img.src = c.base;
-}
-
-function updateSolonFins(dt) {
-    finTimer += dt;
-    if (finTimer < 0.12) return;
-    finTimer = 0;
-    finFrame++;
-    if (finFrame > 5) finFrame = 1;
-    const left = document.getElementById("solonLeftFin");
-    const right = document.getElementById("solonRightFin");
-    if (left) left.src = `assets/images/solon_left_fin_${finFrame}.png`;
-    if (right) right.src = `assets/images/solon_right_fin_${finFrame}.png`;
-}
-
-function updateParallax(t) {
-    const mountains = document.getElementById("mountains");
-    const pillars = document.getElementById("pillars");
-    const dunes = document.getElementById("dunes");
-    const grass = document.getElementById("grass");
-
-    if (mountains) mountains.style.transform = `translateX(${-(t * 5) % 1200}px)`;
-    if (pillars) pillars.style.transform = `translateX(${-(t * 8) % 1400}px)`;
-    if (dunes) dunes.style.transform = `translateX(${-(t * 18) % 1800}px)`;
-    if (grass) grass.style.transform = `translateX(${-(t * 32) % 2200}px)`;
+function bindCreatures() {
+    CREATURES.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (el) el.addEventListener("click", () => tapCreature(c.id));
+    });
 }
 
 function animate(time) {
@@ -99,60 +61,51 @@ function animate(time) {
     const dt = now - lastTime;
     lastTime = now;
 
-    Object.values(CREATURES).forEach(c => {
-        updateBlinkState(c, dt);
-        updateSprite(c);
+    // Brain Update
+    let newScene = brain.update(dt);
+    if (newScene) queueScene(newScene);
 
-        const sprite = document.getElementById(c.id);
-        if (!sprite) return;
+    // Speech Queue Processing
+    if (speechQueue.length > 0) {
+        speechTimer += dt;
+        if (speechTimer >= speechQueue[0].delay) {
+            speechTimer = 0;
+            let item = speechQueue.shift();
+            showDialogue(item.speaker, item.text);
+            audio.sting(item.speaker.toLowerCase());
+        }
+    }
 
-        // Apply Base Positioning (from creatures.js)
-        sprite.style.left = `${c.x * 100}%`;
-        sprite.style.top = `${c.y * 100}%`;
+    // Creature Updates
+    CREATURES.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (!el) return;
 
-        // Apply Drifting Animation
-        const driftX = Math.sin((now * c.speed) + c.phase) * c.drift;
-        const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * c.buoyancy;
-        sprite.style.transform = `translate(${driftX}px, ${driftY}px)`;
+        if (c.talkTimer > 0) c.talkTimer -= dt;
+
+        const driftX = Math.sin((now * c.speed) + c.phase) * 20;
+        const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 10;
+
+        el.style.left = `${c.x * 100}%`;
+        el.style.top = `${c.y * 100}%`;
+        el.style.transform = `translate(${driftX}px, ${driftY}px)`;
     });
 
-    updateSolonFins(dt);
-    updateParallax(now);
     requestAnimationFrame(animate);
 }
 
-function initBiomes() {
-    const bg = document.getElementById("bg-gradient");
-    const map = {
-        lagoonBtn: "biome-lagoon",
-        shoreBtn: "biome-shore",
-        twilightBtn: "biome-twilight",
-        deepBtn: "biome-deep"
-    };
-
-    Object.entries(map).forEach(([id, cls]) => {
-        const btn = document.getElementById(id);
-        if (!btn) return;
-        
-        btn.addEventListener("click", () => {
-            bg.className = cls;
-            document.querySelectorAll(".biome-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-        });
-    });
-}
-
 window.addEventListener("DOMContentLoaded", () => {
-    save.visits++;
+    save.visits = (save.visits || 0) + 1;
     saveData(save);
-    updateBondDisplay();
+    updateUI();
+    bindCreatures();
+    
+    // Setup Feed Button
+    document.getElementById("feed-btn")?.addEventListener("click", () => {
+        let scene = brain.onFeed();
+        if (scene) queueScene(scene);
+        audio.sting("vertex");
+    });
 
-    bindCreature("solon");
-    bindCreature("prism");
-    bindCreature("ripple");
-    bindCreature("lumen");
-    bindCreature("vertex");
-
-    initBiomes();
     requestAnimationFrame(animate);
 });
