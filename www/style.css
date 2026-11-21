@@ -11,7 +11,7 @@ width:100%;
 height:100%;
 overflow:hidden;
 background:#000;
-font-family:Arial,sans-serif;
+font-family:sans-serif;
 }
 
 #scene{
@@ -30,39 +30,110 @@ transition:background 1s ease;
 .biome-lagoon{
 background:linear-gradient(
 180deg,
-#001427 0%,
-#003567 40%,
-#005f8d 70%,
-#0d90a6 100%
-);
+#021a30 0%,
+#043060 40%,
+#106080 70%,
+#20a0a0 100%);
 }
 
 .biome-shore{
 background:linear-gradient(
 180deg,
-#281238 0%,
-#7a3559 40%,
-#ca7546 75%,
-#f0c77c 100%
-);
+#2a1a40 0%,
+#a04060 40%,
+#e07050 70%,
+#f0d090 100%);
 }
 
 .biome-twilight{
 background:linear-gradient(
 180deg,
-#05050f 0%,
-#201238 50%,
-#3d2c68 100%
-);
+#0a0510 0%,
+#1a1028 40%,
+#2a1838 70%,
+#3a2048 100%);
 }
 
 .biome-deep{
 background:linear-gradient(
 180deg,
 #000000 0%,
-#05051b 50%,
-#0c1036 100%
-);
+#050010 40%,
+#0a0020 70%,
+#100030 100%);
+}
+
+.parallax{
+position:absolute;
+pointer-events:none;
+}
+
+#pillars{
+bottom:0;
+width:250%;
+opacity:.28;
+z-index:2;
+}
+
+#mountains{
+bottom:0;
+width:220%;
+opacity:.6;
+z-index:3;
+}
+
+#dunes{
+bottom:0;
+width:220%;
+z-index:4;
+}
+
+#grass{
+bottom:0;
+width:250%;
+z-index:9;
+}
+
+#creature-layer{
+position:absolute;
+inset:0;
+z-index:8;
+}
+
+.creature{
+position:absolute;
+cursor:pointer;
+will-change:transform;
+}
+
+#solon{
+width:180px;
+left:28%;
+top:42%;
+}
+
+#prism{
+width:170px;
+left:66%;
+top:38%;
+}
+
+#ripple{
+width:90px;
+left:74%;
+top:56%;
+}
+
+#lumen{
+width:165px;
+left:20%;
+top:69%;
+}
+
+#vertex{
+width:220px;
+left:40%;
+bottom:20px;
 }
 
 #top-bar{
@@ -73,15 +144,15 @@ width:100%;
 height:90px;
 background:rgba(0,0,0,.85);
 display:flex;
-justify-content:center;
 align-items:center;
-z-index:20;
+justify-content:center;
+z-index:50;
 }
 
 #bond-text{
 font-size:34px;
 font-weight:bold;
-color:#17b4ff;
+color:#09adff;
 }
 
 #dialogue-box{
@@ -91,55 +162,12 @@ left:50%;
 transform:translateX(-50%);
 width:85%;
 padding:14px;
-border-radius:14px;
-text-align:center;
-background:rgba(0,0,0,.65);
+background:rgba(0,0,0,.7);
+border-radius:16px;
 color:#fff;
-font-size:18px;
-z-index:20;
-}
-
-#creature-layer{
-position:absolute;
-inset:0;
-z-index:10;
-}
-
-.creature{
-position:absolute;
-cursor:pointer;
-will-change:transform;
--webkit-user-drag:none;
-}
-
-#solon{
-width:170px;
-left:26%;
-top:33%;
-}
-
-#prism{
-width:170px;
-left:66%;
-top:30%;
-}
-
-#ripple{
-width:80px;
-left:74%;
-top:58%;
-}
-
-#lumen{
-width:160px;
-left:18%;
-top:70%;
-}
-
-#vertex{
-width:220px;
-left:39%;
-bottom:15px;
+font-size:20px;
+text-align:center;
+z-index:50;
 }
 
 #bottom-bar{
@@ -150,8 +178,8 @@ width:100%;
 background:rgba(0,0,0,.85);
 display:flex;
 justify-content:space-around;
-padding:14px 0;
-z-index:20;
+padding:15px 0;
+z-index:50;
 }
 
 .biome-btn{
@@ -163,5 +191,5 @@ color:#00ff00;
 }
 
 .biome-btn.active{
-color:#ff4444;
+color:#ff4040;
 }
