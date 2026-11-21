@@ -27,48 +27,61 @@ body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-fam
 .gold-particle { position: absolute; background: #FFD700; border-radius: 50%; animation: floatUp 1s ease-out forwards; box-shadow: 0 0 10px #FFD700; }
 @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-100vh) scale(0.5); opacity: 0; } }
 
+/* HUD Top Bar */
 #ui-layer { 
-    position: absolute; top: 0; left: 0; width: 100%; height: 70px;
-    background: rgba(0, 0, 0, 0.6); z-index: 50; text-align: center; 
+    position: absolute; top: 0; left: 0; width: 100%; height: 60px;
+    background: rgba(0, 0, 0, 0.7); z-index: 50; text-align: center; 
     display: flex; align-items: center; justify-content: center;
-    border-bottom: 1px solid rgba(0, 170, 255, 0.3);
 }
-#bond-text { font-size: 24px; font-weight: bold; color: #00aaff; text-shadow: 0 0 10px rgba(0,170,255,0.8); }
+#bond-text { font-size: 22px; font-weight: bold; color: #00aaff; text-shadow: 0 0 10px rgba(0,170,255,0.8); }
 
+/* HUD Utility Bar */
+#util-bar {
+    position: absolute; top: 60px; left: 0; width: 100%; height: 30px;
+    background: rgba(0, 0, 0, 0.5); z-index: 50; display: flex;
+    justify-content: space-around; align-items: center; font-size: 12px; font-weight: bold;
+}
+#util-bar span:nth-child(1), #util-bar span:nth-child(2), #util-bar span:nth-child(5) { color: #00ff00; }
+#util-bar span:nth-child(3), #util-bar span:nth-child(4) { color: #ff1e1e; }
+
+/* Creatures */
 #creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
 .creature { position: absolute; cursor: pointer; height: auto; will-change: transform; pointer-events: auto; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.4)); transition: left 1s ease-in-out, top 1s ease-in-out; }
 
+/* Solon Group */
 #solon-group { position: absolute; pointer-events: none; transition: left 1s ease-in-out, top 1s ease-in-out; }
 #solonLeftFin { position: absolute; width: 55px; left: -20px; top: 40px; z-index: 14; pointer-events: none; }
 #solon { position: absolute; width: 130px; z-index: 15; left: 0; }
 #solonRightFin { position: absolute; width: 55px; left: 90px; top: 40px; z-index: 16; pointer-events: none; }
 
-/* THE BUBBLE FIX */
+/* THE TEXT FIX: Flexbox Centering */
 .bubble {
     position: absolute; 
     background: rgba(10, 20, 40, 0.85); 
     border: 1px solid rgba(100, 200, 255, 0.4);
-    border-radius: 50px; 
-    /* Removed flexbox to prevent text crushing */
-    display: block; 
+    border-radius: 40px; 
+    display: flex; /* Use flexbox to center text */
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    padding: 15px 25px; 
+    padding: 10px 20px; 
     color: #ffffff; 
-    font-size: 15px; 
-    font-weight: 600; 
-    line-height: 1.3;
+    font-size: 14px; 
+    font-weight: 500; 
+    line-height: 1.2;
     box-shadow: inset 0 0 15px rgba(0, 170, 255, 0.2), 0 0 15px rgba(0, 170, 255, 0.1);
     backdrop-filter: blur(5px); 
     pointer-events: none; 
     z-index: 100; 
-    word-wrap: break-word; 
+    
+    /* THE FIX: Let the box grow to fit the text natively */
+    width: max-content; 
+    max-width: 250px; 
     white-space: normal;
-    /* Ensure minimum size */
-    min-width: 100px;
-    min-height: 50px;
 }
 .bubble::before { content: ''; position: absolute; top: 15%; left: 15%; width: 25%; height: 15%; border-radius: 50%; border-top: 2px solid rgba(255,255,255,0.4); transform: rotate(-15deg); }
 
+/* Bottom Bars */
 #biome-controls { 
     position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
     background: rgba(0, 0, 0, 0.85); 
