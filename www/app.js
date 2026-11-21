@@ -23,49 +23,56 @@ function updateUI() {
 }
 
 function spawnBubble(speaker, text) {
-    // Find the creature speaking
     let c = CREATURES.find(x => x.name === speaker) || CREATURES.find(x => x.name === "Vertex");
     if (!c) return;
 
     const el = document.getElementById(c.id);
     if (!el) return;
 
-    // Get current screen position of the creature
+    // Get bounding box of creature
     const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top;
+    
+    // Calculate center of creature, then move up
+    const cx = rect.left + (rect.width / 2);
+    
+    // The bubble should spawn above the creature, but not off-screen
+    // If the creature is in the top half, bubble spawns BELOW them
+    let spawnY = rect.top - 120; 
+    if (spawnY < 100) {
+        spawnY = rect.bottom + 20; // Spawn below if too close to top
+    }
 
     // Create bubble
     const bubble = document.createElement("div");
     bubble.className = "bubble";
     bubble.textContent = text;
     
-    // Size of bubble based on text length
-    let size = Math.max(100, Math.min(220, text.length * 8));
-    bubble.style.width = `${size}px`;
-    bubble.style.height = `${size}px`;
+    // Dynamically size based on text length, with min/max bounds
+    let width = Math.max(120, Math.min(280, text.length * 10 + 40));
+    let height = Math.max(60, Math.min(120, text.length * 3 + 40));
     
-    // Position it above the creature
-    bubble.style.left = `${cx - size/2}px`;
-    bubble.style.top = `${cy - size}px`;
+    bubble.style.width = `${width}px`;
+    bubble.style.height = `${height}px`;
+    
+    // Position it
+    bubble.style.left = `${cx - width/2}px`;
+    bubble.style.top = `${spawnY}px`;
     
     document.body.appendChild(bubble);
 
-    // Animate the bubble rising and fading out
+    // Animate
     let startTime = performance.now();
     const life = 6000; // 6 seconds
-    const startY = cy - size;
 
     activeBubbles.push({
         el: bubble,
         startTime: startTime,
         life: life,
-        startX: cx - size/2,
-        startY: startY,
-        size: size
+        startX: cx - width/2,
+        startY: spawnY,
+        driftDir: Math.random() > 0.5 ? 1 : -1
     });
 
-    // Make the creature "talk"
     c.talkTimer = 2.0;
 }
 
@@ -80,16 +87,16 @@ function updateBubbles(now) {
             continue;
         }
 
-        // Float up and sway side to side
-        let currentY = b.startY - (progress * 150); // Rise 150px
-        let currentX = b.startX + Math.sin(progress * Math.PI * 4) * 20; // Sway
+        // Float up and sway
+        let currentY = b.startY - (progress * 80); // Rise 80px over lifetime
+        let currentX = b.startX + Math.sin(progress * Math.PI * 3) * 15; // Gentle sway
 
-        // Fade in at start, fade out at end
+        // Fade in/out
         let alpha = 1.0;
         if (progress < 0.1) alpha = progress / 0.1;
         if (progress > 0.7) alpha = (1.0 - progress) / 0.3;
 
-        b.el.style.transform = `translate(${currentX - b.startX}px, ${currentY - b.startY}px)`;
+        b.el.style.transform = `translate(${currentX - b.startX}px, ${currentY - b.startY}px) scale(${1.0 + progress * 0.1})`;
         b.el.style.opacity = alpha;
     }
 }
@@ -133,11 +140,9 @@ function animate(time) {
     const dt = now - lastTime;
     lastTime = now;
 
-    // Brain Update
     let newScene = brain.update(dt);
     if (newScene) queueScene(newScene);
 
-    // Speech Queue Processing
     if (speechQueue.length > 0) {
         speechTimer += dt;
         if (speechTimer >= speechQueue[0].delay) {
@@ -147,7 +152,6 @@ function animate(time) {
         }
     }
 
-    // Creature Updates
     CREATURES.forEach(c => {
         const el = document.getElementById(c.id);
         if (!el) return;
@@ -162,7 +166,6 @@ function animate(time) {
         el.style.transform = `translate(${driftX}px, ${driftY}px)`;
     });
 
-    // Bubble Physics
     updateBubbles(time);
 
     requestAnimationFrame(animate);
