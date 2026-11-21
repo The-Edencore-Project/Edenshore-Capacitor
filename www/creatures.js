@@ -1,122 +1,93 @@
 export const CREATURES = {
 
-    solon:{
-        base:"solon",
-        blink:"solon_blink",
-        talk:"solon_talk",
+solon:{
+id:"solon",
+base:"assets/images/solon.png",
+blink:"assets/images/solon_blink.png",
+talk:"assets/images/solon_talk.png",
+x:0.30,
+y:0.55,
+drift:40,
+buoyancy:10,
+speed:.55,
+phase:0,
+blinkCooldown:5,
+blinkLength:.12,
+blinkTimer:4,
+blinking:false,
+talkTimer:0
+},
 
-        x:0.30,
-        y:0.55,
+prism:{
+id:"prism",
+base:"assets/images/prism.png",
+blink:"assets/images/prism_blink.png",
+talk:"assets/images/prism_talk.png",
+x:0.70,
+y:0.55,
+drift:55,
+buoyancy:12,
+speed:1.2,
+phase:1.5,
+blinkCooldown:4,
+blinkLength:.12,
+blinkTimer:3,
+blinking:false,
+talkTimer:0
+},
 
-        drift:40,
-        buoyancy:10,
-        speed:0.55,
+ripple:{
+id:"ripple",
+base:"assets/images/ripple.png",
+blink:"assets/images/ripple_blink.png",
+talk:"assets/images/ripple_talk.png",
+x:0.75,
+y:0.35,
+drift:15,
+buoyancy:18,
+speed:.8,
+phase:3,
+blinkCooldown:6,
+blinkLength:.12,
+blinkTimer:2,
+blinking:false,
+talkTimer:0
+},
 
-        blinkCooldown:5,
-        blinkDuration:0.12,
+lumen:{
+id:"lumen",
+base:"assets/images/lumen.png",
+blink:"assets/images/lumen_blink.png",
+talk:"assets/images/lumen_talk.png",
+x:0.20,
+y:0.35,
+drift:22,
+buoyancy:14,
+speed:.5,
+phase:2,
+blinkCooldown:8,
+blinkLength:.12,
+blinkTimer:5,
+blinking:false,
+talkTimer:0
+},
 
-        talking:false,
-        talkTimer:0,
+vertex:{
+id:"vertex",
+base:"assets/images/vertex.png",
+blink:"assets/images/vertex_blink.png",
+talk:"assets/images/vertex_talk.png",
+x:0.50,
+y:0.15,
+drift:10,
+buoyancy:6,
+speed:.38,
+phase:4,
+blinkCooldown:2,
+blinkLength:.12,
+blinkTimer:1,
+blinking:false,
+talkTimer:0
+}
 
-        blinking:false,
-        blinkTimer:3,
-
-        phase:0
-    },
-
-    prism:{
-        base:"prism",
-        blink:"prism_blink",
-        talk:"prism_talk",
-
-        x:0.70,
-        y:0.55,
-
-        drift:55,
-        buoyancy:12,
-        speed:1.15,
-
-        blinkCooldown:4,
-        blinkDuration:0.12,
-
-        talking:false,
-        talkTimer:0,
-
-        blinking:false,
-        blinkTimer:2,
-
-        phase:2
-    },
-
-    ripple:{
-        base:"ripple",
-        blink:"ripple_blink",
-        talk:"ripple_talk",
-
-        x:0.75,
-        y:0.35,
-
-        drift:16,
-        buoyancy:18,
-        speed:0.80,
-
-        blinkCooldown:6,
-        blinkDuration:0.12,
-
-        talking:false,
-        talkTimer:0,
-
-        blinking:false,
-        blinkTimer:4,
-
-        phase:4
-    },
-
-    lumen:{
-        base:"lumen",
-        blink:"lumen_blink",
-        talk:"lumen_talk",
-
-        x:0.20,
-        y:0.35,
-
-        drift:22,
-        buoyancy:14,
-        speed:0.50,
-
-        blinkCooldown:8,
-        blinkDuration:0.12,
-
-        talking:false,
-        talkTimer:0,
-
-        blinking:false,
-        blinkTimer:5,
-
-        phase:1
-    },
-
-    vertex:{
-        base:"vertex",
-        blink:"vertex_blink",
-        talk:"vertex_talk",
-
-        x:0.50,
-        y:0.15,
-
-        drift:10,
-        buoyancy:5,
-        speed:0.40,
-
-        blinkCooldown:2,
-        blinkDuration:0.12,
-
-        talking:false,
-        talkTimer:0,
-
-        blinking:false,
-        blinkTimer:1,
-
-        phase:3
-    }
 };
