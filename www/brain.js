@@ -1,6 +1,6 @@
 import { Arbiter } from './neural.js';
 import { getBank } from './crosstalk.js';
-import { getStatus, addBond } from './save.js';
+import { addBond } from './save.js';
 
 export class Brain {
     constructor(save) {
@@ -10,37 +10,30 @@ export class Brain {
         this.heat = 0;
         this.cooldown = 5.0;
         this.hasGreeted = false;
-        this.greetDelay = 0.5;
+        this.greetDelay = 1.0;
         this.forcedScene = null;
         this.lastTapTime = Date.now();
         this.sleepState = "AWAKE";
         
-        // Build Bags
         this.bags = {};
-        const bankNames = ["jokes", "stories", "facts", "ambient", "council", "visitor", "greetings", "tap_reactions"];
-        bankNames.forEach(name => {
+        ["jokes", "stories", "facts", "ambient", "council", "visitor", "greetings", "tap_reactions"].forEach(name => {
             this.bags[name] = new ShuffleBag(getBank(name));
         });
     }
 
     update(dt) {
         this.cooldown -= dt;
-        
-        let idleSec = (Date.now() - this.lastTapTime) / 1000;
-        if (idleSec > 2.0) this.heat = 0;
+        if ((Date.now() - this.lastTapTime) / 1000 > 2.0) this.heat = 0;
 
-        if (this.sleepState === "AWAKE") {
-            this.currentMood = this.arbiter.getMood(this);
-        } else {
-            this.currentMood = "SLEEPY";
-        }
+        this.currentMood = this.sleepState === "AWAKE" ? this.arbiter.getMood(this) : "SLEEPY";
 
         if (!this.hasGreeted) {
             this.greetDelay -= dt;
             if (this.greetDelay <= 0) {
                 this.hasGreeted = true;
                 this.cooldown = 8.0;
-                return this.bags["greetings"].draw();
+                // It will draw from an empty bag and safely return null
+                return this.bags["greetings"].draw(); 
             }
         }
 
@@ -52,14 +45,10 @@ export class Brain {
 
         if (this.cooldown > 0 || this.sleepState !== "AWAKE") return null;
 
-        // Random banter
         if (Math.random() < 0.05) {
             let cat = this.currentMood === "CRISIS" ? "council" : "ambient";
             let scene = this.bags[cat].draw();
-            if (scene) {
-                this.cooldown = 5.0;
-                return scene;
-            }
+            if (scene) { this.cooldown = 5.0; return scene; }
         }
         return null;
     }
@@ -74,29 +63,22 @@ export class Brain {
             let reaction = this.bags["tap_reactions"].draw();
             if (reaction) this.forcedScene = reaction;
         }
+        return this.forcedScene;
     }
 
     onFeed() {
         this.lastTapTime = Date.now();
         this.heat += 1;
-        let reaction = this.bags["visitor"].draw();
-        if (reaction) this.forcedScene = reaction;
-        return true;
+        return [["Vertex", "Food!"]];
     }
 }
 
 class ShuffleBag {
-    constructor(items) {
-        this.items = [...items];
-        this.drawn = [];
-    }
+    constructor(items) { this.items = [...items]; this.drawn = []; }
     draw() {
+        if (this.items.length === 0) return null; // Safely handle empty banks
         let available = this.items.filter(i => !this.drawn.includes(i));
-        if (available.length === 0) {
-            this.drawn = [];
-            available = this.items;
-        }
-        if (available.length === 0) return null;
+        if (available.length === 0) { this.drawn = []; available = this.items; }
         let choice = available[Math.floor(Math.random() * available.length)];
         this.drawn.push(choice);
         return choice;
