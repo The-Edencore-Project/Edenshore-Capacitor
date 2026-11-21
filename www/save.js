@@ -1,44 +1,26 @@
 const SAVE_KEY = "edenshore_save";
-
-const DEFAULT_SAVE = {
-    bond_score: 0,
-    next_milestone: 50,
-    user_name: "Guest",
-    last_visit_time: Date.now(),
-    vibe_journal: [],
-    max_heat_seen: 0
-};
+const DEFAULT_SAVE = { bond_score: 0, next_milestone: 50, visits: 0 };
 
 export function loadSave() {
     try {
         const saved = localStorage.getItem(SAVE_KEY);
-        if (!saved) {
-            localStorage.setItem(SAVE_KEY, JSON.stringify(DEFAULT_SAVE));
-            return { ...DEFAULT_SAVE };
-        }
-        return JSON.parse(saved);
-    } catch (e) {
-        return { ...DEFAULT_SAVE };
-    }
+        return saved ? JSON.parse(saved) : { ...DEFAULT_SAVE };
+    } catch (e) { return { ...DEFAULT_SAVE }; }
 }
 
 export function saveData(data) {
-    try {
-        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-    } catch (e) {
-        console.warn("Could not save data");
-    }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) {}
 }
 
 export function addBond(save, amount) {
     save.bond_score += amount;
-    let milestoneReached = false;
     if (save.bond_score >= save.next_milestone) {
         save.next_milestone += 50;
-        milestoneReached = true;
+        saveData(save);
+        return true;
     }
     saveData(save);
-    return milestoneReached;
+    return false;
 }
 
 export function getStatus(save) {
