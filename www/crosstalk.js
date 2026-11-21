@@ -1,11 +1,11 @@
-// This is your Bridge. We are leaving it empty for now.
-// Later, we will import your 5,000 lines here.
+// Import your dialogue files here as you convert them from .py to .js
+import { AMBIENT } from './dialogue/ambient.js';
 
-const BANK = {
-    jokes: [], stories: [], facts: [], ambient: [], council: [], 
-    visitor: [], greetings: [], tap_reactions: []
+export const DIALOGUE_BANK = {
+    ambient: AMBIENT,
+    // You will add jokes, stories, council, etc., here later
 };
 
-export function getBank(name) {
-    return BANK[name] || [];
+export function getBank(bankName) {
+    return DIALOGUE_BANK[bankName] || [];
 }
