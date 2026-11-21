@@ -5,62 +5,57 @@ import { getDialogue } from "./dialogue.js";
 let save = loadSave();
 
 const creatures = {
+
     solon: {
-        x: 26,
-        y: 33,
-        ampX: 15,
-        ampY: 8,
+        ax: 18,
+        ay: 8,
         speed: 0.7
     },
 
     prism: {
-        x: 64,
-        y: 29,
-        ampX: 20,
-        ampY: 10,
+        ax: 22,
+        ay: 10,
         speed: 1.0
     },
 
     ripple: {
-        x: 69,
-        y: 52,
-        ampX: 12,
-        ampY: 14,
-        speed: 0.9
+        ax: 12,
+        ay: 14,
+        speed: 1.3
     },
 
     lumen: {
-        x: 18,
-        y: 62,
-        ampX: 18,
-        ampY: 12,
-        speed: 0.6
+        ax: 18,
+        ay: 12,
+        speed: 0.5
     },
 
     vertex: {
-        x: 40,
-        y: 80,
-        ampX: 8,
-        ampY: 5,
-        speed: 0.5
+        ax: 6,
+        ay: 3,
+        speed: 0.4
     }
 };
 
 function updateBondDisplay() {
 
-    const bondText =
-        document.getElementById("bond-text");
+    const bond =
+        document.getElementById(
+            "bond-text"
+        );
 
-    if (!bondText) return;
+    if (!bond) return;
 
-    bondText.textContent =
+    bond.textContent =
         `BOND: ${save.bond} - ${save.title}`;
 }
 
 function showDialogue(text) {
 
     const box =
-        document.getElementById("dialogue-box");
+        document.getElementById(
+            "dialogue-box"
+        );
 
     if (!box) return;
 
@@ -71,7 +66,10 @@ function creatureTapped(name) {
 
     save.lastCreature = name;
 
-    save = addBond(save, 1);
+    save = addBond(
+        save,
+        1
+    );
 
     updateBondDisplay();
 
@@ -82,16 +80,16 @@ function creatureTapped(name) {
     saveData(save);
 }
 
-function bindCreature(name) {
+function bindCreature(id) {
 
     const el =
-        document.getElementById(name);
+        document.getElementById(id);
 
     if (!el) return;
 
     el.addEventListener(
         "click",
-        () => creatureTapped(name)
+        () => creatureTapped(id)
     );
 }
 
@@ -99,32 +97,56 @@ function animate(time) {
 
     const t = time * 0.001;
 
-    Object.entries(creatures).forEach(
-        ([id, data]) => {
+    Object.entries(
+        creatures
+    ).forEach(
+        ([id,data]) => {
 
             const el =
                 document.getElementById(id);
 
             if (!el) return;
 
-            const driftX =
+            const x =
                 Math.sin(
                     t * data.speed
-                ) * data.ampX;
+                ) * data.ax;
 
-            const driftY =
+            const y =
                 Math.cos(
-                    t * data.speed * 1.3
-                ) * data.ampY;
+                    t * data.speed * 1.2
+                ) * data.ay;
 
             el.style.transform =
-                `translate(${driftX}px, ${driftY}px)`;
+                `translate(${x}px,${y}px)`;
         }
     );
 
     requestAnimationFrame(
         animate
     );
+}
+
+function setBiome(name) {
+
+    const bg =
+        document.getElementById(
+            "bg-gradient"
+        );
+
+    if (!bg) return;
+
+    bg.className = name;
+
+    document
+        .querySelectorAll(
+            ".biome-btn"
+        )
+        .forEach(
+            b => b.classList.remove(
+                "active"
+            )
+        );
 }
 
 window.addEventListener(
@@ -142,6 +164,94 @@ window.addEventListener(
         bindCreature("ripple");
         bindCreature("lumen");
         bindCreature("vertex");
+
+        document
+            .getElementById(
+                "lagoonBtn"
+            )
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    setBiome(
+                        "biome-lagoon"
+                    );
+
+                    document
+                        .getElementById(
+                            "lagoonBtn"
+                        )
+                        ?.classList.add(
+                            "active"
+                        );
+                }
+            );
+
+        document
+            .getElementById(
+                "shoreBtn"
+            )
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    setBiome(
+                        "biome-shore"
+                    );
+
+                    document
+                        .getElementById(
+                            "shoreBtn"
+                        )
+                        ?.classList.add(
+                            "active"
+                        );
+                }
+            );
+
+        document
+            .getElementById(
+                "twilightBtn"
+            )
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    setBiome(
+                        "biome-twilight"
+                    );
+
+                    document
+                        .getElementById(
+                            "twilightBtn"
+                        )
+                        ?.classList.add(
+                            "active"
+                        );
+                }
+            );
+
+        document
+            .getElementById(
+                "deepBtn"
+            )
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    setBiome(
+                        "biome-deep"
+                    );
+
+                    document
+                        .getElementById(
+                            "deepBtn"
+                        )
+                        ?.classList.add(
+                            "active"
+                        );
+                }
+            );
 
         requestAnimationFrame(
             animate
