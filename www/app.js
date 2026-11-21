@@ -1,6 +1,5 @@
 import { loadSave, saveData, addBond, getStatus } from './save.js';
 import { Brain } from './brain.js';
-import { audio } from './audio.js';
 
 let save = loadSave();
 let brain = new Brain(save);
@@ -28,7 +27,6 @@ function showDialogue(speaker, text) {
 }
 
 function tapCreature(id) {
-    if (!CREATURES.find(c => c.id === id)) return;
     let milestone = addBond(save, 1);
     if (milestone) showDialogue("SYSTEM", "MILESTONE REACHED!");
     
@@ -36,17 +34,13 @@ function tapCreature(id) {
     if (scene) queueScene(scene);
     
     let c = CREATURES.find(c => c.id === id);
-    c.talkTimer = 2.0;
-    
+    if(c) c.talkTimer = 2.0;
     updateUI();
-    audio.sting(id);
 }
 
 function queueScene(scene) {
     if (!scene) return;
-    scene.forEach(line => {
-        speechQueue.push({ speaker: line[0], text: line[1], delay: 2.5 });
-    });
+    scene.forEach(line => speechQueue.push({ speaker: line[0], text: line[1], delay: 2.5 }));
 }
 
 function bindCreatures() {
@@ -56,36 +50,41 @@ function bindCreatures() {
     });
 }
 
+function initBiomes() {
+    const bg = document.getElementById("bg-gradient");
+    const map = { lagoonBtn: "biome-lagoon", shoreBtn: "biome-shore", twilightBtn: "biome-twilight", deepBtn: "biome-deep" };
+    Object.entries(map).forEach(([id, cls]) => {
+        document.getElementById(id)?.addEventListener("click", () => {
+            bg.className = cls;
+            document.querySelectorAll(".biome-btn").forEach(b => b.classList.remove("active"));
+            document.getElementById(id).classList.add("active");
+        });
+    });
+}
+
 function animate(time) {
     const now = time * 0.001;
     const dt = now - lastTime;
     lastTime = now;
 
-    // Brain Update
     let newScene = brain.update(dt);
     if (newScene) queueScene(newScene);
 
-    // Speech Queue Processing
     if (speechQueue.length > 0) {
         speechTimer += dt;
         if (speechTimer >= speechQueue[0].delay) {
             speechTimer = 0;
             let item = speechQueue.shift();
             showDialogue(item.speaker, item.text);
-            audio.sting(item.speaker.toLowerCase());
         }
     }
 
-    // Creature Updates
     CREATURES.forEach(c => {
         const el = document.getElementById(c.id);
         if (!el) return;
-
         if (c.talkTimer > 0) c.talkTimer -= dt;
-
         const driftX = Math.sin((now * c.speed) + c.phase) * 20;
         const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 10;
-
         el.style.left = `${c.x * 100}%`;
         el.style.top = `${c.y * 100}%`;
         el.style.transform = `translate(${driftX}px, ${driftY}px)`;
@@ -99,12 +98,11 @@ window.addEventListener("DOMContentLoaded", () => {
     saveData(save);
     updateUI();
     bindCreatures();
+    initBiomes();
     
-    // Setup Feed Button
     document.getElementById("feed-btn")?.addEventListener("click", () => {
         let scene = brain.onFeed();
         if (scene) queueScene(scene);
-        audio.sting("vertex");
     });
 
     requestAnimationFrame(animate);
