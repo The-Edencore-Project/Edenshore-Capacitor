@@ -1,74 +1,68 @@
 import { loadSave, saveData } from "./save.js";
 import { addBond } from "./bond.js";
 import { getDialogue } from "./dialogue.js";
+import { audio } from "./audio.js";
 
 let save = loadSave();
-
-const biomeMap = {
-    lagoonBtn: "biome-lagoon",
-    shoreBtn: "biome-shore",
-    twilightBtn: "biome-twilight",
-    deepBtn: "biome-deep"
-};
 
 const creatures = {
 
     solon:{
-        x:28,
-        y:42,
-        phase:0,
-        speed:.55,
+        x:0.30,
+        y:0.55,
         drift:40,
-        rise:10
+        buoyancy:10,
+        speed:0.6,
+        phase:0
     },
 
     prism:{
-        x:66,
-        y:38,
-        phase:1.5,
-        speed:1.15,
+        x:0.70,
+        y:0.55,
         drift:55,
-        rise:12
-    },
-
-    ripple:{
-        x:74,
-        y:56,
-        phase:3.2,
-        speed:.9,
-        drift:18,
-        rise:16
+        buoyancy:12,
+        speed:1.1,
+        phase:2
     },
 
     lumen:{
-        x:20,
-        y:69,
-        phase:2.1,
-        speed:.45,
-        drift:30,
-        rise:14
+        x:0.20,
+        y:0.35,
+        drift:22,
+        buoyancy:12,
+        speed:0.5,
+        phase:1
+    },
+
+    ripple:{
+        x:0.75,
+        y:0.35,
+        drift:14,
+        buoyancy:18,
+        speed:0.8,
+        phase:3
     },
 
     vertex:{
-        x:40,
-        y:84,
-        phase:.8,
-        speed:.35,
+        x:0.50,
+        y:0.15,
         drift:8,
-        rise:6
+        buoyancy:4,
+        speed:0.4,
+        phase:4
     }
 };
 
-function updateBondDisplay() {
+function updateBond() {
 
-    const el =
+    const bond =
         document.getElementById(
             "bond-text"
         );
 
-    if (!el) return;
+    if (!bond) return;
 
-    el.textContent =
+    bond.textContent =
         `BOND: ${save.bond} - ${save.title}`;
 }
 
@@ -84,73 +78,97 @@ function showDialogue(text) {
     box.textContent = text;
 }
 
-function creatureTapped(creature) {
+function tapCreature(id) {
 
-    save.lastCreature = creature;
+    save.lastCreature = id;
 
-    save = addBond(save,1);
-
-    updateBondDisplay();
-
-    showDialogue(
-        getDialogue(creature)
-    );
+    save =
+        addBond(save,1);
 
     saveData(save);
+
+    audio.sting(id);
+
+    updateBond();
+
+    showDialogue(
+        getDialogue(id)
+    );
 }
 
-function bindCreature(name) {
+function hookCreature(id){
 
     const el =
-        document.getElementById(name);
+        document.getElementById(id);
 
-    if (!el) return;
+    if(!el) return;
 
     el.addEventListener(
         "click",
-        () => creatureTapped(name)
+        () => tapCreature(id)
     );
 }
 
-function animate(time) {
+function setBiome(name){
 
-    const t = time * .001;
+    const bg =
+        document.getElementById(
+            "bg-gradient"
+        );
+
+    bg.className = name;
+
+    document
+        .querySelectorAll(
+            ".biome-btn"
+        )
+        .forEach(
+            b => b.classList.remove(
+                "active"
+            )
+        );
+}
+
+function loop(time){
+
+    const t =
+        time / 1000;
 
     Object.entries(creatures)
-    .forEach(([id,data]) => {
+    .forEach(
+        ([id,c]) => {
 
-        const el =
-            document.getElementById(id);
+            const el =
+                document.getElementById(id);
 
-        if (!el) return;
+            if(!el) return;
 
-        const driftX =
-            Math.sin(
-                t * data.speed +
-                data.phase
-            ) * data.drift;
+            const x =
+                Math.sin(
+                    (t*c.speed)+c.phase
+                ) * c.drift;
 
-        const driftY =
-            Math.cos(
-                t * data.speed * 1.5 +
-                data.phase
-            ) * data.rise;
+            const y =
+                Math.cos(
+                    (t*c.speed*1.4)+c.phase
+                ) * c.buoyancy;
 
-        el.style.transform =
-            `translate(${driftX}px,${driftY}px)`;
-    });
+            el.style.transform =
+                `translate(${x}px,${y}px)`;
+        }
+    );
 
-    const mountains =
+    const mtn =
         document.getElementById(
             "mountains"
         );
 
-    const pillars =
+    const pill =
         document.getElementById(
             "pillars"
         );
 
-    const dunes =
+    const dune =
         document.getElementById(
             "dunes"
         );
@@ -160,93 +178,127 @@ function animate(time) {
             "grass"
         );
 
-    if(mountains)
-        mountains.style.transform =
-        `translateX(${
-            -(t*5)%800
-        }px)`;
+    if(mtn){
+        mtn.style.transform =
+            `translateX(${
+                -(t*6)%900
+            }px)`;
+    }
 
-    if(pillars)
-        pillars.style.transform =
-        `translateX(${
-            -(t*8)%1000
-        }px)`;
+    if(pill){
+        pill.style.transform =
+            `translateX(${
+                -(t*8)%1200
+            }px)`;
+    }
 
-    if(dunes)
-        dunes.style.transform =
-        `translateX(${
-            -(t*18)%1200
-        }px)`;
+    if(dune){
+        dune.style.transform =
+            `translateX(${
+                -(t*18)%1200
+            }px)`;
+    }
 
-    if(grass)
+    if(grass){
         grass.style.transform =
-        `translateX(${
-            -(t*35)%1600
-        }px)`;
+            `translateX(${
+                -(t*30)%1600
+            }px)`;
+    }
 
-    requestAnimationFrame(
-        animate
-    );
-}
-
-function setBiome(cls,id){
-
-    const bg =
-        document.getElementById(
-            "bg-gradient"
-        );
-
-    bg.className = cls;
-
-    document
-    .querySelectorAll(
-        ".biome-btn"
-    )
-    .forEach(btn =>
-        btn.classList
-        .remove("active")
-    );
-
-    document
-    .getElementById(id)
-    ?.classList
-    .add("active");
+    requestAnimationFrame(loop);
 }
 
 window.addEventListener(
-"DOMContentLoaded",
-() => {
+    "DOMContentLoaded",
+    () => {
 
-    save.visits++;
+        save.visits++;
 
-    saveData(save);
+        saveData(save);
 
-    updateBondDisplay();
+        updateBond();
 
-    bindCreature("solon");
-    bindCreature("prism");
-    bindCreature("ripple");
-    bindCreature("lumen");
-    bindCreature("vertex");
+        hookCreature("solon");
+        hookCreature("prism");
+        hookCreature("ripple");
+        hookCreature("lumen");
+        hookCreature("vertex");
 
-    Object.entries(
-        biomeMap
-    ).forEach(
-        ([id,cls]) => {
-
-            document
-            .getElementById(id)
+        document
+            .getElementById(
+                "lagoonBtn"
+            )
             ?.addEventListener(
                 "click",
-                () => setBiome(
-                    cls,
-                    id
-                )
-            );
-        }
-    );
+                () => {
 
-    requestAnimationFrame(
-        animate
-    );
-});
+                    setBiome(
+                        "biome-lagoon"
+                    );
+
+                    lagoonBtn.classList.add(
+                        "active"
+                    );
+                }
+            );
+
+        document
+            .getElementById(
+                "shoreBtn"
+            )
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    setBiome(
+                        "biome-shore"
+                    );
+
+                    shoreBtn.classList.add(
+                        "active"
+                    );
+                }
+            );
+
+        document
+            .getElementById(
+                "twilightBtn"
+            )
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    setBiome(
+                        "biome-twilight"
+                    );
+
+                    twilightBtn.classList.add(
+                        "active"
+                    );
+                }
+            );
+
+        document
+            .getElementById(
+                "deepBtn"
+            )
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    setBiome(
+                        "biome-deep"
+                    );
+
+                    deepBtn.classList.add(
+                        "active"
+                    );
+                }
+            );
+
+        requestAnimationFrame(
+            loop
+        );
+    }
+);
