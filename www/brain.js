@@ -1,0 +1,68 @@
+// =====================================================================
+// EDENCORE - brain.js (Sensors + APM)
+// =====================================================================
+class EdenshoreBrain {
+    constructor() {
+        this.bond = 0;
+        this.mood = "NORMAL";
+        this.motion = 0.0;
+        this.battery = 1.0;
+        this.timeElapsed = 0;
+        
+        this.initSensors();
+        this.updateUI();
+    }
+
+    initSensors() {
+        // 1. Motion / Shake (Accelerometer)
+        window.addEventListener('devicemotion', (e) => {
+            let acc = e.accelerationIncludingGravity;
+            if (acc) {
+                // Calculate magnitude
+                let mag = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
+                // Deadzone (V4.4 Logic): 9.8 is resting gravity. 
+                let mov = Math.abs(mag - 9.8);
+                if (mov < 1.5) mov = 0.0; 
+                this.motion = Math.min(1.0, mov / 10.0); // Normalize to 0.0 - 1.0
+            }
+        });
+
+        // 2. Battery
+        if (navigator.getBattery) {
+            navigator.getBattery().then(b => {
+                this.battery = b.level;
+                b.addEventListener('levelchange', () => this.battery = b.level);
+            });
+        }
+    }
+
+    update(dt) {
+        this.timeElapsed += dt;
+        
+        // APM Logic: Determine Mood based on sensors
+        if (this.motion > 0.4) {
+            this.mood = "PLAYFUL";
+        } else if (this.battery < 0.15) {
+            this.mood = "SLEEPY";
+        } else {
+            this.mood = "NORMAL";
+        }
+    }
+
+    addBond(amount) {
+        this.bond += amount;
+        this.updateUI();
+    }
+
+    updateUI() {
+        let title = "Stranger";
+        if (this.bond >= 10) title = "Acquaintance";
+        if (this.bond >= 50) title = "Friend";
+        if (this.bond >= 100) title = "Council Member";
+        
+        const el = document.getElementById("bond-text");
+        if(el) el.innerText = `BOND: ${this.bond} - ${title}`;
+    }
+}
+
+const brain = new EdenshoreBrain();
