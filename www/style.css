@@ -1,6 +1,16 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
 
+/* START OVERLAY */
+#start-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: #021a30; z-index: 999; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; cursor: pointer; transition: opacity 1s;
+}
+#start-overlay h1 { color: #00aaff; letter-spacing: 5px; margin-bottom: 20px; text-shadow: 0 0 20px rgba(0,170,255,0.5); }
+#start-overlay p { color: #80ffe0; font-size: 14px; opacity: 0.7; animation: pulse 2s infinite; }
+@keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
 /* Backgrounds */
 #bg-gradient { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: background 1.5s ease; z-index: 1; overflow: hidden; }
 .biome-lagoon { background: linear-gradient(to bottom, #0b3d5e, #1a6b8a); }
@@ -10,49 +20,40 @@ body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-fam
 
 /* Parallax Layers */
 .parallax-layer { position: absolute; width: 200%; height: 100%; background-size: contain; background-repeat: repeat-x; background-position: bottom; pointer-events: none; }
-
-/* These durations control how fast they move. Mountains are slowest, dunes are fastest. */
 #layer-mountains { background-image: url('assets/images/mountains.png'); z-index: 2; bottom: 5%; opacity: 0.6; animation: slideParallax 120s linear infinite; }
 #layer-pillars { background-image: url('assets/images/pillars.png'); z-index: 3; bottom: 0%; opacity: 0.8; animation: slideParallax 90s linear infinite; }
 #layer-dunes { background-image: url('assets/images/sand_dunes.png'); z-index: 4; bottom: -5%; opacity: 1.0; animation: slideParallax 45s linear infinite; }
+@keyframes slideParallax { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-@keyframes slideParallax {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); } /* Moves one full width, seamlessly repeating */
-}
-
-/* Floating Particles */
+/* Particles */
 #particle-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
 .particle { position: absolute; background: rgba(255, 255, 255, 0.4); border-radius: 50%; animation: floatUp linear infinite; }
-
-@keyframes floatUp {
-    0% { transform: translateY(0) scale(1); opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
-}
+@keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-100vh) scale(0.5); opacity: 0; } }
 
 /* UI */
 #ui-layer { position: absolute; top: 0; left: 0; width: 100%; padding: 20px; z-index: 50; pointer-events: none; text-align: center; }
-#bond-text { font-size: 24px; font-weight: bold; color: #00aaff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-top: 10px; }
+#bond-text { font-size: 24px; font-weight: bold; color: #00aaff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-top: 10px; }
 
 /* Creatures */
 #creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
-.creature { position: absolute; cursor: pointer; width: 150px; height: auto; will-change: transform; pointer-events: auto; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.4)); }
+.creature { position: absolute; cursor: pointer; height: auto; will-change: transform; pointer-events: auto; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.4)); }
 
-/* Solon Group Specifics */
+/* Solon Group */
 #solon-group { position: absolute; pointer-events: none; }
-#solonLeftFin { position: absolute; width: 60px; left: -20px; top: 40px; z-index: 14; pointer-events: none; }
-#solon { position: absolute; width: 150px; z-index: 15; }
-#solonRightFin { position: absolute; width: 60px; left: 110px; top: 40px; z-index: 16; pointer-events: none; }
+#solonLeftFin { position: absolute; width: 70px; left: -25px; top: 45px; z-index: 14; pointer-events: none; }
+#solon { position: absolute; width: 150px; z-index: 15; left: 0; }
+#solonRightFin { position: absolute; width: 70px; left: 105px; top: 45px; z-index: 16; pointer-events: none; }
 
-/* Bubbles */
+/* Speech Bubbles (Fixed clipping and positioning) */
 .bubble {
-    position: absolute; background: rgba(20, 40, 60, 0.6); border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50px; display: flex; align-items: center; justify-content: center; text-align: center;
-    padding: 20px; color: white; font-size: 16px; font-weight: 600; line-height: 1.2;
-    box-shadow: inset 0 0 20px rgba(0, 170, 255, 0.2), 0 0 15px rgba(0, 170, 255, 0.1);
-    backdrop-filter: blur(4px); pointer-events: none; z-index: 30; word-wrap: break-word; white-space: normal;
+    position: absolute; background: rgba(20, 40, 60, 0.85); border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 40px; display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 15px 25px; color: white; font-size: 15px; font-weight: 600; line-height: 1.3;
+    box-shadow: inset 0 0 20px rgba(0, 170, 255, 0.2), 0 0 15px rgba(0, 170, 255, 0.2);
+    backdrop-filter: blur(5px); pointer-events: none; z-index: 100; 
+    word-wrap: break-word; white-space: normal;
+    /* Force it to be above everything and visible */
+    transform-origin: center bottom;
 }
 .bubble::before { content: ''; position: absolute; top: 15%; left: 15%; width: 25%; height: 15%; border-radius: 50%; border-top: 2px solid rgba(255,255,255,0.6); transform: rotate(-15deg); }
 
@@ -60,6 +61,5 @@ body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-fam
 #biome-controls { position: absolute; bottom: 10px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; z-index: 50; }
 .biome-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(5px); }
 .biome-btn.active { background: rgba(0, 170, 255, 0.5); border-color: #00aaff; }
-
 #controls { position: absolute; bottom: 60px; right: 20px; z-index: 50; }
 .action-btn { background: rgba(255, 140, 0, 0.5); border: 1px solid #ff8c00; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; backdrop-filter: blur(5px); }
