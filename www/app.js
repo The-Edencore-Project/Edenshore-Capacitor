@@ -6,12 +6,18 @@ let save = loadSave();
 let brain = new Brain(save);
 let lastTime = 0;
 
+// Added Formation Targets
+const FORMATIONS = {
+    NORMAL: null,
+    HUDDLE: [[0.5, 0.6], [0.45, 0.65], [0.55, 0.65], [0.48, 0.55], [0.52, 0.55]],
+    QUEUE: [[0.2, 0.3], [0.4, 0.3], [0.6, 0.3], [0.8, 0.3], [0.5, 0.15]]
+};
+
 const CREATURES = [
     { id: "solon", name: "Solon", x: 0.25, y: 0.55, speed: 0.5, phase: 0, talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
     { id: "prism", name: "Prism", x: 0.75, y: 0.55, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
     { id: "lumen", name: "Lumen", x: 0.15, y: 0.35, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false },
     { id: "ripple", name: "Ripple", x: 0.85, y: 0.35, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false },
-    // VERTEX Y POSITION FIXED: 0.15 puts him near the sand
     { id: "vertex", name: "Vertex", x: 0.50, y: 0.15, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false }
 ];
 
@@ -20,6 +26,7 @@ let speechTimer = 0;
 let activeBubbles = [];
 let finFrame = 1;
 let finTimer = 0;
+let currentFormation = "NORMAL";
 
 function updateUI() {
     const el = document.getElementById("bond-text");
@@ -36,24 +43,23 @@ function spawnBubble(speaker, text) {
     const rect = el.getBoundingClientRect();
     const cx = rect.left + (rect.width / 2);
     
-    // Spawn above the creature, but clamp to be safely below the HUD
     let spawnY = rect.top - 60; 
-    if (spawnY < 80) spawnY = rect.bottom + 20; // Below HUD if too close
+    if (spawnY < 80) spawnY = rect.bottom + 20; 
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
     bubble.innerText = text; 
     
-    // Dynamic sizing based on text
-    let width = Math.max(140, Math.min(window.innerWidth - 40, text.length * 9 + 30));
-    bubble.style.width = `${width}px`;
-    bubble.style.left = `${cx - (width/2)}px`; 
+    // No more dynamic width, let CSS handle it!
+    bubble.style.left = `${cx}px`; 
     bubble.style.top = `${spawnY}px`; 
+    // Center the bubble exactly
+    bubble.style.transform = `translateX(-50%)`;
     
     document.body.appendChild(bubble);
 
     let startTime = performance.now();
-    activeBubbles.push({ el: bubble, startTime: startTime, life: 6000, startX: cx - (width/2), startY: spawnY });
+    activeBubbles.push({ el: bubble, startTime: startTime, life: 6000, startX: cx, startY: spawnY });
     c.talkTimer = 2.0;
 }
 
@@ -67,10 +73,17 @@ function updateBubbles(now) {
         if (progress < 0.1) alpha = progress / 0.1;
         if (progress > 0.7) alpha = (1.0 - progress) / 0.3;
         
-        // Clean float animation
-        b.el.style.transform = `translate(0px, -${progress * 50}px)`;
+        // Keep it centered while floating up
+        b.el.style.transform = `translate(-50%, -${progress * 50}px)`;
         b.el.style.opacity = alpha;
     }
+}
+
+// Choreography Logic
+function updateFormation(newMood) {
+    if (newMood === "CRISIS") currentFormation = "HUDDLE";
+    else if (newMood === "SLEEPY") currentFormation = "QUEUE";
+    else currentFormation = "NORMAL";
 }
 
 function updateCreatureSprite(c, now) {
@@ -106,9 +119,27 @@ function updateSolonFins(dt) {
     if (right) right.src = `assets/images/solon_right_fin_${finFrame}.png`;
 }
 
+function triggerMilestoneBurst() {
+    const layer = document.getElementById("particle-layer");
+    for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+            let p = document.createElement("div");
+            p.className = "gold-particle";
+            let size = Math.random() * 6 + 2;
+            p.style.width = `${size}px`;
+            p.style.height = `${size}px`;
+            p.style.left = `${50 + (Math.random() - 0.5) * 20}%`;
+            p.style.bottom = `50%`;
+            p.style.animationDuration = `${Math.random() * 2 + 1}s`;
+            layer.appendChild(p);
+            setTimeout(() => p.remove(), 3000);
+        }, i * 50); // Staggered spawn
+    }
+}
+
 function tapCreature(id) {
     let milestone = addBond(save, 1);
-    if (milestone) spawnBubble("SYSTEM", "MILESTONE REACHED!");
+    if (milestone) triggerMilestoneBurst();
     let scene = brain.onTap();
     if (scene) queueScene(scene);
     audio.sting(id);
@@ -164,6 +195,9 @@ function animate(time) {
     let newScene = brain.update(dt);
     if (newScene) queueScene(newScene);
 
+    // Update formation based on current mood
+    updateFormation(brain.currentMood);
+
     if (speechQueue.length > 0) {
         speechTimer += dt;
         if (speechTimer >= speechQueue[0].delay) {
@@ -173,7 +207,7 @@ function animate(time) {
         }
     }
 
-    CREATURES.forEach(c => {
+    CREATURES.forEach((c, index) => {
         let el = c.id === "solon" ? document.getElementById("solon-group") : document.getElementById(c.id);
         if (!el) return;
 
@@ -181,11 +215,22 @@ function animate(time) {
         updateBlink(c, dt);
         updateCreatureSprite(c, now);
 
-        const driftX = Math.sin((now * c.speed) + c.phase) * 15;
-        const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 8;
+        let targetX = c.x;
+        let targetY = c.y;
 
-        el.style.left = `${c.x * 100}%`;
-        el.style.top = `${c.y * 100}%`;
+        // Apply formation targets
+        if (FORMATIONS[currentFormation]) {
+            targetX = FORMATIONS[currentFormation][index][0];
+            targetY = FORMATIONS[currentFormation][index][1];
+        }
+
+        // Smoothly move towards target (handled by CSS transition now)
+        el.style.left = `${targetX * 100}%`;
+        el.style.top = `${targetY * 100}%`;
+        
+        // Add floating drift
+        const driftX = Math.sin((now * c.speed) + c.phase) * 10;
+        const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 5;
         el.style.transform = `translate(${driftX}px, ${driftY}px)`;
     });
 
