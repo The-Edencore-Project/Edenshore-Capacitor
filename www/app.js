@@ -1,5 +1,5 @@
 // =====================================================================
-// EDENCORE PROJECT - app.js (V0.1 Web Engine)
+// EDENCORE PROJECT - app.js (V0.1 Web Engine - The Council)
 // =====================================================================
 
 const state = {
@@ -8,73 +8,94 @@ const state = {
     current_biome: "LAGOON"
 };
 
-// 1. Resize Logic (Handles different phone screens)
+// Store creature data so we can animate them
+const creatures = {
+    solon:  { phase: Math.random() * 6.28, baseX: 0.30, baseY: 0.55 },
+    prism:  { phase: Math.random() * 6.28, baseX: 0.70, baseY: 0.55 },
+    lumen:  { phase: Math.random() * 6.28, baseX: 0.20, baseY: 0.35 },
+    ripple: { phase: Math.random() * 6.28, baseX: 0.75, baseY: 0.35 },
+    vertex: { phase: Math.random() * 6.28, baseX: 0.50, baseY: 0.15 }
+};
+
+// 1. Resize Logic
 function resize() {
-    // We calculate scale based on the smallest dimension (like V4.4)
     const baseSize = Math.min(window.innerWidth, window.innerHeight);
     
-    // Scale Solon (0.20 base scale from V4.4)
-    const solon = document.getElementById('solon');
-    const solonScale = baseSize * 0.20;
-    solon.style.width = solonScale + 'px';
-    solon.style.height = 'auto';
-    
-    // Position Solon in the center for now
-    solon.style.left = (window.innerWidth / 2) - (solonScale / 2) + 'px';
-    solon.style.top = (window.innerHeight / 2) - (solonScale / 2) + 'px';
+    document.querySelectorAll('.creature').forEach(el => {
+        const scale = parseFloat(el.dataset.scale);
+        const size = baseSize * scale;
+        
+        // Set size
+        el.style.width = size + 'px';
+        el.style.height = 'auto';
+        
+        // Set base positions (using the data object above)
+        const id = el.id;
+        if (creatures[id]) {
+            const cx = window.innerWidth * creatures[id].baseX;
+            // Adjust Y based on screen height. Vertex stays near the sand.
+            const cy = window.innerHeight * creatures[id].baseY; 
+            
+            el.style.left = (cx - size / 2) + 'px';
+            el.style.top = (cy - size / 2) + 'px';
+        }
+    });
 }
 
 // 2. The Main Loop
 let lastTime = performance.now();
 
 function tick(currentTime) {
-    // Calculate Delta Time (dt)
     const dt = (currentTime - lastTime) / 1000; 
     lastTime = currentTime;
     
-    // Cap dt to prevent massive jumps if the app lags
     const safeDt = Math.min(dt, 0.1); 
     state.time_elapsed += safeDt;
 
     // --- PARALLAX SCROLLING ---
-    state.base_scroll += safeDt * 100; // Scroll speed
-
-    const parallaxElements = document.querySelectorAll('.parallax');
-    parallaxElements.forEach(el => {
+    state.base_scroll += safeDt * 100; 
+    document.querySelectorAll('.parallax').forEach(el => {
         const speed = parseFloat(el.dataset.speed);
-        // Math to loop the background infinitely
         const offset = -(state.base_scroll * speed) % (window.innerWidth);
         el.style.transform = `translateX(${offset}px)`;
     });
 
-    // --- CREATURE MOVEMENT (Solon Test) ---
-    const solon = document.getElementById('solon');
-    // Gentle Sine wave bobbing up and down (V4.4 breathing logic)
-    const bobY = Math.sin(state.time_elapsed * 2.0) * (window.innerHeight * 0.02);
-    
-    // Apply translation to Solon (keeping him centered horizontally for now)
-    solon.style.transform = `translateY(${bobY}px)`;
+    // --- CREATURE ANIMATION ---
+    // Loop through each creature and apply the V4.4 math
+    for (const [id, data] of Object.entries(creatures)) {
+        const el = document.getElementById(id);
+        if (!el) continue;
 
-    // Request the next frame
+        // Breathing scale (subtle 3% pulse)
+        const breathScale = 1.0 + (Math.sin(state.time_elapsed * 2.5 + data.phase) * 0.03);
+        
+        // Bobbing Y offset (2% of screen height)
+        const bobY = Math.sin(state.time_elapsed * 2.0 + data.phase) * (window.innerHeight * 0.02);
+        
+        // Floating X offset (slow drift left and right)
+        const driftX = Math.cos(state.time_elapsed * 1.5 + data.phase) * (window.innerWidth * 0.02);
+
+        // Apply transforms. 
+        // Vertex (the crab) doesn't bob as much because he's on the ground.
+        const finalY = id === 'vertex' ? (bobY * 0.2) : bobY;
+
+        el.style.transform = `translate(${driftX}px, ${finalY}px) scale(${breathScale})`;
+    }
+
     requestAnimationFrame(tick);
 }
 
-// 3. UI Interaction (Biome Switching)
+// 3. UI Interaction
 document.querySelectorAll('.biome-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-        // Remove active class from all
         document.querySelectorAll('.biome-btn').forEach(b => b.classList.remove('active'));
-        // Add to clicked
         e.target.classList.add('active');
         
-        // Change Background
         const biome = e.target.dataset.biome;
         state.current_biome = biome;
         const bg = document.getElementById('bg-gradient');
         
-        // Remove old classes
         bg.className = '';
-        // Add new class
         bg.classList.add(`biome-${biome.toLowerCase()}`);
     });
 });
@@ -82,6 +103,6 @@ document.querySelectorAll('.biome-btn').forEach(btn => {
 // 4. Initialize
 window.addEventListener('resize', resize);
 window.addEventListener('load', () => {
-    resize(); // Initial setup
-    requestAnimationFrame(tick); // Start the engine
+    resize(); 
+    requestAnimationFrame(tick); 
 });
