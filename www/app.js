@@ -9,15 +9,16 @@ const state = {
 };
 
 // Define the starting X/Y ratios for the Council
+// Y-axis: 0.0 is bottom (sand), 1.0 is top (surface)
 const creatures = {
-    solon:  { phase: Math.random() * 6.28, baseX: 0.30, baseY: 0.50 },
+    solon:  { phase: Math.random() * 6.28, baseX: 0.30, baseY: 0.55 },
     prism:  { phase: Math.random() * 6.28, baseX: 0.70, baseY: 0.55 },
     lumen:  { phase: Math.random() * 6.28, baseX: 0.20, baseY: 0.35 },
     ripple: { phase: Math.random() * 6.28, baseX: 0.75, baseY: 0.35 },
-    vertex: { phase: Math.random() * 6.28, baseX: 0.50, baseY: 0.15 }
+    vertex: { phase: Math.random() * 6.28, baseX: 0.50, baseY: 0.12 } // Vertex near sand
 };
 
-// 1. Resize Logic (Calculates exact pixel sizes and initial positions)
+// 1. Resize Logic
 function resize() {
     const baseSize = Math.min(window.innerWidth, window.innerHeight);
     
@@ -31,7 +32,9 @@ function resize() {
         const id = el.id;
         if (creatures[id]) {
             const cx = window.innerWidth * creatures[id].baseX;
-            const cy = window.innerHeight * creatures[id].baseY; 
+            
+            // THE FIX: Invert Y-axis (1.0 - baseY) because Web is top-left, not bottom-left
+            const cy = window.innerHeight * (1.0 - creatures[id].baseY); 
             
             el.style.left = (cx - size / 2) + 'px';
             el.style.top = (cy - size / 2) + 'px';
@@ -53,12 +56,11 @@ function tick(currentTime) {
     state.base_scroll += safeDt * 100; 
     document.querySelectorAll('.parallax').forEach(el => {
         const speed = parseFloat(el.dataset.speed);
-        // Modulo math creates the infinite loop effect
         const offset = -(state.base_scroll * speed) % (window.innerWidth);
         el.style.transform = `translateX(${offset}px)`;
     });
 
-    // --- CREATURE ANIMATION (Breathing & Bobbing) ---
+    // --- CREATURE ANIMATION ---
     for (const [id, data] of Object.entries(creatures)) {
         const el = document.getElementById(id);
         if (!el) continue;
@@ -67,8 +69,8 @@ function tick(currentTime) {
         const bobY = Math.sin(state.time_elapsed * 2.0 + data.phase) * (window.innerHeight * 0.02);
         const driftX = Math.cos(state.time_elapsed * 1.5 + data.phase) * (window.innerWidth * 0.02);
 
-        // Vertex stays on the sand (bobs less)
-        const finalY = id === 'vertex' ? (bobY * 0.2) : bobY;
+        // THE FIX: Vertex stays grounded on the sand (no bobbing)
+        const finalY = id === 'vertex' ? 0 : bobY;
 
         el.style.transform = `translate(${driftX}px, ${finalY}px) scale(${breathScale})`;
     }
@@ -76,7 +78,7 @@ function tick(currentTime) {
     requestAnimationFrame(tick);
 }
 
-// 3. UI Interaction (Biome Switching)
+// 3. UI Interaction
 document.querySelectorAll('.biome-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.biome-btn').forEach(b => b.classList.remove('active'));
