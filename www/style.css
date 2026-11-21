@@ -1,7 +1,6 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
 
-/* START OVERLAY */
 #start-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background: #021a30; z-index: 999; display: flex; flex-direction: column;
@@ -11,82 +10,72 @@ body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-fam
 #start-overlay p { color: #80ffe0; font-size: 14px; opacity: 0.7; animation: pulse 2s infinite; }
 @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
-/* Backgrounds */
 #bg-gradient { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: background 1.5s ease; z-index: 1; overflow: hidden; }
 .biome-lagoon { background: linear-gradient(to bottom, #0b3d5e, #1a6b8a); }
 .biome-shore { background: linear-gradient(to bottom, #1a4f6b, #2d7a8c); }
 .biome-twilight { background: linear-gradient(to bottom, #1a2a4a, #0e1b30); }
 .biome-deep { background: linear-gradient(to bottom, #050a14, #000000); }
 
-/* Parallax Layers (Slightly darker to match the video) */
 .parallax-layer { position: absolute; width: 200%; height: 100%; background-size: contain; background-repeat: repeat-x; background-position: bottom; pointer-events: none; }
 #layer-mountains { background-image: url('assets/images/mountains.png'); z-index: 2; bottom: 5%; opacity: 0.4; animation: slideParallax 120s linear infinite; }
 #layer-pillars { background-image: url('assets/images/pillars.png'); z-index: 3; bottom: 0%; opacity: 0.5; animation: slideParallax 90s linear infinite; }
 #layer-dunes { background-image: url('assets/images/sand_dunes.png'); z-index: 4; bottom: -5%; opacity: 0.8; animation: slideParallax 45s linear infinite; }
 @keyframes slideParallax { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-/* Particles */
 #particle-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
 .particle { position: absolute; background: rgba(255, 255, 255, 0.4); border-radius: 50%; animation: floatUp linear infinite; }
+.gold-particle { position: absolute; background: #FFD700; border-radius: 50%; animation: floatUp 1s ease-out forwards; box-shadow: 0 0 10px #FFD700; }
 @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-100vh) scale(0.5); opacity: 0; } }
 
-/* UI & HUD */
 #ui-layer { 
     position: absolute; top: 0; left: 0; width: 100%; height: 70px;
-    background: rgba(0, 0, 0, 0.6); /* Slightly more transparent HUD */
-    z-index: 50; text-align: center; 
+    background: rgba(0, 0, 0, 0.6); z-index: 50; text-align: center; 
     display: flex; align-items: center; justify-content: center;
     border-bottom: 1px solid rgba(0, 170, 255, 0.3);
 }
 #bond-text { font-size: 24px; font-weight: bold; color: #00aaff; text-shadow: 0 0 10px rgba(0,170,255,0.8); }
 
-/* Creatures */
 #creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
-.creature { position: absolute; cursor: pointer; height: auto; will-change: transform; pointer-events: auto; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.4)); }
+.creature { position: absolute; cursor: pointer; height: auto; will-change: transform; pointer-events: auto; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.4)); transition: left 1s ease-in-out, top 1s ease-in-out; }
 
-/* Solon Group */
-#solon-group { position: absolute; pointer-events: none; }
+#solon-group { position: absolute; pointer-events: none; transition: left 1s ease-in-out, top 1s ease-in-out; }
 #solonLeftFin { position: absolute; width: 55px; left: -20px; top: 40px; z-index: 14; pointer-events: none; }
 #solon { position: absolute; width: 130px; z-index: 15; left: 0; }
 #solonRightFin { position: absolute; width: 55px; left: 90px; top: 40px; z-index: 16; pointer-events: none; }
 
-/* Speech Bubbles (THE TEXT FIX) */
+/* THE BUBBLE FIX */
 .bubble {
     position: absolute; 
     background: rgba(10, 20, 40, 0.85); 
     border: 1px solid rgba(100, 200, 255, 0.4);
-    border-radius: 50px; /* Perfect Oval */
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
+    border-radius: 50px; 
+    /* Removed flexbox to prevent text crushing */
+    display: block; 
     text-align: center;
-    /* Changed padding to prevent text clipping */
-    padding: 10px 20px; 
+    padding: 15px 25px; 
     color: #ffffff; 
-    font-size: 14px; 
-    font-weight: 500; 
-    line-height: 1.2;
+    font-size: 15px; 
+    font-weight: 600; 
+    line-height: 1.3;
     box-shadow: inset 0 0 15px rgba(0, 170, 255, 0.2), 0 0 15px rgba(0, 170, 255, 0.1);
     backdrop-filter: blur(5px); 
     pointer-events: none; 
     z-index: 100; 
     word-wrap: break-word; 
     white-space: normal;
+    /* Ensure minimum size */
+    min-width: 100px;
+    min-height: 50px;
 }
 .bubble::before { content: ''; position: absolute; top: 15%; left: 15%; width: 25%; height: 15%; border-radius: 50%; border-top: 2px solid rgba(255,255,255,0.4); transform: rotate(-15deg); }
 
-/* Controls */
 #biome-controls { 
     position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
     background: rgba(0, 0, 0, 0.85); 
     display: flex; justify-content: space-around; align-items: center; z-index: 50;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
-.biome-btn { 
-    background: transparent; border: none; color: #00ff00; 
-    font-size: 14px; font-weight: bold; padding: 10px; cursor: pointer; 
-    letter-spacing: 1px; transition: color 0.3s;
-}
+.biome-btn { background: transparent; border: none; color: #00ff00; font-size: 14px; font-weight: bold; padding: 10px; cursor: pointer; letter-spacing: 1px; transition: color 0.3s; }
 .biome-btn.active { color: #ff1e1e; text-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
 
 #controls { position: absolute; bottom: 70px; right: 10px; z-index: 50; }
