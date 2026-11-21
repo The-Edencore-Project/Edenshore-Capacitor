@@ -6,11 +6,12 @@ let save = loadSave();
 let brain = new Brain(save);
 let lastTime = 0;
 
+// EXACT X/Y POSITIONS FROM GOLDEN CODE
 const CREATURES = [
-    { id: "solon", name: "Solon", x: 0.25, y: 0.55, speed: 0.5, phase: 0, talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
-    { id: "prism", name: "Prism", x: 0.75, y: 0.55, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
-    { id: "lumen", name: "Lumen", x: 0.15, y: 0.35, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false },
-    { id: "ripple", name: "Ripple", x: 0.85, y: 0.35, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false },
+    { id: "solon", name: "Solon", x: 0.30, y: 0.55, speed: 0.5, phase: 0, talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
+    { id: "prism", name: "Prism", x: 0.70, y: 0.55, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
+    { id: "lumen", name: "Lumen", x: 0.20, y: 0.35, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false },
+    { id: "ripple", name: "Ripple", x: 0.75, y: 0.35, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false },
     { id: "vertex", name: "Vertex", x: 0.50, y: 0.15, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false }
 ];
 
@@ -29,30 +30,35 @@ function spawnBubble(speaker, text) {
     let c = CREATURES.find(x => x.name === speaker) || CREATURES.find(x => x.name === "Vertex");
     if (!c) return;
 
-    let el = document.getElementById(c.id);
+    let el = c.id === "solon" ? document.getElementById("solon-group") : document.getElementById(c.id);
     if (!el) return;
 
     const rect = el.getBoundingClientRect();
     const cx = rect.left + (rect.width / 2);
-    let spawnY = rect.top - 100; 
-    if (spawnY < 100) spawnY = rect.bottom + 20; 
+    
+    // Position bubble safely above the creature
+    let spawnY = rect.top - 60; 
+    if (spawnY < 100) spawnY = rect.bottom + 20; // Spawn below if too high
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
     bubble.textContent = text;
     
-    let width = Math.max(120, Math.min(280, text.length * 10 + 40));
-    let height = Math.max(60, Math.min(120, text.length * 3 + 40));
+    // Calculate dynamic width based on text
+    let width = Math.max(140, Math.min(window.innerWidth - 40, text.length * 10 + 40));
     
     bubble.style.width = `${width}px`;
-    bubble.style.height = `${height}px`;
-    bubble.style.left = `${cx - width/2}px`;
+    // Position center
+    bubble.style.left = `${cx}px`;
     bubble.style.top = `${spawnY}px`;
+    // Use CSS transform to perfectly center it
+    bubble.style.transform = `translate(-50%, -100%)`;
     
     document.body.appendChild(bubble);
 
     let startTime = performance.now();
-    activeBubbles.push({ el: bubble, startTime: startTime, life: 6000, startX: cx - width/2, startY: spawnY });
+    // We store startX/startY for the float animation
+    activeBubbles.push({ el: bubble, startTime: startTime, life: 6000, startX: cx, startY: spawnY });
     c.talkTimer = 2.0;
 }
 
@@ -61,12 +67,14 @@ function updateBubbles(now) {
         let b = activeBubbles[i];
         let progress = (now - b.startTime) / b.life;
         if (progress >= 1.0) { b.el.remove(); activeBubbles.splice(i, 1); continue; }
+        
         let currentY = b.startY - (progress * 80);
-        let currentX = b.startX + Math.sin(progress * Math.PI * 3) * 15;
         let alpha = 1.0;
         if (progress < 0.1) alpha = progress / 0.1;
         if (progress > 0.7) alpha = (1.0 - progress) / 0.3;
-        b.el.style.transform = `translate(${currentX - b.startX}px, ${currentY - b.startY}px)`;
+        
+        // Apply float and fade, keeping the centering transform
+        b.el.style.transform = `translate(-50%, calc(-100% - ${progress * 80}px))`;
         b.el.style.opacity = alpha;
     }
 }
@@ -105,7 +113,6 @@ function updateSolonFins(dt) {
 }
 
 function tapCreature(id) {
-    if (!audio.hasStarted) audio.start();
     let milestone = addBond(save, 1);
     if (milestone) spawnBubble("SYSTEM", "MILESTONE REACHED!");
     let scene = brain.onTap();
@@ -173,7 +180,6 @@ function animate(time) {
     }
 
     CREATURES.forEach(c => {
-        // Special group handling for Solon
         let el = c.id === "solon" ? document.getElementById("solon-group") : document.getElementById(c.id);
         if (!el) return;
 
@@ -194,6 +200,16 @@ function animate(time) {
     requestAnimationFrame(animate);
 }
 
+// START OVERLAY LOGIC (This fixes audio!)
+document.getElementById("start-overlay").addEventListener("click", () => {
+    const overlay = document.getElementById("start-overlay");
+    overlay.style.opacity = "0";
+    setTimeout(() => overlay.style.display = "none", 1000);
+    
+    // Start music now that user interacted
+    audio.start();
+});
+
 window.addEventListener("DOMContentLoaded", () => {
     save.visits = (save.visits || 0) + 1;
     saveData(save);
@@ -203,7 +219,6 @@ window.addEventListener("DOMContentLoaded", () => {
     spawnParticles();
     
     document.getElementById("feed-btn")?.addEventListener("click", () => {
-        if (!audio.hasStarted) audio.start();
         let scene = brain.onFeed();
         if (scene) queueScene(scene);
     });
