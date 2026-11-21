@@ -6,13 +6,13 @@ let save = loadSave();
 let brain = new Brain(save);
 let lastTime = 0;
 
-// EXACT X/Y POSITIONS FROM GOLDEN CODE
+// POSITIONS FIXED (Vertex moved down to y: 0.05)
 const CREATURES = [
     { id: "solon", name: "Solon", x: 0.30, y: 0.55, speed: 0.5, phase: 0, talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
     { id: "prism", name: "Prism", x: 0.70, y: 0.55, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
     { id: "lumen", name: "Lumen", x: 0.20, y: 0.35, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false },
     { id: "ripple", name: "Ripple", x: 0.75, y: 0.35, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false },
-    { id: "vertex", name: "Vertex", x: 0.50, y: 0.15, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false }
+    { id: "vertex", name: "Vertex", x: 0.50, y: 0.05, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false }
 ];
 
 let speechQueue = [];
@@ -36,29 +36,24 @@ function spawnBubble(speaker, text) {
     const rect = el.getBoundingClientRect();
     const cx = rect.left + (rect.width / 2);
     
-    // Position bubble safely above the creature
-    let spawnY = rect.top - 60; 
-    if (spawnY < 100) spawnY = rect.bottom + 20; // Spawn below if too high
+    // Spawn above the creature, but clamp to the screen bounds
+    let spawnY = rect.top - 20; 
+    if (spawnY < 90) spawnY = rect.bottom + 20; // Below the HUD
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
-    bubble.textContent = text;
+    bubble.innerText = text; // Using innerText instead of textContent to force text rendering
     
-    // Calculate dynamic width based on text
+    // Dynamic sizing
     let width = Math.max(140, Math.min(window.innerWidth - 40, text.length * 10 + 40));
-    
     bubble.style.width = `${width}px`;
-    // Position center
-    bubble.style.left = `${cx}px`;
-    bubble.style.top = `${spawnY}px`;
-    // Use CSS transform to perfectly center it
-    bubble.style.transform = `translate(-50%, -100%)`;
+    bubble.style.left = `${cx - (width/2)}px`; // Exact left position
+    bubble.style.top = `${spawnY}px`; 
     
     document.body.appendChild(bubble);
 
     let startTime = performance.now();
-    // We store startX/startY for the float animation
-    activeBubbles.push({ el: bubble, startTime: startTime, life: 6000, startX: cx, startY: spawnY });
+    activeBubbles.push({ el: bubble, startTime: startTime, life: 6000, startX: cx - (width/2), startY: spawnY });
     c.talkTimer = 2.0;
 }
 
@@ -73,8 +68,8 @@ function updateBubbles(now) {
         if (progress < 0.1) alpha = progress / 0.1;
         if (progress > 0.7) alpha = (1.0 - progress) / 0.3;
         
-        // Apply float and fade, keeping the centering transform
-        b.el.style.transform = `translate(-50%, calc(-100% - ${progress * 80}px))`;
+        // Fixed transform to prevent text clipping
+        b.el.style.transform = `translate(0px, -${progress * 80}px)`;
         b.el.style.opacity = alpha;
     }
 }
@@ -187,8 +182,8 @@ function animate(time) {
         updateBlink(c, dt);
         updateCreatureSprite(c, now);
 
-        const driftX = Math.sin((now * c.speed) + c.phase) * 20;
-        const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 10;
+        const driftX = Math.sin((now * c.speed) + c.phase) * 15; // Reduced drift
+        const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 8;
 
         el.style.left = `${c.x * 100}%`;
         el.style.top = `${c.y * 100}%`;
@@ -200,13 +195,10 @@ function animate(time) {
     requestAnimationFrame(animate);
 }
 
-// START OVERLAY LOGIC (This fixes audio!)
 document.getElementById("start-overlay").addEventListener("click", () => {
     const overlay = document.getElementById("start-overlay");
     overlay.style.opacity = "0";
     setTimeout(() => overlay.style.display = "none", 1000);
-    
-    // Start music now that user interacted
     audio.start();
 });
 
