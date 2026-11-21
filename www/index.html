@@ -1,1 +1,38 @@
-. 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Edenshore APK Test</title>
+  <style>
+    body { background: #021a30; color: #fff; text-align: center; font-family: sans-serif; padding: 20px; }
+    img { max-width: 80vw; margin-top: 20px; }
+    button { padding: 15px 30px; font-size: 18px; margin-top: 30px; background: #1a7f50; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    .status { color: #8cf; font-size: 14px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Edenshore v0.1</h1>
+  <p class="status">If you see Solon, the Capacitor build works.</p>
+  
+  <!-- This tests the image path -->
+  <img src="assets/images/solon.png" alt="Solon the Turtle">
+  
+  <br>
+  
+  <!-- This tests the audio path -->
+  <button onclick="playAudio()">Play Solon Sting</button>
+
+  <script>
+    function playAudio() {
+      // Standard Web Audio API
+      var audio = new Audio('assets/audio/stings/solon_sting.mp3');
+      audio.play().then(() => {
+        console.log("Audio playing successfully!");
+      }).catch(e => {
+        alert("Audio Error: " + e.message);
+      });
+    }
+  </script>
+</body>
+</html>
