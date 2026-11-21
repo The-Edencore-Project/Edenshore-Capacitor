@@ -32,7 +32,6 @@ export class Brain {
             if (this.greetDelay <= 0) {
                 this.hasGreeted = true;
                 this.cooldown = 8.0;
-                // It will draw from an empty bag and safely return null
                 return this.bags["greetings"].draw(); 
             }
         }
@@ -76,7 +75,7 @@ export class Brain {
 class ShuffleBag {
     constructor(items) { this.items = [...items]; this.drawn = []; }
     draw() {
-        if (this.items.length === 0) return null; // Safely handle empty banks
+        if (this.items.length === 0) return null;
         let available = this.items.filter(i => !this.drawn.includes(i));
         if (available.length === 0) { this.drawn = []; available = this.items; }
         let choice = available[Math.floor(Math.random() * available.length)];
