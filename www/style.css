@@ -4,7 +4,7 @@ body, html {
     height: 100%; 
     overflow: hidden; 
     font-family: sans-serif; 
-    background: #000; /* Forces black background */
+    background: #000;
 }
 
 /* --- THE SCENE & BIOMES --- */
@@ -26,7 +26,6 @@ body, html {
     transition: background 2s ease; 
 }
 
-/* V4.4 Biomes */
 .biome-lagoon { background: linear-gradient(180deg, #021a30 0%, #043060 40%, #106080 70%, #20a0a0 100%); }
 .biome-shore { background: linear-gradient(180deg, #2a1a40 0%, #a04060 40%, #e07050 70%, #f0d090 100%); }
 .biome-twilight { background: linear-gradient(180deg, #0a0510 0%, #1a1028 40%, #2a1838 70%, #3a2048 100%); }
@@ -57,7 +56,7 @@ body, html {
     pointer-events: none; 
 }
 .creature { 
-    position: absolute; /* THIS forces them not to stack */
+    position: absolute; /* Forces absolute positioning to stop stacking */
     transform-origin: center center; 
     transition: transform 0.1s linear; 
 }
@@ -79,7 +78,7 @@ body, html {
   left: 0; 
   width: 100%;
   background: rgba(0, 0, 0, 0.85); 
-  color: #0bf; /* Neon Blue */
+  color: #0bf; 
   padding: 15px; 
   text-align: center; 
   font-size: 1.2rem; 
@@ -100,11 +99,11 @@ body, html {
 }
 
 .biome-btn {
-  color: #0f0; /* Neon Green */
+  color: #0f0; 
   font-size: 0.9rem; 
   font-weight: bold; 
   cursor: pointer;
   padding: 5px 10px; 
   transition: color 0.2s;
 }
-.biome-btn.active { color: #f00; } /* Neon Red for active */
+.biome-btn.active { color: #f00; } 
