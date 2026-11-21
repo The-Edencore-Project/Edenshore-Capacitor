@@ -7,18 +7,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-  <!-- THE SCENE -->
   <div id="scene">
     <div id="bg-gradient" class="biome-lagoon"></div>
     
-    <!-- Parallax Backgrounds -->
     <img src="assets/images/pillars.png" id="pillars" class="parallax" data-speed="0.1">
     <img src="assets/images/mountains.png" id="mountains" class="parallax" data-speed="0.2">
     <img src="assets/images/sand_dunes.png" id="dunes" class="parallax" data-speed="0.4">
     <img src="assets/images/grass.png" id="grass" class="parallax" data-speed="1.0">
 
-    <!-- The Council Lives Here (Z-Order handled top to bottom) -->
     <div id="creature-layer">
       <img src="assets/images/solon.png" id="solon" class="creature" data-scale="0.20">
       <img src="assets/images/lumen.png" id="lumen" class="creature" data-scale="0.18">
@@ -28,7 +24,6 @@
     </div>
   </div>
 
-  <!-- THE UI LAYER -->
   <div id="ui-layer">
     <div id="top-bar">
       <div id="bond-text">BOND: 0 - Stranger</div>
@@ -41,6 +36,8 @@
     </div>
   </div>
 
+  <!-- Load Brain first, then App -->
+  <script src="brain.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
