@@ -3,36 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Edenshore APK Test</title>
-  <style>
-    body { background: #021a30; color: #fff; text-align: center; font-family: sans-serif; padding: 20px; }
-    img { max-width: 80vw; margin-top: 20px; }
-    button { padding: 15px 30px; font-size: 18px; margin-top: 30px; background: #1a7f50; color: white; border: none; border-radius: 8px; cursor: pointer; }
-    .status { color: #8cf; font-size: 14px; margin-top: 10px; }
-  </style>
+  <title>Edenshore</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Edenshore v0.1</h1>
-  <p class="status">If you see Solon, the Capacitor build works.</p>
-  
-  <!-- This tests the image path -->
-  <img src="assets/images/solon.png" alt="Solon the Turtle">
-  
-  <br>
-  
-  <!-- This tests the audio path -->
-  <button onclick="playAudio()">Play Solon Sting</button>
 
-  <script>
-    function playAudio() {
-      // Standard Web Audio API
-      var audio = new Audio('assets/audio/stings/solon_sting.mp3');
-      audio.play().then(() => {
-        console.log("Audio playing successfully!");
-      }).catch(e => {
-        alert("Audio Error: " + e.message);
-      });
-    }
-  </script>
+  <!-- THE SCENE (Holds the environment and creatures) -->
+  <div id="scene">
+    <!-- Parallax Background Elements -->
+    <div id="bg-gradient" class="biome-lagoon"></div>
+    <img src="assets/images/pillars.png" id="pillars" class="parallax" data-speed="0.1">
+    <img src="assets/images/mountains.png" id="mountains" class="parallax" data-speed="0.2">
+    <img src="assets/images/sand_dunes.png" id="dunes" class="parallax" data-speed="0.4">
+    <img src="assets/images/grass.png" id="grass" class="parallax" data-speed="1.0">
+
+    <!-- The Council Lives Here -->
+    <div id="creature-layer">
+      <img src="assets/images/solon.png" id="solon" class="creature" data-scale="0.20">
+    </div>
+  </div>
+
+  <!-- THE UI LAYER (HUD, Touch Controls) -->
+  <div id="ui-layer">
+    <div id="top-bar">
+      <div id="bond-text">BOND: 0 - Stranger</div>
+    </div>
+    <div id="bottom-bar">
+      <div class="biome-btn active" data-biome="LAGOON">LAGOON</div>
+      <div class="biome-btn" data-biome="SHORE">SHORE</div>
+      <div class="biome-btn" data-biome="TWILIGHT">TWILIGHT</div>
+      <div class="biome-btn" data-biome="DEEP">DEEP</div>
+    </div>
+  </div>
+
+  <!-- The Engine -->
+  <script src="app.js"></script>
 </body>
 </html>
