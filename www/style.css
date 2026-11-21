@@ -1,22 +1,62 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: sans-serif; color: white; }
+body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
 
-#bg-gradient { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: background 1.5s ease; }
+#bg-gradient { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: background 1.5s ease; z-index: 1; }
 .biome-lagoon { background: linear-gradient(to bottom, #0b3d5e, #1a6b8a); }
 .biome-shore { background: linear-gradient(to bottom, #1a4f6b, #2d7a8c); }
 .biome-twilight { background: linear-gradient(to bottom, #1a2a4a, #0e1b30); }
 .biome-deep { background: linear-gradient(to bottom, #050a14, #000000); }
 
 #ui-layer { position: absolute; top: 0; left: 0; width: 100%; padding: 20px; z-index: 50; pointer-events: none; text-align: center; }
-#bond-text { font-size: 24px; font-weight: bold; color: #00aaff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 10px; }
-#dialogue-box { font-size: 18px; min-height: 30px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+#bond-text { font-size: 24px; font-weight: bold; color: #00aaff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
 #creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
-.creature { position: absolute; cursor: pointer; width: 150px; height: auto; will-change: transform; pointer-events: auto; }
+.creature { position: absolute; cursor: pointer; width: 150px; height: auto; will-change: transform; pointer-events: auto; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.4)); }
+
+/* --- NEW BUBBLE CSS --- */
+.bubble {
+    position: absolute;
+    background: rgba(20, 40, 60, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: inset 0 0 20px rgba(0, 170, 255, 0.2), 0 0 15px rgba(0, 170, 255, 0.1);
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 30;
+}
+/* The highlight on the bubble */
+.bubble::before {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 20%;
+    width: 30%;
+    height: 20%;
+    border-radius: 50%;
+    border-top: 2px solid rgba(255,255,255,0.6);
+    transform: rotate(-15deg);
+}
+/* The tiny floating dots next to the bubble */
+.bubble-dot {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 29;
+}
 
 #biome-controls { position: absolute; bottom: 10px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; z-index: 50; }
-.biome-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; }
+.biome-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(5px); }
 .biome-btn.active { background: rgba(0, 170, 255, 0.5); border-color: #00aaff; }
 
 #controls { position: absolute; bottom: 60px; right: 20px; z-index: 50; }
-.action-btn { background: rgba(255, 140, 0, 0.5); border: 1px solid #ff8c00; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; }
+.action-btn { background: rgba(255, 140, 0, 0.5); border: 1px solid #ff8c00; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; backdrop-filter: blur(5px); }
