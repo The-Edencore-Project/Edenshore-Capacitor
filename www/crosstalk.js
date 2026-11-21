@@ -1,11 +1,16 @@
-// Import your dialogue files here as you convert them from .py to .js
 import { AMBIENT } from './dialogue/ambient.js';
 
-export const DIALOGUE_BANK = {
+const BANK = {
     ambient: AMBIENT,
-    // You will add jokes, stories, council, etc., here later
+    jokes: [],
+    stories: [],
+    facts: [],
+    council: [],
+    visitor: [],
+    greetings: [["Vertex", "Hello! You're back!"]], 
+    tap_reactions: [["Solon", "Watch the glass."]]
 };
 
-export function getBank(bankName) {
-    return DIALOGUE_BANK[bankName] || [];
+export function getBank(name) {
+    return BANK[name] || [];
 }
