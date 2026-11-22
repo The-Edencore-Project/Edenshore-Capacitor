@@ -6,6 +6,7 @@ let save = loadSave();
 let brain = new Brain(save);
 let lastTime = 0;
 
+// THE UPSIDE DOWN PENTAGON LAYOUT (Base Coordinates)
 const CREATURES = [
     { id: "solon",  name: "Solon",  x: 0.30, y: 0.45, speed: 0.5, phase: 0,   talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
     { id: "prism",  name: "Prism",  x: 0.70, y: 0.45, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
@@ -26,6 +27,22 @@ let finFrame = 1;
 let finTimer = 0;
 let lumenTentacleEls = [];
 
+// THEATRE STATE
+let theatreState = "IDLE"; // IDLE, FEEDING, SLEEPING
+let theatreTimer = 0;
+let foodParticles = []; // {x, y, vx, vy, phase}
+let sleepDialogueIndex = 0;
+
+const SLEEP_DIALOGUE = [
+    ["Lumen", "It is time for rest, little one."],
+    ["Vertex", "I'm not tired! I'm still playing!"],
+    ["Solon", "Kid, the sand is calling you."],
+    ["Vertex", "But the glass is so interesting right now..."],
+    ["Ripple", "Shh. We will be here when you wake."],
+    ["Vertex", "Okay... okay. Just five more minutes."],
+    ["Lumen", "Goodnight, Vertex."]
+];
+
 // CANVAS SETUP
 const canvas = document.getElementById("fx-canvas");
 const ctx = canvas.getContext("2d");
@@ -36,6 +53,11 @@ function resizeCanvas() {
 }
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
+
+// Wait for fonts to load before drawing
+if (document.fonts) {
+    document.fonts.ready.then(() => { console.log("Fonts loaded"); });
+}
 
 // ============================================================
 // THE VOICE: 14-char chunking
@@ -64,12 +86,12 @@ function queueScene(scene) {
         const speaker = line[0];
         const text = line[1];
         const chunks = chunkText(text);
-        chunks.forEach(chunk => speechQueue.push({ speaker, text: chunk, delay: 1.5 }));
+        chunks.forEach(chunk => speechQueue.push({ speaker, text: chunk, delay: 2.0 }));
     });
 }
 
 // ============================================================
-// THE BUBBLE: Canvas Rendering
+// THE BUBBLE: Canvas Rendering (Bulletproof)
 // ============================================================
 function spawnBubble(speaker, text) {
     const c = CREATURES.find(x => x.name === speaker) || CREATURES.find(x => x.name === "Vertex");
@@ -79,30 +101,28 @@ function spawnBubble(speaker, text) {
     if (!el) return;
 
     const rect = el.getBoundingClientRect();
-    const cx = rect.left + (rect.width / 2);
-    const spawnY = Math.max(100, rect.top - 60);
+    let cx = rect.left + (rect.width / 2);
+    let spawnY = Math.max(100, rect.top - 60);
 
-    // Measure text on canvas to get exact dimensions
+    // Ensure font is set before measuring
     ctx.font = "600 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-    const tw = ctx.measureText(text).width;
-    const th = 20; // approximate line height for one line
+    const tw = Math.max(ctx.measureText(text).width, 20); // Minimum width 20px
+    const th = 20; 
     
-    // Calculate circle diameter (diagonal + padding)
     const diag = Math.sqrt(tw * tw + th * th);
     const refSize = Math.min(window.innerWidth, window.innerHeight);
-    const diameter = Math.max(diag + (refSize * 0.08), 90);
+    const diameter = Math.max(diag + (refSize * 0.08), 100); // Minimum diameter 100px
     const radius = diameter / 2;
 
     // Clamp X position
-    let x = cx;
-    if (x - radius < 0) x = radius;
-    if (x + radius > window.innerWidth) x = window.innerWidth - radius;
+    if (cx - radius < 0) cx = radius;
+    if (cx + radius > window.innerWidth) cx = window.innerWidth - radius;
 
     activeBubbles.push({
         speaker: speaker,
         text: text,
         color: TEXT_COLORS[speaker] || "#ffffff",
-        x: x,
+        x: cx,
         y: spawnY,
         radius: radius,
         startTime: performance.now(),
@@ -113,7 +133,6 @@ function spawnBubble(speaker, text) {
 }
 
 function drawBubbles(now) {
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (let i = activeBubbles.length - 1; i >= 0; i--) {
@@ -125,41 +144,107 @@ function drawBubbles(now) {
             continue;
         }
 
-        // Alpha curve
         let alpha = 1.0;
         if (progress < 0.1) alpha = progress / 0.1;
         else if (progress > 0.75) alpha = (1.0 - progress) / 0.25;
         else alpha = 1.0;
 
-        // Rise and sway
         const rise = (canvas.height * 0.48) * progress;
         const sway = Math.sin(progress * Math.PI * 2) * (canvas.width * 0.05);
         
         const currentX = b.x + sway;
         const currentY = b.y - rise;
 
-        // 1. Draw the Circle
+        // 1. Draw Circle
         ctx.beginPath();
         ctx.arc(currentX, currentY, b.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(38, 64, 89, ${0.45 * alpha})`;
         ctx.fill();
 
-        // 2. Draw the Highlight Arc
+        // 2. Draw Highlight Arc
         ctx.beginPath();
         ctx.arc(currentX, currentY, b.radius * 0.75, 100 * Math.PI / 180, 140 * Math.PI / 180);
         ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * alpha})`;
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 3. Draw the Text
+        // 3. Draw Text
         ctx.font = "600 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
         ctx.fillStyle = b.color;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        
-        // Simple wrap (since we chunked to 14 chars, it should fit on 1-2 lines)
+        ctx.globalAlpha = alpha;
         ctx.fillText(b.text, currentX, currentY);
+        ctx.globalAlpha = 1.0;
     }
+}
+
+// ============================================================
+// THEATRE ENGINE
+// ============================================================
+function startFeeding() {
+    theatreState = "FEEDING";
+    theatreTimer = 10.0; // 10 seconds of feeding
+    foodParticles = [];
+    // Spawn 15 food particles at the top
+    for (let i = 0; i < 15; i++) {
+        foodParticles.push({
+            x: window.innerWidth * 0.5 + (Math.random() - 0.5) * (window.innerWidth * 0.6),
+            y: -20 - (Math.random() * 50),
+            vx: (Math.random() - 0.5) * 30,
+            vy: 80 + Math.random() * 60,
+            phase: Math.random() * 6.28
+        });
+    }
+    audio.sting("Vertex");
+}
+
+function startSleeping() {
+    theatreState = "SLEEPING";
+    sleepDialogueIndex = 0;
+    theatreTimer = 0;
+    queueScene([SLEEP_DIALOGUE[0]]);
+    sleepDialogueIndex++;
+}
+
+function updateTheatre(dt) {
+    if (theatreState === "FEEDING") {
+        theatreTimer -= dt;
+        if (theatreTimer <= 0) {
+            theatreState = "IDLE";
+            foodParticles = [];
+        }
+    } 
+    else if (theatreState === "SLEEPING") {
+        theatreTimer += dt;
+        // Trigger next dialogue line every 3 seconds
+        if (sleepDialogueIndex < SLEEP_DIALOGUE.length && theatreTimer > (sleepDialogueIndex * 3.0)) {
+            queueScene([SLEEP_DIALOGUE[sleepDialogueIndex]]);
+            sleepDialogueIndex++;
+        }
+        if (sleepDialogueIndex >= SLEEP_DIALOGUE.length && theatreTimer > (SLEEP_DIALOGUE.length * 3.0) + 2.0) {
+            brain.sleepState = "SLEEPING";
+        }
+    }
+
+    // Update Food Particles
+    for (let i = foodParticles.length - 1; i >= 0; i--) {
+        const f = foodParticles[i];
+        f.x += f.vx * dt;
+        f.y += f.vy * dt;
+        if (f.y > window.innerHeight) {
+            foodParticles.splice(i, 1);
+        }
+    }
+}
+
+function drawFood() {
+    ctx.fillStyle = "#FFD700";
+    foodParticles.forEach(f => {
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, 4 + Math.sin(f.phase + performance.now() * 0.005) * 2, 0, Math.PI * 2);
+        ctx.fill();
+    });
 }
 
 // ============================================================
@@ -168,12 +253,11 @@ function drawBubbles(now) {
 function updateDebugHUD() {
     const el = document.getElementById("debug-overlay");
     if (!el) return;
-    
     const netStr = "[0.5, 1.0, 0.9, 1.0]";
-
     el.innerText = 
         `Mood: ${brain.currentMood}\n` +
         `Sleep: ${brain.sleepState}\n` +
+        `State: ${theatreState}\n` +
         `Light: 0.50 | Temp: 0.60\n` +
         `Motion: 0.00 | Shake: 0.00\n` +
         `Rhythm: 1.0s | Heat: ${brain.heat}\n` +
@@ -181,7 +265,7 @@ function updateDebugHUD() {
 }
 
 // ============================================================
-// Milestone Overlay
+// Milestone & Float Text
 // ============================================================
 function triggerMilestoneBurst() {
     const layer = document.getElementById("particle-layer");
@@ -207,20 +291,6 @@ function showMilestone(text) {
     el.innerText = text;
     el.classList.add("active");
     setTimeout(() => el.classList.remove("active"), 3000);
-}
-
-// ============================================================
-// Float Text
-// ============================================================
-function spawnFloatText(x, y, text, color) {
-    const el = document.createElement("div");
-    el.className = "float-text";
-    el.innerText = text;
-    el.style.color = color || "#FFD700";
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3500);
 }
 
 // ============================================================
@@ -262,6 +332,12 @@ function updateCreatureSprite(c, now) {
     const el = document.getElementById(c.id);
     if (!el) return;
 
+    // Sleep state forces closed eyes
+    if (brain.sleepState === "SLEEPING") {
+        el.src = el.dataset.blink;
+        return;
+    }
+
     if (c.talkTimer > 0) {
         el.src = (Math.floor(now * 1000 / 150) % 2 === 0) ? el.dataset.talk : el.dataset.base;
         return;
@@ -271,7 +347,7 @@ function updateCreatureSprite(c, now) {
 }
 
 function updateBlink(c, dt) {
-    if (c.talkTimer > 0) return;
+    if (c.talkTimer > 0 || brain.sleepState === "SLEEPING") return;
     c.blinkTimer -= dt;
     if (c.blinkTimer <= 0) {
         if (!c.isBlinking) { c.isBlinking = true; c.blinkTimer = 0.15; }
@@ -317,12 +393,18 @@ function bindCreatures() {
 
 function bindUtilBar() {
     document.getElementById("btn-feed").addEventListener("click", () => {
+        startFeeding();
         const response = brain.onFeed();
         if (response) queueScene(response);
-        audio.sting("Vertex");
     });
     document.getElementById("btn-sleep").addEventListener("click", () => {
-        brain.sleepState = brain.sleepState === "AWAKE" ? "SLEEPING" : "AWAKE";
+        if (brain.sleepState === "AWAKE") {
+            startSleeping();
+        } else {
+            brain.sleepState = "AWAKE";
+            theatreState = "IDLE";
+            queueScene([["Vertex", "I'm awake! I'm awake!"]]);
+        }
     });
     document.getElementById("btn-dim").addEventListener("click", () => {});
     document.getElementById("btn-vol").addEventListener("click", () => {
@@ -374,9 +456,14 @@ function animate(time) {
     const dt = now - lastTime;
     lastTime = now;
 
+    // 1. Update Brain
     const newScene = brain.update(dt);
     if (newScene) queueScene(newScene);
 
+    // 2. Update Theatre
+    updateTheatre(dt);
+
+    // 3. Handle Speech Queue
     if (speechQueue.length > 0 && activeBubbles.length < 2) {
         speechTimer += dt;
         if (speechTimer >= speechQueue[0].delay) {
@@ -386,6 +473,7 @@ function animate(time) {
         }
     }
 
+    // 4. Update Creatures
     CREATURES.forEach((c) => {
         const el = c.id === "solon" ? document.getElementById("solon-group") : document.getElementById(c.id);
         if (!el) return;
@@ -394,17 +482,37 @@ function animate(time) {
         updateBlink(c, dt);
         if (c.id !== "solon") updateCreatureSprite(c, now);
 
-        el.style.left = `${c.x * 100}%`;
-        el.style.top = `${c.y * 100}%`;
+        // THEATRE POSITIONING
+        let targetX = c.x;
+        let targetY = c.y;
+
+        if (theatreState === "FEEDING") {
+            if (c.name === "Lumen" || c.name === "Prism") {
+                targetY = 0.15; // Rise to top
+            } else if (c.name === "Solon") {
+                targetX = 0.5 + Math.sin(now * 0.8) * 0.3; // Swim across
+                targetY = 0.5;
+            } else if (c.name === "Vertex") {
+                targetY = 0.85; // Stay on sand
+            }
+        } else if (theatreState === "SLEEPING" || brain.sleepState === "SLEEPING") {
+            targetY = 0.85; // Everyone sinks
+            if (c.name === "Vertex") targetY = 0.88;
+        }
+
+        el.style.left = `${targetX * 100}%`;
+        el.style.top = `${targetY * 100}%`;
 
         const driftX = Math.sin((now * c.speed) + c.phase) * 10;
         const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 5;
         el.style.transform = `translateX(-50%) translate(${driftX}px, ${driftY}px)`;
     });
 
+    // 5. Update Visuals
     updateSolonFins(dt);
     updateLumenTentacles(now);
     drawBubbles(time);
+    drawFood();
     updateDebugHUD();
     
     requestAnimationFrame(animate);
