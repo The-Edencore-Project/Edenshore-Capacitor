@@ -1,95 +1,33 @@
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
-
-#start-overlay {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: #021a30; z-index: 999; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; cursor: pointer; transition: opacity 1s;
-}
-#start-overlay h1 { color: #00aaff; letter-spacing: 5px; margin-bottom: 20px; text-shadow: 0 0 20px rgba(0,170,255,0.5); }
-#start-overlay p { color: #80ffe0; font-size: 14px; opacity: 0.7; animation: pulse 2s infinite; }
-@keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
-
-#bg-gradient { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: background 1.5s ease; z-index: 1; overflow: hidden; }
-.biome-lagoon { background: linear-gradient(to bottom, #0b3d5e, #1a6b8a); }
-.biome-shore { background: linear-gradient(to bottom, #1a4f6b, #2d7a8c); }
-.biome-twilight { background: linear-gradient(to bottom, #1a2a4a, #0e1b30); }
-.biome-deep { background: linear-gradient(to bottom, #050a14, #000000); }
-
-.parallax-layer { position: absolute; width: 200%; height: 100%; background-size: contain; background-repeat: repeat-x; background-position: bottom; pointer-events: none; }
-#layer-mountains { background-image: url('assets/images/mountains.png'); z-index: 2; bottom: 5%; opacity: 0.4; animation: slideParallax 120s linear infinite; }
-#layer-pillars { background-image: url('assets/images/pillars.png'); z-index: 3; bottom: 0%; opacity: 0.5; animation: slideParallax 90s linear infinite; }
-#layer-dunes { background-image: url('assets/images/sand_dunes.png'); z-index: 4; bottom: -5%; opacity: 0.8; animation: slideParallax 45s linear infinite; }
-@keyframes slideParallax { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-
-#particle-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
-.particle { position: absolute; background: rgba(255, 255, 255, 0.4); border-radius: 50%; animation: floatUp linear infinite; }
-.gold-particle { position: absolute; background: #FFD700; border-radius: 50%; animation: floatUp 1s ease-out forwards; box-shadow: 0 0 10px #FFD700; }
-@keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-100vh) scale(0.5); opacity: 0; } }
-
-/* HUD Top Bar */
-#ui-layer { 
-    position: absolute; top: 0; left: 0; width: 100%; height: 60px;
-    background: rgba(0, 0, 0, 0.7); z-index: 50; text-align: center; 
-    display: flex; align-items: center; justify-content: center;
-}
-#bond-text { font-size: 22px; font-weight: bold; color: #00aaff; text-shadow: 0 0 10px rgba(0,170,255,0.8); }
-
-/* HUD Utility Bar */
-#util-bar {
-    position: absolute; top: 60px; left: 0; width: 100%; height: 30px;
-    background: rgba(0, 0, 0, 0.5); z-index: 50; display: flex;
-    justify-content: space-around; align-items: center; font-size: 12px; font-weight: bold;
-}
-#util-bar span:nth-child(1), #util-bar span:nth-child(2), #util-bar span:nth-child(5) { color: #00ff00; }
-#util-bar span:nth-child(3), #util-bar span:nth-child(4) { color: #ff1e1e; }
-
-/* Creatures */
-#creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
-.creature { position: absolute; cursor: pointer; height: auto; will-change: transform; pointer-events: auto; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.4)); transition: left 1s ease-in-out, top 1s ease-in-out; }
-
-/* Solon Group */
-#solon-group { position: absolute; pointer-events: none; transition: left 1s ease-in-out, top 1s ease-in-out; }
-#solonLeftFin { position: absolute; width: 55px; left: -20px; top: 40px; z-index: 14; pointer-events: none; }
-#solon { position: absolute; width: 130px; z-index: 15; left: 0; }
-#solonRightFin { position: absolute; width: 55px; left: 90px; top: 40px; z-index: 16; pointer-events: none; }
-
-/* THE TEXT FIX: Flexbox Centering */
+/* --- THE DEFINITIVE BUBBLE FIX --- */
 .bubble {
     position: absolute; 
     background: rgba(10, 20, 40, 0.85); 
     border: 1px solid rgba(100, 200, 255, 0.4);
-    border-radius: 40px; 
-    display: flex; /* Use flexbox to center text */
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 10px 20px; 
+    border-radius: 30px; /* Oval shape */
+    padding: 12px 24px; /* Gives the text breathing room */
     color: #ffffff; 
-    font-size: 14px; 
-    font-weight: 500; 
-    line-height: 1.2;
+    font-size: 15px; 
+    font-weight: 600; 
+    line-height: 1.4;
+    text-align: center;
     box-shadow: inset 0 0 15px rgba(0, 170, 255, 0.2), 0 0 15px rgba(0, 170, 255, 0.1);
     backdrop-filter: blur(5px); 
     pointer-events: none; 
     z-index: 100; 
     
-    /* THE FIX: Let the box grow to fit the text natively */
-    width: max-content; 
-    max-width: 250px; 
+    /* THE FIX: Force the bubble to wrap text naturally */
+    display: inline-block; 
+    width: auto;
+    max-width: 250px;
     white-space: normal;
+    word-wrap: break-word;
 }
-.bubble::before { content: ''; position: absolute; top: 15%; left: 15%; width: 25%; height: 15%; border-radius: 50%; border-top: 2px solid rgba(255,255,255,0.4); transform: rotate(-15deg); }
-
-/* Bottom Bars */
-#biome-controls { 
-    position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
-    background: rgba(0, 0, 0, 0.85); 
-    display: flex; justify-content: space-around; align-items: center; z-index: 50;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+.bubble::before { 
+    content: ''; 
+    position: absolute; 
+    top: 15%; left: 15%; 
+    width: 25%; height: 15%; 
+    border-radius: 50%; 
+    border-top: 2px solid rgba(255,255,255,0.4); 
+    transform: rotate(-15deg); 
 }
-.biome-btn { background: transparent; border: none; color: #00ff00; font-size: 14px; font-weight: bold; padding: 10px; cursor: pointer; letter-spacing: 1px; transition: color 0.3s; }
-.biome-btn.active { color: #ff1e1e; text-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
-
-#controls { position: absolute; bottom: 70px; right: 10px; z-index: 50; }
-.action-btn { background: rgba(255, 140, 0, 0.8); border: 1px solid #ff8c00; color: white; padding: 8px 16px; border-radius: 10px; font-weight: bold; backdrop-filter: blur(5px); }
