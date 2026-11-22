@@ -6,13 +6,19 @@ let save = loadSave();
 let brain = new Brain(save);
 let lastTime = 0;
 
-// THE UPSIDE DOWN PENTAGON LAYOUT (Per Director Annotation)
+// THE UPSIDE DOWN PENTAGON LAYOUT
+// Y-values inverted from Kivy (0=bottom) to CSS (0=top)
 const CREATURES = [
-    { id: "solon",  name: "Solon",  x: 0.30, y: 0.68, speed: 0.5, phase: 0,   talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
-    { id: "prism",  name: "Prism",  x: 0.72, y: 0.68, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
-    { id: "lumen",  name: "Lumen",  x: 0.22, y: 0.38, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false },
-    { id: "ripple", name: "Ripple", x: 0.80, y: 0.38, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false },
-    { id: "vertex", name: "Vertex", x: 0.50, y: 0.15, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false }
+    // Top Left (Kivy y=0.55 -> CSS y=0.45)
+    { id: "solon",  name: "Solon",  x: 0.30, y: 0.45, speed: 0.5, phase: 0,   talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
+    // Top Right (Kivy y=0.55 -> CSS y=0.45)
+    { id: "prism",  name: "Prism",  x: 0.70, y: 0.45, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
+    // Bottom Left (Kivy y=0.35 -> CSS y=0.65)
+    { id: "lumen",  name: "Lumen",  x: 0.20, y: 0.65, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false },
+    // Bottom Right (Kivy y=0.35 -> CSS y=0.65)
+    { id: "ripple", name: "Ripple", x: 0.75, y: 0.65, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false },
+    // Bottom Center / Sand (Kivy y=0.15 -> CSS y=0.85)
+    { id: "vertex", name: "Vertex", x: 0.50, y: 0.85, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false }
 ];
 
 const TEXT_COLORS = {
@@ -59,7 +65,7 @@ function queueScene(scene) {
 }
 
 // ============================================================
-// THE BUBBLE: Circular, Golden Code parity
+// THE BUBBLE: Bulletproof Rendering (Golden Code parity)
 // ============================================================
 function spawnBubble(speaker, text) {
     const c = CREATURES.find(x => x.name === speaker) || CREATURES.find(x => x.name === "Vertex");
@@ -70,42 +76,72 @@ function spawnBubble(speaker, text) {
 
     const rect = el.getBoundingClientRect();
     const cx = rect.left + (rect.width / 2);
-    
-    // Spawn HIGH above the creature (Director: "MOVE up")
-    const spawnY = Math.max(120, rect.top - 60);
+    const spawnY = Math.max(100, rect.top - 80); // Spawn high above
 
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
+    // 1. Measure the text using a detached, unstyled element
+    const measure = document.createElement("span");
+    measure.style.position = "absolute";
+    measure.style.visibility = "hidden";
+    measure.style.whiteSpace = "nowrap";
+    measure.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+    measure.style.fontSize = "15px";
+    measure.style.fontWeight = "600";
+    measure.innerText = text;
+    document.body.appendChild(measure);
     
-    const textSpan = document.createElement("span");
-    textSpan.innerText = text;
-    textSpan.style.color = TEXT_COLORS[speaker] || "#ffffff";
-    bubble.appendChild(textSpan);
+    const tw = measure.offsetWidth;
+    const th = measure.offsetHeight;
+    measure.remove();
 
-    // Measure text first (detached from layout, so no backdrop-filter interference)
-    bubble.style.visibility = "hidden";
-    bubble.style.width = "auto";
-    bubble.style.height = "auto";
-    document.body.appendChild(bubble);
-    
-    const tw = textSpan.offsetWidth;
-    const th = textSpan.offsetHeight;
-    
-    // Golden Code math: radius = diagonal/2 + 2% padding
+    // 2. Calculate diameter based on text diagonal + padding
     const diag = Math.sqrt(tw * tw + th * th);
     const refSize = Math.min(window.innerWidth, window.innerHeight);
-    const radius = (diag / 2) + (refSize * 0.02);
-    const diameter = radius * 2;
+    const diameter = diag + (refSize * 0.08); // 8% padding to ensure plenty of room
 
-    // Now set fixed circle size
+    // 3. Create the Bubble Container
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.style.position = "absolute";
     bubble.style.width = `${diameter}px`;
     bubble.style.height = `${diameter}px`;
-    bubble.style.visibility = "visible";
-
-    // Center horizontally
-    const bWidth = diameter;
-    bubble.style.left = `${Math.max(4, Math.min(window.innerWidth - bWidth - 4, cx - (bWidth / 2)))}px`;
+    bubble.style.borderRadius = "50%";
+    bubble.style.background = "rgba(38, 64, 89, 0.45)";
+    bubble.style.left = `${Math.max(4, Math.min(window.innerWidth - diameter - 4, cx - (diameter / 2)))}px`;
     bubble.style.top = `${spawnY}px`;
+    bubble.style.pointerEvents = "none";
+    bubble.style.zIndex = "100";
+    // NO overflow hidden, NO flex, NO backdrop-filter
+
+    // Add the highlight arc
+    const arc = document.createElement("div");
+    arc.style.position = "absolute";
+    arc.style.top = "15%";
+    arc.style.left = "15%";
+    arc.style.width = "30%";
+    arc.style.height = "30%";
+    arc.style.borderRadius = "50%";
+    arc.style.borderTop = "2px solid rgba(255,255,255,0.8)";
+    arc.style.transform = "rotate(35deg)";
+    bubble.appendChild(arc);
+
+    // 4. Create the Text Span
+    const textSpan = document.createElement("span");
+    textSpan.innerText = text;
+    textSpan.style.position = "absolute";
+    textSpan.style.top = "50%";
+    textSpan.style.left = "50%";
+    textSpan.style.transform = "translate(-50%, -50%)";
+    textSpan.style.color = TEXT_COLORS[speaker] || "#ffffff";
+    textSpan.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+    textSpan.style.fontSize = "15px";
+    textSpan.style.fontWeight = "600";
+    textSpan.style.textAlign = "center";
+    textSpan.style.lineHeight = "1.3";
+    textSpan.style.width = `${Math.max(tw + 10, diameter * 0.7)}px`; 
+    // ^ Force the span width so the WebView doesn't collapse it
+    
+    bubble.appendChild(textSpan);
+    document.body.appendChild(bubble);
 
     const startTime = performance.now();
     activeBubbles.push({ 
@@ -140,16 +176,28 @@ function updateBubbles(now) {
 }
 
 // ============================================================
-// HUD Debug Overlay
+// HUD Debug Overlay (Full Golden Code Parity)
 // ============================================================
 function updateDebugHUD() {
     const el = document.getElementById("debug-overlay");
     if (!el) return;
+    
+    // Simulate sensor values for the HUD display
+    const light = 0.50;
+    const temp = 0.60;
+    const motion = 0.00;
+    const shake = 0.00;
+    const rhythm = 1.0;
+    const net = brain.arbiter ? brain.arbiter.net.forward([0.2, 1.0, 0.0, 0.1, Math.min(brain.heat/3.0, 1.0), Math.min(save.bond_score/1000.0, 1.0), 0.0, 0.5, 0.0, 0.0, 0.2, 0.0]) : [0,0,0,0];
+    const netStr = net.map(n => n.toFixed(1)).join(', ');
+
     el.innerText = 
         `Mood: ${brain.currentMood}\n` +
         `Sleep: ${brain.sleepState}\n` +
-        `Bond: ${save.bond_score}\n` +
-        `Heat: ${brain.heat}`;
+        `Light: ${light.toFixed(2)} | Temp: ${temp.toFixed(2)}\n` +
+        `Motion: ${motion.toFixed(2)} | Shake: ${shake.toFixed(2)}\n` +
+        `Rhythm: ${rhythm.toFixed(1)}s | Heat: ${brain.heat}\n` +
+        `Net: [${netStr}]`;
 }
 
 // ============================================================
