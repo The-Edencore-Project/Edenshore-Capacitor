@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edenshore</title>
-    <!-- CACHE BUSTER ADDED HERE -->
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
     <div id="start-overlay">
@@ -13,7 +12,7 @@
         <p>Tap anywhere to enter</p>
     </div>
 
-    <div id="bg-gradient" class="biome-deep">
+    <div id="bg-gradient" class="biome-lagoon">
         <div id="layer-mountains" class="parallax-layer"></div>
         <div id="layer-pillars" class="parallax-layer"></div>
         <div id="layer-dunes" class="parallax-layer"></div>
@@ -23,7 +22,7 @@
     <div id="ui-layer">
         <div id="bond-text">BOND: 0 - Stranger</div>
     </div>
-    
+
     <div id="util-bar">
         <span id="btn-feed">FEED</span>
         <span id="btn-sleep">SLEEP</span>
@@ -32,26 +31,28 @@
         <span id="btn-menu">MENU</span>
     </div>
 
+    <div id="debug-overlay"></div>
+
     <div id="creature-layer">
-        <div id="solon-group" style="width: 130px; height: 130px;">
+        <div id="solon-group">
             <img id="solonLeftFin" src="assets/images/solon_left_fin_1.png">
             <img id="solon" class="creature" src="assets/images/solon_body.png" data-base="assets/images/solon_body.png" data-blink="assets/images/solon_body_blink.png" data-talk="assets/images/solon_body_talk.png">
             <img id="solonRightFin" src="assets/images/solon_right_fin_1.png">
         </div>
 
-        <!-- SIZES ADJUSTED TO MATCH GOLDEN CODE -->
         <img id="prism" class="creature" src="assets/images/prism.png" data-base="assets/images/prism.png" data-blink="assets/images/prism_blink.png" data-talk="assets/images/prism_talk.png" style="width: 150px;">
-        <img id="lumen" class="creature" src="assets/images/lumen.png" data-base="assets/images/lumen.png" data-blink="assets/images/lumen_blink.png" data-talk="assets/images/lumen_talk.png" style="width: 120px;">
-        <!-- Ripple made bigger -->
-        <img id="ripple" class="creature" src="assets/images/ripple.png" data-base="assets/images/ripple.png" data-blink="assets/images/ripple_blink.png" data-talk="assets/images/ripple_talk.png" style="width: 130px;"> 
-        <img id="vertex" class="creature" src="assets/images/vertex.png" data-base="assets/images/vertex.png" data-blink="assets/images/vertex_blink.png" data-talk="assets/images/vertex_talk.png" style="width: 110px;">
+        <img id="lumen" class="creature" src="assets/images/lumen.png" data-base="assets/images/lumen.png" data-blink="assets/images/lumen_blink.png" data-talk="assets/images/lumen_talk.png" style="width: 130px;">
+        <img id="ripple" class="creature" src="assets/images/ripple.png" data-base="assets/images/ripple.png" data-blink="assets/images/ripple_blink.png" data-talk="assets/images/ripple_talk.png" style="width: 160px;"> 
+        <img id="vertex" class="creature" src="assets/images/vertex.png" data-base="assets/images/vertex.png" data-blink="assets/images/vertex_blink.png" data-talk="assets/images/vertex_talk.png" style="width: 120px;">
     </div>
 
+    <div id="milestone-overlay"></div>
+
     <div id="biome-controls">
-        <button id="lagoonBtn" class="biome-btn">LAGOON</button>
+        <button id="lagoonBtn" class="biome-btn active">LAGOON</button>
         <button id="shoreBtn" class="biome-btn">SHORE</button>
         <button id="twilightBtn" class="biome-btn">TWILIGHT</button>
-        <button id="deepBtn" class="biome-btn active">DEEP</button>
+        <button id="deepBtn" class="biome-btn">DEEP</button>
     </div>
 
     <script type="module" src="app.js"></script>
