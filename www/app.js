@@ -13,24 +13,25 @@ function spawnBubble(speaker, text) {
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
-    
-    // THE FIX: Set the text BEFORE appending to the DOM
     bubble.innerText = text; 
     
-    // THE FIX: Only set X and Y, let CSS handle the width
-    bubble.style.left = `${cx}px`; 
-    bubble.style.top = `${spawnY}px`; 
-    // We still need this to center the bubble over the creature
-    bubble.style.transform = `translateX(-50%)`; 
-    
+    // 1. Append to DOM first so the browser calculates the width
     document.body.appendChild(bubble);
 
+    // 2. Get the calculated width
+    const bubbleWidth = bubble.offsetWidth;
+    
+    // 3. Position it exactly. Left = Center - (Width / 2)
+    bubble.style.left = `${cx - (bubbleWidth / 2)}px`; 
+    bubble.style.top = `${spawnY}px`; 
+    
     let startTime = performance.now();
-    activeBubbles.push({ el: bubble, startTime: startTime, life: 6000, startX: cx, startY: spawnY });
+    
+    // 4. Store the exact left position for the float animation
+    activeBubbles.push({ el: bubble, startTime: startTime, life: 6000, startX: cx - (bubbleWidth / 2), startY: spawnY });
     c.talkTimer = 2.0;
 }
 
-// Update the animation loop to maintain the centering transform
 function updateBubbles(now) {
     for (let i = activeBubbles.length - 1; i >= 0; i--) {
         let b = activeBubbles[i];
@@ -41,8 +42,8 @@ function updateBubbles(now) {
         if (progress < 0.1) alpha = progress / 0.1;
         if (progress > 0.7) alpha = (1.0 - progress) / 0.3;
         
-        // Float up and keep it centered with -50%
-        b.el.style.transform = `translate(-50%, -${progress * 50}px)`;
+        // 5. Float up using standard translateY. No centering transform needed anymore!
+        b.el.style.transform = `translateY(-${progress * 50}px)`;
         b.el.style.opacity = alpha;
     }
 }
