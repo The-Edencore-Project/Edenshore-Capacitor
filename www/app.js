@@ -7,17 +7,11 @@ let brain = new Brain(save);
 let lastTime = 0;
 
 // THE UPSIDE DOWN PENTAGON LAYOUT
-// Y-values inverted from Kivy (0=bottom) to CSS (0=top)
 const CREATURES = [
-    // Top Left (Kivy y=0.55 -> CSS y=0.45)
     { id: "solon",  name: "Solon",  x: 0.30, y: 0.45, speed: 0.5, phase: 0,   talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
-    // Top Right (Kivy y=0.55 -> CSS y=0.45)
     { id: "prism",  name: "Prism",  x: 0.70, y: 0.45, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
-    // Bottom Left (Kivy y=0.35 -> CSS y=0.65)
     { id: "lumen",  name: "Lumen",  x: 0.20, y: 0.65, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false },
-    // Bottom Right (Kivy y=0.35 -> CSS y=0.65)
     { id: "ripple", name: "Ripple", x: 0.75, y: 0.65, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false },
-    // Bottom Center / Sand (Kivy y=0.15 -> CSS y=0.85)
     { id: "vertex", name: "Vertex", x: 0.50, y: 0.85, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false }
 ];
 
@@ -34,20 +28,20 @@ let finTimer = 0;
 let lumenTentacleEls = [];
 
 // ============================================================
-// THE VOICE: 24-char chunking (Golden Code parity)
+// THE VOICE: 14-char chunking
 // ============================================================
 function chunkText(text) {
     const words = text.split(' ');
     const chunks = [];
     let current = "";
     for (const w of words) {
-        if (w.length > 24) {
+        if (w.length > 14) {
             if (current) { chunks.push(current); current = ""; }
-            for (let i = 0; i < w.length; i += 24) chunks.push(w.slice(i, i + 24));
+            for (let i = 0; i < w.length; i += 14) chunks.push(w.slice(i, i + 14));
             continue;
         }
         if (!current) current = w;
-        else if (current.length + 1 + w.length <= 24) current += " " + w;
+        else if (current.length + 1 + w.length <= 14) current += " " + w;
         else { chunks.push(current); current = w; }
     }
     if (current) chunks.push(current);
@@ -65,7 +59,7 @@ function queueScene(scene) {
 }
 
 // ============================================================
-// THE BUBBLE: Bulletproof Rendering (Golden Code parity)
+// THE BUBBLE: Bulletproof Circle
 // ============================================================
 function spawnBubble(speaker, text) {
     const c = CREATURES.find(x => x.name === speaker) || CREATURES.find(x => x.name === "Vertex");
@@ -76,71 +70,31 @@ function spawnBubble(speaker, text) {
 
     const rect = el.getBoundingClientRect();
     const cx = rect.left + (rect.width / 2);
-    const spawnY = Math.max(100, rect.top - 80); // Spawn high above
+    const spawnY = Math.max(100, rect.top - 80);
 
-    // 1. Measure the text using a detached, unstyled element
-    const measure = document.createElement("span");
-    measure.style.position = "absolute";
-    measure.style.visibility = "hidden";
-    measure.style.whiteSpace = "nowrap";
-    measure.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-    measure.style.fontSize = "15px";
-    measure.style.fontWeight = "600";
-    measure.innerText = text;
-    document.body.appendChild(measure);
-    
-    const tw = measure.offsetWidth;
-    const th = measure.offsetHeight;
-    measure.remove();
-
-    // 2. Calculate diameter based on text diagonal + padding
-    const diag = Math.sqrt(tw * tw + th * th);
-    const refSize = Math.min(window.innerWidth, window.innerHeight);
-    const diameter = diag + (refSize * 0.08); // 8% padding to ensure plenty of room
-
-    // 3. Create the Bubble Container
+    // Create bubble with fixed dimensions to force WebView rendering
     const bubble = document.createElement("div");
     bubble.className = "bubble";
-    bubble.style.position = "absolute";
-    bubble.style.width = `${diameter}px`;
-    bubble.style.height = `${diameter}px`;
-    bubble.style.borderRadius = "50%";
-    bubble.style.background = "rgba(38, 64, 89, 0.45)";
-    bubble.style.left = `${Math.max(4, Math.min(window.innerWidth - diameter - 4, cx - (diameter / 2)))}px`;
-    bubble.style.top = `${spawnY}px`;
-    bubble.style.pointerEvents = "none";
-    bubble.style.zIndex = "100";
-    // NO overflow hidden, NO flex, NO backdrop-filter
-
-    // Add the highlight arc
-    const arc = document.createElement("div");
-    arc.style.position = "absolute";
-    arc.style.top = "15%";
-    arc.style.left = "15%";
-    arc.style.width = "30%";
-    arc.style.height = "30%";
-    arc.style.borderRadius = "50%";
-    arc.style.borderTop = "2px solid rgba(255,255,255,0.8)";
-    arc.style.transform = "rotate(35deg)";
-    bubble.appendChild(arc);
-
-    // 4. Create the Text Span
-    const textSpan = document.createElement("span");
-    textSpan.innerText = text;
-    textSpan.style.position = "absolute";
-    textSpan.style.top = "50%";
-    textSpan.style.left = "50%";
-    textSpan.style.transform = "translate(-50%, -50%)";
-    textSpan.style.color = TEXT_COLORS[speaker] || "#ffffff";
-    textSpan.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-    textSpan.style.fontSize = "15px";
-    textSpan.style.fontWeight = "600";
-    textSpan.style.textAlign = "center";
-    textSpan.style.lineHeight = "1.3";
-    textSpan.style.width = `${Math.max(tw + 10, diameter * 0.7)}px`; 
-    // ^ Force the span width so the WebView doesn't collapse it
     
-    bubble.appendChild(textSpan);
+    // Enforce a stable circle size regardless of text to force rendering
+    const size = 110; // Fixed size for all bubbles
+    bubble.style.width = `${size}px`;
+    bubble.style.height = `${size}px`;
+    bubble.style.left = `${Math.max(4, Math.min(window.innerWidth - size - 4, cx - (size / 2)))}px`;
+    bubble.style.top = `${spawnY}px`;
+
+    // Create text container as inline-block with fixed width
+    const textDiv = document.createElement("div");
+    textDiv.className = "bubble-text";
+    textDiv.style.display = "inline-block";
+    textDiv.style.width = "80%";
+    textDiv.style.wordWrap = "break-word";
+    textDiv.style.whiteSpace = "normal";
+    textDiv.style.textAlign = "center";
+    textDiv.style.color = TEXT_COLORS[speaker] || "#ffffff";
+    textDiv.innerText = text;
+    
+    bubble.appendChild(textDiv);
     document.body.appendChild(bubble);
 
     const startTime = performance.now();
@@ -152,7 +106,6 @@ function spawnBubble(speaker, text) {
         startY: spawnY 
     });
     
-    // Talk timer from text length (Golden Code)
     c.talkTimer = Math.max(1.5, Math.min(6.0, text.length * 0.1));
 }
 
@@ -176,19 +129,18 @@ function updateBubbles(now) {
 }
 
 // ============================================================
-// HUD Debug Overlay (Full Golden Code Parity)
+// HUD Debug Overlay
 // ============================================================
 function updateDebugHUD() {
     const el = document.getElementById("debug-overlay");
     if (!el) return;
     
-    // Simulate sensor values for the HUD display
     const light = 0.50;
     const temp = 0.60;
     const motion = 0.00;
     const shake = 0.00;
     const rhythm = 1.0;
-    const net = brain.arbiter ? brain.arbiter.net.forward([0.2, 1.0, 0.0, 0.1, Math.min(brain.heat/3.0, 1.0), Math.min(save.bond_score/1000.0, 1.0), 0.0, 0.5, 0.0, 0.0, 0.2, 0.0]) : [0,0,0,0];
+    const net = [0.5, 1.0, 0.9, 1.0];
     const netStr = net.map(n => n.toFixed(1)).join(', ');
 
     el.innerText = 
@@ -230,7 +182,7 @@ function showMilestone(text) {
 }
 
 // ============================================================
-// Float Text (+1, zZz)
+// Float Text
 // ============================================================
 function spawnFloatText(x, y, text, color) {
     const el = document.createElement("div");
@@ -312,7 +264,7 @@ function updateSolonFins(dt) {
 }
 
 // ============================================================
-// Interaction
+// Interaction & Buttons
 // ============================================================
 function tapCreature(id) {
     const milestone = addBond(save, 1);
@@ -331,8 +283,30 @@ function bindCreatures() {
         const el = document.getElementById(c.id);
         if (el) el.addEventListener("click", () => tapCreature(c.id));
     });
-    const solonFin = document.getElementById("solon-group");
-    if (solonFin) solonFin.style.pointerEvents = "auto";
+    const solonGroup = document.getElementById("solon-group");
+    if (solonGroup) solonGroup.addEventListener("click", () => tapCreature("solon"));
+}
+
+function bindUtilBar() {
+    document.getElementById("btn-feed").addEventListener("click", () => {
+        const response = brain.onFeed();
+        if (response) queueScene(response);
+        audio.sting("Vertex");
+    });
+    document.getElementById("btn-sleep").addEventListener("click", () => {
+        brain.sleepState = brain.sleepState === "AWAKE" ? "SLEEPING" : "AWAKE";
+    });
+    document.getElementById("btn-dim").addEventListener("click", () => {
+        // Placeholder: lights toggle
+        console.log("DIM pressed");
+    });
+    document.getElementById("btn-vol").addEventListener("click", () => {
+        audio.volume = audio.volume > 0 ? 0 : 0.30;
+        if (audio.music) audio.music.volume = audio.volume;
+    });
+    document.getElementById("btn-menu").addEventListener("click", () => {
+        alert("Menu coming soon!");
+    });
 }
 
 function updateUI() {
@@ -402,7 +376,7 @@ function animate(time) {
 
         const driftX = Math.sin((now * c.speed) + c.phase) * 10;
         const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 5;
-        el.style.transform = `translate(${driftX}px, ${driftY}px)`;
+        el.style.transform = `translateX(-50%) translate(${driftX}px, ${driftY}px)`;
     });
 
     updateSolonFins(dt);
@@ -428,6 +402,7 @@ window.addEventListener("DOMContentLoaded", () => {
     saveData(save);
     updateUI();
     bindCreatures();
+    bindUtilBar();
     initBiomes();
     initLumenTentacles();
     spawnParticles();
