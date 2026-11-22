@@ -42,7 +42,7 @@ body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-fam
 #solon { position: absolute; width: 130px; z-index: 15; left: 0; }
 #solonRightFin { position: absolute; width: 55px; left: 90px; top: 40px; z-index: 16; pointer-events: none; }
 
-/* THE HARDENED BUBBLE */
+/* THE TEXT BUBBLE FIX */
 .bubble {
     position: absolute; 
     background: rgba(10, 20, 40, 0.85); 
