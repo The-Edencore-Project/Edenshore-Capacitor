@@ -6,7 +6,6 @@ let save = loadSave();
 let brain = new Brain(save);
 let lastTime = 0;
 
-// THE UPSIDE DOWN PENTAGON LAYOUT
 const CREATURES = [
     { id: "solon",  name: "Solon",  x: 0.30, y: 0.45, speed: 0.5, phase: 0,   talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
     { id: "prism",  name: "Prism",  x: 0.70, y: 0.45, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
@@ -26,6 +25,17 @@ let activeBubbles = [];
 let finFrame = 1;
 let finTimer = 0;
 let lumenTentacleEls = [];
+
+// CANVAS SETUP
+const canvas = document.getElementById("fx-canvas");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
 // ============================================================
 // THE VOICE: 14-char chunking
@@ -59,7 +69,7 @@ function queueScene(scene) {
 }
 
 // ============================================================
-// THE BUBBLE: Bulletproof Circle
+// THE BUBBLE: Canvas Rendering
 // ============================================================
 function spawnBubble(speaker, text) {
     const c = CREATURES.find(x => x.name === speaker) || CREATURES.find(x => x.name === "Vertex");
@@ -70,61 +80,85 @@ function spawnBubble(speaker, text) {
 
     const rect = el.getBoundingClientRect();
     const cx = rect.left + (rect.width / 2);
-    const spawnY = Math.max(100, rect.top - 80);
+    const spawnY = Math.max(100, rect.top - 60);
 
-    // Create bubble with fixed dimensions to force WebView rendering
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
+    // Measure text on canvas to get exact dimensions
+    ctx.font = "600 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+    const tw = ctx.measureText(text).width;
+    const th = 20; // approximate line height for one line
     
-    // Enforce a stable circle size regardless of text to force rendering
-    const size = 110; // Fixed size for all bubbles
-    bubble.style.width = `${size}px`;
-    bubble.style.height = `${size}px`;
-    bubble.style.left = `${Math.max(4, Math.min(window.innerWidth - size - 4, cx - (size / 2)))}px`;
-    bubble.style.top = `${spawnY}px`;
+    // Calculate circle diameter (diagonal + padding)
+    const diag = Math.sqrt(tw * tw + th * th);
+    const refSize = Math.min(window.innerWidth, window.innerHeight);
+    const diameter = Math.max(diag + (refSize * 0.08), 90);
+    const radius = diameter / 2;
 
-    // Create text container as inline-block with fixed width
-    const textDiv = document.createElement("div");
-    textDiv.className = "bubble-text";
-    textDiv.style.display = "inline-block";
-    textDiv.style.width = "80%";
-    textDiv.style.wordWrap = "break-word";
-    textDiv.style.whiteSpace = "normal";
-    textDiv.style.textAlign = "center";
-    textDiv.style.color = TEXT_COLORS[speaker] || "#ffffff";
-    textDiv.innerText = text;
-    
-    bubble.appendChild(textDiv);
-    document.body.appendChild(bubble);
+    // Clamp X position
+    let x = cx;
+    if (x - radius < 0) x = radius;
+    if (x + radius > window.innerWidth) x = window.innerWidth - radius;
 
-    const startTime = performance.now();
-    activeBubbles.push({ 
-        el: bubble, 
-        startTime: startTime, 
-        life: 6000, 
-        startX: parseFloat(bubble.style.left), 
-        startY: spawnY 
+    activeBubbles.push({
+        speaker: speaker,
+        text: text,
+        color: TEXT_COLORS[speaker] || "#ffffff",
+        x: x,
+        y: spawnY,
+        radius: radius,
+        startTime: performance.now(),
+        life: 6000
     });
-    
+
     c.talkTimer = Math.max(1.5, Math.min(6.0, text.length * 0.1));
 }
 
-function updateBubbles(now) {
+function drawBubbles(now) {
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     for (let i = activeBubbles.length - 1; i >= 0; i--) {
         const b = activeBubbles[i];
         const progress = (now - b.startTime) / b.life;
-        if (progress >= 1.0) { b.el.remove(); activeBubbles.splice(i, 1); continue; }
+        
+        if (progress >= 1.0) {
+            activeBubbles.splice(i, 1);
+            continue;
+        }
 
+        // Alpha curve
         let alpha = 1.0;
         if (progress < 0.1) alpha = progress / 0.1;
         else if (progress > 0.75) alpha = (1.0 - progress) / 0.25;
         else alpha = 1.0;
 
-        const rise = (window.innerHeight * 0.48) * progress;
-        const sway = Math.sin(progress * Math.PI * 2) * (window.innerWidth * 0.08);
+        // Rise and sway
+        const rise = (canvas.height * 0.48) * progress;
+        const sway = Math.sin(progress * Math.PI * 2) * (canvas.width * 0.05);
+        
+        const currentX = b.x + sway;
+        const currentY = b.y - rise;
 
-        b.el.style.transform = `translate(${sway}px, -${rise}px)`;
-        b.el.style.opacity = alpha;
+        // 1. Draw the Circle
+        ctx.beginPath();
+        ctx.arc(currentX, currentY, b.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(38, 64, 89, ${0.45 * alpha})`;
+        ctx.fill();
+
+        // 2. Draw the Highlight Arc
+        ctx.beginPath();
+        ctx.arc(currentX, currentY, b.radius * 0.75, 100 * Math.PI / 180, 140 * Math.PI / 180);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * alpha})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 3. Draw the Text
+        ctx.font = "600 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        ctx.fillStyle = b.color;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        
+        // Simple wrap (since we chunked to 14 chars, it should fit on 1-2 lines)
+        ctx.fillText(b.text, currentX, currentY);
     }
 }
 
@@ -135,21 +169,15 @@ function updateDebugHUD() {
     const el = document.getElementById("debug-overlay");
     if (!el) return;
     
-    const light = 0.50;
-    const temp = 0.60;
-    const motion = 0.00;
-    const shake = 0.00;
-    const rhythm = 1.0;
-    const net = [0.5, 1.0, 0.9, 1.0];
-    const netStr = net.map(n => n.toFixed(1)).join(', ');
+    const netStr = "[0.5, 1.0, 0.9, 1.0]";
 
     el.innerText = 
         `Mood: ${brain.currentMood}\n` +
         `Sleep: ${brain.sleepState}\n` +
-        `Light: ${light.toFixed(2)} | Temp: ${temp.toFixed(2)}\n` +
-        `Motion: ${motion.toFixed(2)} | Shake: ${shake.toFixed(2)}\n` +
-        `Rhythm: ${rhythm.toFixed(1)}s | Heat: ${brain.heat}\n` +
-        `Net: [${netStr}]`;
+        `Light: 0.50 | Temp: 0.60\n` +
+        `Motion: 0.00 | Shake: 0.00\n` +
+        `Rhythm: 1.0s | Heat: ${brain.heat}\n` +
+        `Net: ${netStr}`;
 }
 
 // ============================================================
@@ -296,17 +324,12 @@ function bindUtilBar() {
     document.getElementById("btn-sleep").addEventListener("click", () => {
         brain.sleepState = brain.sleepState === "AWAKE" ? "SLEEPING" : "AWAKE";
     });
-    document.getElementById("btn-dim").addEventListener("click", () => {
-        // Placeholder: lights toggle
-        console.log("DIM pressed");
-    });
+    document.getElementById("btn-dim").addEventListener("click", () => {});
     document.getElementById("btn-vol").addEventListener("click", () => {
         audio.volume = audio.volume > 0 ? 0 : 0.30;
         if (audio.music) audio.music.volume = audio.volume;
     });
-    document.getElementById("btn-menu").addEventListener("click", () => {
-        alert("Menu coming soon!");
-    });
+    document.getElementById("btn-menu").addEventListener("click", () => {});
 }
 
 function updateUI() {
@@ -381,7 +404,7 @@ function animate(time) {
 
     updateSolonFins(dt);
     updateLumenTentacles(now);
-    updateBubbles(time);
+    drawBubbles(time);
     updateDebugHUD();
     
     requestAnimationFrame(animate);
