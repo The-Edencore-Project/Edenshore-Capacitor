@@ -6,13 +6,18 @@ let save = loadSave();
 let brain = new Brain(save);
 let lastTime = 0;
 
-// --- SPREAD POSITIONS TO MATCH YOUR DIAGRAM ---
+// THE UPSIDE DOWN PENTAGON LAYOUT
 const CREATURES = [
-    { id: "solon", name: "Solon", x: 0.20, y: 0.50, speed: 0.5, phase: 0, talkTimer: 0, blinkTimer: 3.0, isBlinking: false }, // Bottom Left
-    { id: "prism", name: "Prism", x: 0.80, y: 0.45, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false }, // Bottom Right
-    { id: "lumen", name: "Lumen", x: 0.20, y: 0.70, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false }, // Top Left
-    { id: "ripple", name: "Ripple", x: 0.80, y: 0.65, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false }, // Top Right
-    { id: "vertex", name: "Vertex", x: 0.50, y: 0.70, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false } // Top Center
+    // Top Left
+    { id: "solon", name: "Solon", x: 0.25, y: 0.65, speed: 0.5, phase: 0, talkTimer: 0, blinkTimer: 3.0, isBlinking: false }, 
+    // Bottom Left
+    { id: "lumen", name: "Lumen", x: 0.20, y: 0.30, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false }, 
+    // Bottom Center (On Sand)
+    { id: "vertex", name: "Vertex", x: 0.50, y: 0.15, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false }, 
+    // Bottom Right
+    { id: "ripple", name: "Ripple", x: 0.80, y: 0.30, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false },
+    // Top Right
+    { id: "prism", name: "Prism", x: 0.75, y: 0.65, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false }
 ];
 
 let speechQueue = [];
@@ -36,7 +41,6 @@ function spawnBubble(speaker, text) {
     const rect = el.getBoundingClientRect();
     const cx = rect.left + (rect.width / 2);
     
-    // Spawn slightly above the creature
     let spawnY = rect.top - 20; 
     if (spawnY < 100) spawnY = rect.bottom + 20; 
 
@@ -45,10 +49,8 @@ function spawnBubble(speaker, text) {
     bubble.innerText = text; 
     bubble.style.top = `${spawnY}px`; 
     
-    // Append to body
     document.body.appendChild(bubble);
 
-    // Calculate width dynamically and center it
     const bWidth = bubble.offsetWidth;
     bubble.style.left = `${cx - (bWidth / 2)}px`; 
     
@@ -225,9 +227,6 @@ window.addEventListener("DOMContentLoaded", () => {
     bindCreatures();
     initBiomes();
     spawnParticles();
-    
-    // The rogue feed button event listener is removed here.
-    // The FEED logic is now on the top bar (to be wired up later if needed).
 
     requestAnimationFrame(animate);
 });
