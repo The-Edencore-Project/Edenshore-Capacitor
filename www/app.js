@@ -6,18 +6,13 @@ let save = loadSave();
 let brain = new Brain(save);
 let lastTime = 0;
 
-const FORMATIONS = {
-    NORMAL: null,
-    HUDDLE: [[0.5, 0.6], [0.45, 0.65], [0.55, 0.65], [0.48, 0.55], [0.52, 0.55]],
-    QUEUE: [[0.2, 0.3], [0.4, 0.3], [0.6, 0.3], [0.8, 0.3], [0.5, 0.15]]
-};
-
+// --- SPREAD POSITIONS TO MATCH YOUR DIAGRAM ---
 const CREATURES = [
-    { id: "solon", name: "Solon", x: 0.25, y: 0.55, speed: 0.5, phase: 0, talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
-    { id: "prism", name: "Prism", x: 0.75, y: 0.55, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
-    { id: "lumen", name: "Lumen", x: 0.15, y: 0.35, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false },
-    { id: "ripple", name: "Ripple", x: 0.85, y: 0.35, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false },
-    { id: "vertex", name: "Vertex", x: 0.50, y: 0.15, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false }
+    { id: "solon", name: "Solon", x: 0.20, y: 0.50, speed: 0.5, phase: 0, talkTimer: 0, blinkTimer: 3.0, isBlinking: false }, // Bottom Left
+    { id: "prism", name: "Prism", x: 0.80, y: 0.45, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false }, // Bottom Right
+    { id: "lumen", name: "Lumen", x: 0.20, y: 0.70, speed: 0.8, phase: 2.0, talkTimer: 0, blinkTimer: 5.0, isBlinking: false }, // Top Left
+    { id: "ripple", name: "Ripple", x: 0.80, y: 0.65, speed: 0.6, phase: 3.0, talkTimer: 0, blinkTimer: 6.0, isBlinking: false }, // Top Right
+    { id: "vertex", name: "Vertex", x: 0.50, y: 0.70, speed: 1.0, phase: 4.0, talkTimer: 0, blinkTimer: 2.0, isBlinking: false } // Top Center
 ];
 
 let speechQueue = [];
@@ -25,7 +20,6 @@ let speechTimer = 0;
 let activeBubbles = [];
 let finFrame = 1;
 let finTimer = 0;
-let currentFormation = "NORMAL";
 
 function updateUI() {
     const el = document.getElementById("bond-text");
@@ -42,20 +36,19 @@ function spawnBubble(speaker, text) {
     const rect = el.getBoundingClientRect();
     const cx = rect.left + (rect.width / 2);
     
-    let spawnY = rect.top - 40; 
+    // Spawn slightly above the creature
+    let spawnY = rect.top - 20; 
     if (spawnY < 100) spawnY = rect.bottom + 20; 
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
-    
-    // 1. SET TEXT BEFORE APPENDING
     bubble.innerText = text; 
     bubble.style.top = `${spawnY}px`; 
     
-    // 2. APPEND TO DOM (Browser calculates width now)
+    // Append to body
     document.body.appendChild(bubble);
 
-    // 3. READ WIDTH & POSITION EXACTLY
+    // Calculate width dynamically and center it
     const bWidth = bubble.offsetWidth;
     bubble.style.left = `${cx - (bWidth / 2)}px`; 
     
@@ -74,16 +67,9 @@ function updateBubbles(now) {
         if (progress < 0.1) alpha = progress / 0.1;
         if (progress > 0.7) alpha = (1.0 - progress) / 0.3;
         
-        // 4. FLOAT UP (No centering transform needed)
         b.el.style.transform = `translateY(-${progress * 50}px)`;
         b.el.style.opacity = alpha;
     }
-}
-
-function updateFormation(newMood) {
-    if (newMood === "CRISIS") currentFormation = "HUDDLE";
-    else if (newMood === "SLEEPY") currentFormation = "QUEUE";
-    else currentFormation = "NORMAL";
 }
 
 function updateCreatureSprite(c, now) {
@@ -194,7 +180,6 @@ function animate(time) {
 
     let newScene = brain.update(dt);
     if (newScene) queueScene(newScene);
-    updateFormation(brain.currentMood);
 
     if (speechQueue.length > 0) {
         speechTimer += dt;
@@ -213,16 +198,8 @@ function animate(time) {
         updateBlink(c, dt);
         updateCreatureSprite(c, now);
 
-        let targetX = c.x;
-        let targetY = c.y;
-
-        if (FORMATIONS[currentFormation]) {
-            targetX = FORMATIONS[currentFormation][index][0];
-            targetY = FORMATIONS[currentFormation][index][1];
-        }
-
-        el.style.left = `${targetX * 100}%`;
-        el.style.top = `${targetY * 100}%`;
+        el.style.left = `${c.x * 100}%`;
+        el.style.top = `${c.y * 100}%`;
         
         const driftX = Math.sin((now * c.speed) + c.phase) * 10;
         const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 5;
@@ -249,10 +226,8 @@ window.addEventListener("DOMContentLoaded", () => {
     initBiomes();
     spawnParticles();
     
-    document.getElementById("feed-btn")?.addEventListener("click", () => {
-        let scene = brain.onFeed();
-        if (scene) queueScene(scene);
-    });
+    // The rogue feed button event listener is removed here.
+    // The FEED logic is now on the top bar (to be wired up later if needed).
 
     requestAnimationFrame(animate);
 });
