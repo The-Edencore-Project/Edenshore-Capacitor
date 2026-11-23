@@ -1,6 +1,7 @@
 // =====================================================================
-// EDENCORE - app.js (Physics + Splash + Brain Link)
+// EDENCORE - app.js (Clean Boot, No Injection)
 // =====================================================================
+
 const state = { time_elapsed: 0, base_scroll: 0 };
 
 const creatures = {
@@ -37,7 +38,11 @@ function tick(currentTime) {
     const safeDt = Math.min(dt, 0.1); 
     
     state.time_elapsed += safeDt;
-    brain.update(safeDt); 
+    
+    // Check if brain exists before updating
+    if (window.brain) {
+        window.brain.update(safeDt); 
+    }
 
     state.base_scroll += safeDt * 100; 
     document.querySelectorAll('.parallax').forEach(el => {
@@ -47,8 +52,8 @@ function tick(currentTime) {
     });
 
     let speedMult = 1.0;
-    if (brain.mood === "PLAYFUL") speedMult = 2.0; 
-    if (brain.mood === "SLEEPY") speedMult = 0.3;  
+    if (window.brain && window.brain.mood === "PLAYFUL") speedMult = 2.0; 
+    if (window.brain && window.brain.mood === "SLEEPY") speedMult = 0.3;  
 
     for (const [id, data] of Object.entries(creatures)) {
         const el = document.getElementById(id);
@@ -69,20 +74,32 @@ function tick(currentTime) {
 document.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('splash-screen');
     if (splash) {
+        // Tap to dismiss
         splash.addEventListener('click', () => {
             splash.style.opacity = '0';
             setTimeout(() => {
                 splash.style.display = 'none';
             }, 800);
         });
+        
+        // Auto-dismiss after 3 seconds just in case
+        setTimeout(() => {
+            if (splash.style.display !== 'none') {
+                splash.style.opacity = '0';
+                setTimeout(() => { splash.style.display = 'none'; }, 800);
+            }
+        }, 3000);
     }
+
+    // Start the engine
+    resize();
+    requestAnimationFrame(tick); 
 });
 
 // --- TAP TO ADD BOND ---
 window.addEventListener('touchstart', (e) => {
-    // Ignore taps on UI buttons
     if (e.target.classList.contains('biome-btn')) return;
-    brain.addBond(1);
+    if (window.brain) window.brain.addBond(1);
 }, { passive: true });
 
 // --- BIOME SWITCHING ---
@@ -97,7 +114,3 @@ document.querySelectorAll('.biome-btn').forEach(btn => {
 });
 
 window.addEventListener('resize', resize);
-window.addEventListener('load', () => {
-    resize(); 
-    requestAnimationFrame(tick); 
-});
