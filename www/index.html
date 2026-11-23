@@ -2,16 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#021a30">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Edenshore</title>
-    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
+
+    <!-- START OVERLAY -->
     <div id="start-overlay">
         <h1>EDENSHORE</h1>
         <p>Tap anywhere to enter</p>
     </div>
 
+    <!-- BACKGROUND & BIOMES -->
     <div id="bg-gradient" class="biome-lagoon">
         <div id="layer-mountains" class="parallax-layer"></div>
         <div id="layer-pillars" class="parallax-layer"></div>
@@ -19,10 +26,12 @@
         <div id="particle-layer"></div>
     </div>
 
+    <!-- HUD: TOP BAR (BOND) -->
     <div id="ui-layer">
         <div id="bond-text">BOND: 0 - Stranger</div>
     </div>
 
+    <!-- HUD: UTIL BAR (FEED, SLEEP, DIM, VOL, MENU) -->
     <div id="util-bar">
         <span id="btn-feed">FEED</span>
         <span id="btn-sleep">SLEEP</span>
@@ -31,26 +40,58 @@
         <span id="btn-menu">MENU</span>
     </div>
 
+    <!-- DEBUG OVERLAY -->
     <div id="debug-overlay"></div>
 
+    <!-- CREATURES -->
     <div id="creature-layer">
         <div id="solon-group">
-            <img id="solonLeftFin" src="assets/images/solon_left_fin_1.png">
-            <img id="solon" class="creature" src="assets/images/solon_body.png" data-base="assets/images/solon_body.png" data-blink="assets/images/solon_body_blink.png" data-talk="assets/images/solon_body_talk.png">
-            <img id="solonRightFin" src="assets/images/solon_right_fin_1.png">
+            <img id="solonLeftFin" src="assets/images/solon_left_fin_1.png" alt="">
+            <img id="solon" class="creature" 
+                 src="assets/images/solon_body.png" 
+                 data-base="assets/images/solon_body.png" 
+                 data-blink="assets/images/solon_body_blink.png" 
+                 data-talk="assets/images/solon_body_talk.png" 
+                 alt="Solon">
+            <img id="solonRightFin" src="assets/images/solon_right_fin_1.png" alt="">
         </div>
 
-        <img id="prism" class="creature" src="assets/images/prism.png" data-base="assets/images/prism.png" data-blink="assets/images/prism_blink.png" data-talk="assets/images/prism_talk.png" style="width: 150px;">
-        <img id="lumen" class="creature" src="assets/images/lumen.png" data-base="assets/images/lumen.png" data-blink="assets/images/lumen_blink.png" data-talk="assets/images/lumen_talk.png" style="width: 120px;">
-        <img id="ripple" class="creature" src="assets/images/ripple.png" data-base="assets/images/ripple.png" data-blink="assets/images/ripple_blink.png" data-talk="assets/images/ripple_talk.png" style="width: 160px;"> 
-        <img id="vertex" class="creature" src="assets/images/vertex.png" data-base="assets/images/vertex.png" data-blink="assets/images/vertex_blink.png" data-talk="assets/images/vertex_talk.png" style="width: 120px;">
+        <img id="prism" class="creature" 
+             src="assets/images/prism.png" 
+             data-base="assets/images/prism.png" 
+             data-blink="assets/images/prism_blink.png" 
+             data-talk="assets/images/prism_talk.png" 
+             style="width: 150px;" alt="Prism">
+
+        <img id="lumen" class="creature" 
+             src="assets/images/lumen.png" 
+             data-base="assets/images/lumen.png" 
+             data-blink="assets/images/lumen_blink.png" 
+             data-talk="assets/images/lumen_talk.png" 
+             style="width: 120px;" alt="Lumen">
+
+        <img id="ripple" class="creature" 
+             src="assets/images/ripple.png" 
+             data-base="assets/images/ripple.png" 
+             data-blink="assets/images/ripple_blink.png" 
+             data-talk="assets/images/ripple_talk.png" 
+             style="width: 160px;" alt="Ripple">
+
+        <img id="vertex" class="creature" 
+             src="assets/images/vertex.png" 
+             data-base="assets/images/vertex.png" 
+             data-blink="assets/images/vertex_blink.png" 
+             data-talk="assets/images/vertex_talk.png" 
+             style="width: 120px;" alt="Vertex">
     </div>
 
-    <!-- NEW: CANVAS OVERLAY FOR SPEECH BUBBLES -->
+    <!-- CANVAS OVERLAY FOR SPEECH BUBBLES & FOOD -->
     <canvas id="fx-canvas"></canvas>
 
+    <!-- MILESTONE OVERLAY -->
     <div id="milestone-overlay"></div>
 
+    <!-- BOTTOM BAR: BIOME CONTROLS -->
     <div id="biome-controls">
         <button id="lagoonBtn" class="biome-btn active">LAGOON</button>
         <button id="shoreBtn" class="biome-btn">SHORE</button>
@@ -58,6 +99,7 @@
         <button id="deepBtn" class="biome-btn">DEEP</button>
     </div>
 
-    <script type="module" src="app.js"></script>
+    <!-- THE BRAIN -->
+    <script type="module" src="app.js?v=8"></script>
 </body>
 </html>
