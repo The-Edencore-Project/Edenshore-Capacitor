@@ -69,4 +69,4 @@ Format: `https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capaci
 ---
 
 ## 🚀 Usage for AI
-When starting a new thread, paste this single URL:
+When starting a new thread, paste this single URL:https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/RAW_FILES_ACCESS.md
