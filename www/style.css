@@ -1,218 +1,137 @@
-/* =====================================================================
-   EDENSHORE - STYLE.CSS V2.0
-   The Canvas-first Theatre Engine
-   ===================================================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body, html { 
+    width: 100%; 
+    height: 100%; 
+    overflow: hidden; 
+    font-family: sans-serif; 
+    background: #000;
+}
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body { 
+/* --- SPLASH SCREEN --- */
+#splash-screen {
+    position: absolute;
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    background: #021a30;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.8s ease;
+}
+#splash-screen h1 {
+    color: #0bf;
+    font-size: 3rem;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px rgba(0, 187, 255, 0.8);
+    margin-bottom: 20px;
+}
+#splash-screen p {
+    color: #668;
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+/* --- THE SCENE & BIOMES --- */
+#scene { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
     width: 100vw; 
     height: 100vh; 
     overflow: hidden; 
-    background: #000; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    color: white; 
-    user-select: none; 
-    position: relative;
 }
-
-/* =====================================================================
-   START OVERLAY
-   ===================================================================== */
-#start-overlay {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: #021a30; z-index: 999; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; cursor: pointer; transition: opacity 1s;
-}
-#start-overlay h1 { 
-    color: #00aaff; letter-spacing: 5px; margin-bottom: 20px; 
-    text-shadow: 0 0 20px rgba(0,170,255,0.5); font-size: 28px; 
-}
-#start-overlay p { 
-    color: #80ffe0; font-size: 14px; opacity: 0.7; animation: pulse 2s infinite; 
-}
-@keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
-
-/* =====================================================================
-   BACKGROUND & BIOMES
-   ===================================================================== */
 #bg-gradient { 
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-    transition: background 1.5s ease; z-index: 1; overflow: hidden; 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    z-index: 1; 
+    transition: background 2s ease; 
 }
-.biome-lagoon { background: linear-gradient(to bottom, #0b3d5e, #1a6b8a); }
-.biome-shore { background: linear-gradient(to bottom, #1a4f6b, #2d7a8c); }
-.biome-twilight { background: linear-gradient(to bottom, #1a2a4a, #0e1b30); }
-.biome-deep { background: linear-gradient(to bottom, #050a14, #000000); }
 
-.parallax-layer { 
-    position: absolute; width: 200%; height: 100%; 
-    background-size: contain; background-repeat: repeat-x; background-position: bottom; 
+.biome-lagoon { background: linear-gradient(180deg, #021a30 0%, #043060 40%, #106080 70%, #20a0a0 100%); }
+.biome-shore { background: linear-gradient(180deg, #2a1a40 0%, #a04060 40%, #e07050 70%, #f0d090 100%); }
+.biome-twilight { background: linear-gradient(180deg, #0a0510 0%, #1a1028 40%, #2a1838 70%, #3a2048 100%); }
+.biome-deep { background: linear-gradient(180deg, #000000 0%, #050010 40%, #0a0020 70%, #100030 100%); }
+
+/* Parallax Elements */
+.parallax { 
+    position: absolute; 
+    z-index: 2; 
+    bottom: 0; 
+    width: 200%; 
+    opacity: 0.9; 
     pointer-events: none; 
 }
-#layer-mountains { background-image: url('assets/images/mountains.png'); z-index: 2; bottom: 5%; opacity: 0.4; animation: slideParallax 120s linear infinite; }
-#layer-pillars { background-image: url('assets/images/pillars.png'); z-index: 3; bottom: 0%; opacity: 0.5; animation: slideParallax 90s linear infinite; }
-#layer-dunes { background-image: url('assets/images/sand_dunes.png'); z-index: 4; bottom: -5%; opacity: 0.8; animation: slideParallax 45s linear infinite; }
-@keyframes slideParallax { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+#pillars { bottom: 5%; opacity: 0.3; z-index: 2; }
+#mountains { bottom: 2%; opacity: 0.6; z-index: 3; }
+#dunes { z-index: 4; }
+#grass { z-index: 6; opacity: 0.8; bottom: -2%; }
 
-#particle-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
-.particle { position: absolute; background: rgba(255, 255, 255, 0.4); border-radius: 50%; animation: floatUp linear infinite; }
-.gold-particle { 
-    position: absolute; width: 6px; height: 6px; 
-    background: #FFD700; border-radius: 50%; 
-    animation: floatUp 1s ease-out forwards; 
-    box-shadow: 0 0 10px #FFD700; 
+/* --- CREATURES --- */
+#creature-layer { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    z-index: 5; 
+    pointer-events: none; 
 }
-@keyframes floatUp { 
-    0% { transform: translateY(0) scale(1); opacity: 0; } 
-    10% { opacity: 1; } 
-    90% { opacity: 1; } 
-    100% { transform: translateY(-100vh) scale(0.5); opacity: 0; } 
-}
-
-/* =====================================================================
-   HUD - TOP BAR (BOND)
-   ===================================================================== */
-#ui-layer { 
-    position: absolute; top: 0; left: 0; width: 100%; height: 60px; 
-    background: rgba(0, 0, 0, 0.7); z-index: 50; 
-    text-align: center; display: flex; align-items: center; justify-content: center; 
-}
-#bond-text { 
-    font-size: 22px; font-weight: bold; color: #00aaff; 
-    text-shadow: 0 0 10px rgba(0,170,255,0.8); 
-}
-
-/* =====================================================================
-   HUD - UTIL BAR (FEED, SLEEP, DIM, VOL, MENU)
-   ===================================================================== */
-#util-bar { 
-    position: absolute; top: 60px; left: 0; width: 100%; height: 30px; 
-    background: rgba(0, 0, 0, 0.5); z-index: 60; 
-    display: flex; justify-content: space-around; align-items: center; 
-    font-size: 12px; font-weight: bold; pointer-events: auto; 
-}
-#util-bar span { cursor: pointer; padding: 5px 10px; pointer-events: auto; }
-#util-bar span:nth-child(1), #util-bar span:nth-child(2), #util-bar span:nth-child(5) { color: #00ff00; }
-#util-bar span:nth-child(3), #util-bar span:nth-child(4) { color: #ff1e1e; }
-
-/* =====================================================================
-   DEBUG OVERLAY
-   ===================================================================== */
-#debug-overlay {
-    position: absolute; top: 95px; left: 10px; 
-    background: rgba(0, 0, 0, 0.6); 
-    padding: 6px 10px; 
-    font-family: monospace; 
-    font-size: 11px; 
-    color: #ccffcc; 
-    z-index: 55; 
-    white-space: pre; 
-    pointer-events: none;
-    line-height: 1.3;
-}
-
-/* =====================================================================
-   CREATURES
-   ===================================================================== */
-#creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
-
 .creature { 
     position: absolute; 
-    cursor: pointer; 
-    height: auto; 
-    will-change: transform; 
-    pointer-events: auto; 
-    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.4)); 
-    transition: left 1s ease-in-out, top 1s ease-in-out; 
-    transform: translateX(-50%); 
-    -webkit-tap-highlight-color: transparent; 
+    transform-origin: center center; 
+    transition: transform 0.1s linear; 
 }
 
-#solon-group { 
-    position: absolute; pointer-events: none; 
-    transition: left 1s ease-in-out, top 1s ease-in-out; 
-    width: 130px; height: 130px; transform: translateX(-50%); 
-}
-#solon { position: absolute; width: 130px; z-index: 15; left: 0; top: 0; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
-#solonLeftFin { position: absolute; width: 55px; left: 5px; top: 45px; z-index: 14; pointer-events: none; }
-#solonRightFin { position: absolute; width: 55px; left: 70px; top: 45px; z-index: 16; pointer-events: none; }
-
-/* Riddle Highlight (used by app.js during riddle_wait) */
-.creature.riddle-target { animation: riddlePulse 1.2s ease-in-out infinite; }
-@keyframes riddlePulse { 
-    0%, 100% { filter: drop-shadow(0 10px 10px rgba(0,0,0,0.4)); } 
-    50% { filter: drop-shadow(0 0 20px #FFD700) drop-shadow(0 10px 10px rgba(0,0,0,0.4)); } 
+/* --- UI LAYER --- */
+#ui-layer { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    z-index: 10; 
+    pointer-events: none; 
 }
 
-/* =====================================================================
-   FX CANVAS (Bubbles & Food) - POINTER NONE SO CLICKS PASS THROUGH
-   ===================================================================== */
-#fx-canvas {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 45; 
-    pointer-events: none;
+#top-bar {
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+  width: 100%;
+  background: rgba(0, 0, 0, 0.85); 
+  color: #0bf; 
+  padding: 15px; 
+  text-align: center; 
+  font-size: 1.2rem; 
+  font-weight: bold; 
+  letter-spacing: 1px;
 }
 
-/* =====================================================================
-   LUMEN TENTACLES
-   ===================================================================== */
-.lumen-tentacle {
-    position: absolute;
-    width: 2px;
-    background: linear-gradient(to bottom, rgba(255,128,179,0.8), rgba(255,128,179,0));
-    transform-origin: top center;
-    pointer-events: none;
-    z-index: 19;
+#bottom-bar {
+  position: absolute; 
+  bottom: 0; 
+  left: 0; 
+  width: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex; 
+  justify-content: space-around; 
+  padding: 15px 0; 
+  pointer-events: auto;
 }
 
-/* =====================================================================
-   FLOAT TEXT (Food +1, zZz)
-   ===================================================================== */
-.float-text {
-    position: absolute;
-    font-size: 18px;
-    font-weight: bold;
-    z-index: 60;
-    pointer-events: none;
-    animation: floatTextUp 3.5s ease-out forwards;
+.biome-btn {
+  color: #0f0; 
+  font-size: 0.9rem; 
+  font-weight: bold; 
+  cursor: pointer;
+  padding: 5px 10px; 
+  transition: color 0.2s;
 }
-@keyframes floatTextUp {
-    0% { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(-150px); opacity: 0; }
-}
-
-/* =====================================================================
-   MILESTONE OVERLAY
-   ===================================================================== */
-#milestone-overlay {
-    position: absolute;
-    top: 30%; left: 0; width: 100%;
-    text-align: center;
-    font-size: 36px;
-    font-weight: bold;
-    color: #FFD700;
-    text-shadow: 0 0 20px rgba(255,215,0,0.8);
-    z-index: 70;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.5s;
-}
-#milestone-overlay.active { opacity: 1; }
-
-/* =====================================================================
-   BOTTOM BAR - BIOME CONTROLS
-   ===================================================================== */
-#biome-controls { 
-    position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; 
-    background: rgba(0, 0, 0, 0.85); 
-    display: flex; justify-content: space-around; align-items: center; 
-    z-index: 50; border-top: 1px solid rgba(255, 255, 255, 0.1); 
-}
-.biome-btn { 
-    background: transparent; border: none; color: #00ff00; 
-    font-size: 14px; font-weight: bold; padding: 10px; cursor: pointer; 
-    letter-spacing: 1px; transition: color 0.3s; -webkit-tap-highlight-color: transparent; 
-}
-.biome-btn.active { color: #ff1e1e; text-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+.biome-btn.active { color: #f00; } 
