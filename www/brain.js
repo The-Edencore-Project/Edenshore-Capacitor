@@ -1,5 +1,5 @@
 // =====================================================================
-// EDENCORE - brain.js (Sensors + APM)
+// EDENCORE - brain.js (Fully Repaired)
 // =====================================================================
 class EdenshoreBrain {
     constructor() {
@@ -14,16 +14,18 @@ class EdenshoreBrain {
     }
 
     initSensors() {
+        // Motion Sensor
         window.addEventListener('devicemotion', (e) => {
             let acc = e.accelerationIncludingGravity;
             if (acc) {
                 let mag = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
                 let mov = Math.abs(mag - 9.8);
-                if (mov < 1.5) mov = 0.0; 
+                if (mov < 1.5) mov = 0.0; // Deadzone
                 this.motion = Math.min(1.0, mov / 10.0); 
             }
         });
 
+        // Battery Sensor
         if (navigator.getBattery) {
             navigator.getBattery().then(b => {
                 this.battery = b.level;
@@ -56,8 +58,11 @@ class EdenshoreBrain {
         if (this.bond >= 100) title = "Council Member";
         
         const el = document.getElementById("bond-text");
-        if(el) el.innerText = `BOND: ${this.bond} - ${title}`;
+        if (el) {
+            el.innerText = `BOND: ${this.bond} - ${title}`;
+        }
     }
 }
 
-const brain = new EdenshoreBrain();
+// Initialize the brain immediately
+window.brain = new EdenshoreBrain();
