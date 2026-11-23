@@ -31,6 +31,7 @@ function resize() {
 }
 
 let lastTime = performance.now();
+let dialogueCooldown = 0;
 
 function tick(currentTime) {
     const dt = (currentTime - lastTime) / 1000; 
@@ -39,7 +40,6 @@ function tick(currentTime) {
     
     state.time_elapsed += safeDt;
     
-    // Check if brain exists before updating
     if (window.brain) {
         window.brain.update(safeDt); 
     }
@@ -67,6 +67,19 @@ function tick(currentTime) {
         el.style.transform = `translate(${driftX}px, ${finalY}px) scale(${breathScale})`;
     }
 
+    // Dialogue Trigger System
+    dialogueCooldown += safeDt;
+    // Trigger a line every 15 seconds if no one is talking
+    if (dialogueCooldown > 15.0 && window.dialogue && !window.dialogue.isTalking) {
+        dialogueCooldown = 0;
+        let speaker = "Solon";
+        if (window.brain) {
+            if (window.brain.mood === "PLAYFUL") speaker = "Prism";
+            else if (window.brain.mood === "SLEEPY") speaker = "Lumen";
+        }
+        window.dialogue.triggerRandom(speaker, window.brain.mood);
+    }
+
     requestAnimationFrame(tick);
 }
 
@@ -74,24 +87,14 @@ function tick(currentTime) {
 document.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('splash-screen');
     if (splash) {
-        // Tap to dismiss
         splash.addEventListener('click', () => {
             splash.style.opacity = '0';
             setTimeout(() => {
                 splash.style.display = 'none';
             }, 800);
         });
-        
-        // Auto-dismiss after 3 seconds just in case
-        setTimeout(() => {
-            if (splash.style.display !== 'none') {
-                splash.style.opacity = '0';
-                setTimeout(() => { splash.style.display = 'none'; }, 800);
-            }
-        }, 3000);
     }
 
-    // Start the engine
     resize();
     requestAnimationFrame(tick); 
 });
