@@ -1,3 +1,21 @@
+// ============================================================
+// EDENSHORE - APP.JS V2.1 (DEFENSIVE BOOT)
+// ============================================================
+
+// GLOBAL ERROR TRAP (If anything crashes, show it on screen)
+window.addEventListener('error', (e) => {
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = "position:absolute;top:10px;left:10px;right:10px;background:red;color:white;z-index:9999;padding:10px;font-size:12px;font-family:monospace;";
+    errDiv.innerText = "CRASH: " + e.message + "\n" + e.filename + ":" + e.lineno;
+    document.body.appendChild(errDiv);
+});
+window.addEventListener('unhandledrejection', (e) => {
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = "position:absolute;top:10px;left:10px;right:10px;background:red;color:white;z-index:9999;padding:10px;font-size:12px;font-family:monospace;";
+    errDiv.innerText = "PROMISE REJECTION: " + e.reason;
+    document.body.appendChild(errDiv);
+});
+
 import { loadSave, saveData, addBond, getStatus } from './save.js';
 import { Brain } from './brain.js';
 import { audio } from './audio.js';
@@ -97,7 +115,6 @@ function spawnBubble(speaker, text) {
     let cx = rect.left + (rect.width / 2);
     let spawnY = Math.max(100, rect.top - 60);
 
-    // Use requestAnimationFrame to ensure text is measured AFTER DOM is ready
     requestAnimationFrame(() => {
         ctx.font = "600 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
         const tw = Math.max(ctx.measureText(text).width, 20);
@@ -147,20 +164,17 @@ function drawBubbles(now) {
         const currentX = b.x + sway;
         const currentY = b.y - rise;
 
-        // Draw Circle
         ctx.beginPath();
         ctx.arc(currentX, currentY, b.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(38, 64, 89, ${0.45 * alpha})`;
         ctx.fill();
 
-        // Draw Highlight Arc
         ctx.beginPath();
         ctx.arc(currentX, currentY, b.radius * 0.75, 100 * Math.PI / 180, 140 * Math.PI / 180);
         ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * alpha})`;
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Draw Text
         ctx.font = "600 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
         ctx.fillStyle = b.color;
         ctx.textAlign = "center";
@@ -332,10 +346,7 @@ function handleWorldTap() {
         brain.wakeUp();
         return;
     }
-    if (brain.gameState === "riddle_wait") {
-        // Ignore world taps during riddle; force them to tap a creature
-        return;
-    }
+    if (brain.gameState === "riddle_wait") return;
     const scene = brain.onTap();
     if (scene) queueScene(scene);
     audio.sting("Vertex");
@@ -404,8 +415,6 @@ function initBiomes() {
             bg.className = cls;
             document.querySelectorAll(".biome-btn").forEach(b => b.classList.remove("active"));
             document.getElementById(id).classList.add("active");
-            
-            // Trigger Biome Brain logic
             const biomeName = cls.replace("biome-", "").toUpperCase();
             brain.onBiomeSwitch(biomeName);
         });
@@ -437,14 +446,11 @@ function animate(time) {
     const dt = now - lastTime;
     lastTime = now;
 
-    // 1. Update Brain
     const newScene = brain.update(dt);
     if (newScene) queueScene(newScene);
 
-    // 2. Update Theatre
     updateTheatre(dt);
 
-    // 3. Speech Queue
     if (speechQueue.length > 0 && activeBubbles.length < 2) {
         speechTimer += dt;
         if (speechTimer >= speechQueue[0].delay) {
@@ -454,7 +460,6 @@ function animate(time) {
         }
     }
 
-    // 4. Update Creatures
     CREATURES.forEach((c) => {
         const el = c.id === "solon" ? document.getElementById("solon-group") : document.getElementById(c.id);
         if (!el) return;
@@ -466,7 +471,6 @@ function animate(time) {
         let targetX = c.x;
         let targetY = c.y;
 
-        // THEATRE POSITIONING
         if (brain.sleepState === "SLEEPING" || brain.sleepState === "WAKING") {
             targetY = 0.85;
             if (c.name === "Vertex") targetY = 0.88;
@@ -484,7 +488,6 @@ function animate(time) {
         el.style.transform = `translateX(-50%) translate(${driftX}px, ${driftY}px)`;
     });
 
-    // 5. Visuals
     updateSolonFins(dt);
     updateLumenTentacles(now);
     drawBubbles(time);
@@ -495,31 +498,43 @@ function animate(time) {
 }
 
 // ============================================================
-// BOOT
+// BOOT (Wrapped in try/catch so you can see errors)
 // ============================================================
-document.getElementById("start-overlay").addEventListener("click", () => {
+try {
     const overlay = document.getElementById("start-overlay");
-    overlay.style.opacity = "0";
-    setTimeout(() => overlay.style.display = "none", 1000);
-    audio.start();
-});
+    if (overlay) {
+        overlay.addEventListener("click", () => {
+            overlay.style.opacity = "0";
+            setTimeout(() => overlay.style.display = "none", 1000);
+            try { audio.start(); } catch(e) { console.error("Audio fail", e); }
+        });
+    }
 
-window.addEventListener("DOMContentLoaded", () => {
-    save.visits = (save.visits || 0) + 1;
-    saveData(save);
-    updateUI();
-    bindCreatures();
-    bindUtilBar();
-    initBiomes();
-    initLumenTentacles();
-    spawnParticles();
-    
-    document.body.addEventListener("click", (e) => {
-        if (e.target.tagName === "IMG" || e.target.id === "solon-group") return;
-        if (e.target.id === "btn-feed" || e.target.id === "btn-sleep" || e.target.id === "btn-dim" || e.target.id === "btn-vol" || e.target.id === "btn-menu") return;
-        if (e.target.classList.contains("biome-btn")) return;
-        handleWorldTap();
+    window.addEventListener("DOMContentLoaded", () => {
+        try {
+            save.visits = (save.visits || 0) + 1;
+            saveData(save);
+            updateUI();
+            bindCreatures();
+            bindUtilBar();
+            initBiomes();
+            initLumenTentacles();
+            spawnParticles();
+            
+            document.body.addEventListener("click", (e) => {
+                if (e.target.tagName === "IMG" || e.target.id === "solon-group") return;
+                if (e.target.id.startsWith("btn-")) return;
+                if (e.target.classList.contains("biome-btn")) return;
+                handleWorldTap();
+            });
+
+            requestAnimationFrame(animate);
+        } catch(err) {
+            console.error("BOOT ERROR:", err);
+            alert("Boot Error: " + err.message);
+        }
     });
-
-    requestAnimationFrame(animate);
-});
+} catch (err) {
+    console.error("GLOBAL ERROR:", err);
+    alert("Global Error: " + err.message);
+}
