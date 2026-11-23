@@ -9,9 +9,9 @@
 <body>
 
   <!-- THE SPLASH SCREEN -->
-  <div id="splash-screen" style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #021a30; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.8s ease;">
-    <h1 style="color: #0bf; font-size: 3rem; letter-spacing: 4px; text-shadow: 0 0 20px rgba(0,187,255,0.8); margin-bottom: 20px;">EDENSHORE</h1>
-    <p style="color: #668; font-size: 1rem; letter-spacing: 1px;">Tap anywhere to enter</p>
+  <div id="splash-screen">
+    <h1>EDENSHORE</h1>
+    <p>Tap anywhere to enter</p>
   </div>
 
   <!-- THE SCENE -->
@@ -36,9 +36,16 @@
 
   <!-- THE UI LAYER -->
   <div id="ui-layer">
+    
+    <!-- THE GHOST BUBBLE -->
+    <div id="ghost-bubble">
+      <div id="bubble-text"></div>
+    </div>
+
     <div id="top-bar">
       <div id="bond-text">BOND: 0 - Stranger</div>
     </div>
+    
     <div id="bottom-bar">
       <div class="biome-btn active" data-biome="LAGOON">LAGOON</div>
       <div class="biome-btn" data-biome="SHORE">SHORE</div>
@@ -47,10 +54,11 @@
     </div>
   </div>
 
-  <!-- LOAD MODULES IN ORDER (No custom injection needed) -->
+  <!-- LOAD MODULES -->
   <script src="save.js"></script>
   <script src="audio.js"></script>
   <script src="brain.js"></script>
+  <script src="dialogue.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
