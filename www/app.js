@@ -283,3 +283,243 @@ function updateLumenTentacles(now) {
         t.style.left = `${baseX + offsetX + sway}px`;
         t.style.top = `${baseY}px`;
         t.style.height = `${len}px`;
+        t.style.transform = `rotate(${(idx - 2) * 4}deg)`;
+    });
+}
+
+// ============================================================
+// SPRITE UPDATE
+// ============================================================
+function updateCreatureSprite(c, now) {
+    const el = document.getElementById(c.id);
+    if (!el) return;
+
+    if (brain.sleepState === "SLEEPING") { el.src = el.dataset.blink; return; }
+    if (c.talkTimer > 0) {
+        el.src = (Math.floor(now * 1000 / 150) % 2 === 0) ? el.dataset.talk : el.dataset.base;
+        return;
+    }
+    if (c.isBlinking) { el.src = el.dataset.blink; return; }
+    el.src = el.dataset.base;
+}
+
+function updateBlink(c, dt) {
+    if (c.talkTimer > 0 || brain.sleepState === "SLEEPING") return;
+    c.blinkTimer -= dt;
+    if (c.blinkTimer <= 0) {
+        if (!c.isBlinking) { c.isBlinking = true; c.blinkTimer = 0.15; }
+        else { c.isBlinking = false; c.blinkTimer = 3.0 + Math.random() * 3.0; }
+    }
+}
+
+function updateSolonFins(dt) {
+    finTimer += dt;
+    if (finTimer < 0.12) return;
+    finTimer = 0;
+    finFrame++;
+    if (finFrame > 5) finFrame = 1;
+    const left = document.getElementById("solonLeftFin");
+    const right = document.getElementById("solonRightFin");
+    if (left) left.src = `assets/images/solon_left_fin_${finFrame}.png`;
+    if (right) right.src = `assets/images/solon_right_fin_${finFrame}.png`;
+}
+
+// ============================================================
+// INPUT & UI BINDING
+// ============================================================
+function handleWorldTap() {
+    if (brain.sleepState !== "AWAKE") {
+        brain.wakeUp();
+        return;
+    }
+    if (brain.gameState === "riddle_wait") {
+        // Ignore world taps during riddle; force them to tap a creature
+        return;
+    }
+    const scene = brain.onTap();
+    if (scene) queueScene(scene);
+    audio.sting("Vertex");
+}
+
+function handleCreatureTap(id) {
+    addBond(save, 1);
+    const milestone = addBond(save, 0);
+    if (milestone) {
+        triggerMilestoneBurst();
+        showMilestone(`MILESTONE: ${save.bond_score}`);
+    }
+    
+    if (brain.gameState === "riddle_wait") {
+        brain.onCreatureTap(id.charAt(0).toUpperCase() + id.slice(1));
+    } else {
+        const scene = brain.onTap();
+        if (scene) queueScene(scene);
+    }
+    audio.sting(id);
+    updateUI();
+}
+
+function bindCreatures() {
+    CREATURES.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (el) el.addEventListener("click", () => handleCreatureTap(c.id));
+    });
+    const solonGroup = document.getElementById("solon-group");
+    if (solonGroup) solonGroup.addEventListener("click", () => handleCreatureTap("solon"));
+}
+
+function bindUtilBar() {
+    document.getElementById("btn-feed").addEventListener("click", () => {
+        startFeeding();
+        const response = brain.onFeed();
+        if (response) queueScene(response);
+    });
+    document.getElementById("btn-sleep").addEventListener("click", () => {
+        if (brain.sleepState === "AWAKE") {
+            brain.triggerSleep();
+            queueScene([["Lumen", "It is time for rest, little one."]]);
+        } else {
+            brain.wakeUp();
+            queueScene([["Vertex", "I'm awake! I'm awake!"]]);
+        }
+    });
+    document.getElementById("btn-dim").addEventListener("click", () => {});
+    document.getElementById("btn-vol").addEventListener("click", () => {
+        audio.volume = audio.volume > 0 ? 0 : 0.30;
+        if (audio.music) audio.music.volume = audio.volume;
+    });
+    document.getElementById("btn-menu").addEventListener("click", () => {});
+}
+
+function updateUI() {
+    const el = document.getElementById("bond-text");
+    if (el) el.textContent = getStatus(save);
+}
+
+function initBiomes() {
+    const bg = document.getElementById("bg-gradient");
+    const map = { lagoonBtn: "biome-lagoon", shoreBtn: "biome-shore", twilightBtn: "biome-twilight", deepBtn: "biome-deep" };
+    Object.entries(map).forEach(([id, cls]) => {
+        document.getElementById(id)?.addEventListener("click", () => {
+            bg.className = cls;
+            document.querySelectorAll(".biome-btn").forEach(b => b.classList.remove("active"));
+            document.getElementById(id).classList.add("active");
+            
+            // Trigger Biome Brain logic
+            const biomeName = cls.replace("biome-", "").toUpperCase();
+            brain.onBiomeSwitch(biomeName);
+        });
+    });
+}
+
+function spawnParticles() {
+    const layer = document.getElementById("particle-layer");
+    if (!layer) return;
+    setInterval(() => {
+        const p = document.createElement("div");
+        p.className = "particle";
+        const size = Math.random() * 4 + 2;
+        p.style.width = `${size}px`;
+        p.style.height = `${size}px`;
+        p.style.left = `${Math.random() * 100}%`;
+        p.style.bottom = "-10px";
+        p.style.animationDuration = `${Math.random() * 5 + 5}s`;
+        layer.appendChild(p);
+        setTimeout(() => p.remove(), 10000);
+    }, 300);
+}
+
+// ============================================================
+// MAIN ANIMATION LOOP
+// ============================================================
+function animate(time) {
+    const now = time * 0.001;
+    const dt = now - lastTime;
+    lastTime = now;
+
+    // 1. Update Brain
+    const newScene = brain.update(dt);
+    if (newScene) queueScene(newScene);
+
+    // 2. Update Theatre
+    updateTheatre(dt);
+
+    // 3. Speech Queue
+    if (speechQueue.length > 0 && activeBubbles.length < 2) {
+        speechTimer += dt;
+        if (speechTimer >= speechQueue[0].delay) {
+            speechTimer = 0;
+            const item = speechQueue.shift();
+            spawnBubble(item.speaker, item.text);
+        }
+    }
+
+    // 4. Update Creatures
+    CREATURES.forEach((c) => {
+        const el = c.id === "solon" ? document.getElementById("solon-group") : document.getElementById(c.id);
+        if (!el) return;
+
+        if (c.talkTimer > 0) c.talkTimer -= dt;
+        updateBlink(c, dt);
+        if (c.id !== "solon") updateCreatureSprite(c, now);
+
+        let targetX = c.x;
+        let targetY = c.y;
+
+        // THEATRE POSITIONING
+        if (brain.sleepState === "SLEEPING" || brain.sleepState === "WAKING") {
+            targetY = 0.85;
+            if (c.name === "Vertex") targetY = 0.88;
+        } else if (theatreState === "FEEDING") {
+            if (c.name === "Lumen" || c.name === "Prism") targetY = 0.15;
+            else if (c.name === "Solon") { targetX = 0.5 + Math.sin(now * 0.8) * 0.3; targetY = 0.5; }
+            else if (c.name === "Vertex") targetY = 0.85;
+        }
+
+        el.style.left = `${targetX * 100}%`;
+        el.style.top = `${targetY * 100}%`;
+
+        const driftX = Math.sin((now * c.speed) + c.phase) * 10;
+        const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 5;
+        el.style.transform = `translateX(-50%) translate(${driftX}px, ${driftY}px)`;
+    });
+
+    // 5. Visuals
+    updateSolonFins(dt);
+    updateLumenTentacles(now);
+    drawBubbles(time);
+    drawFood();
+    updateDebugHUD();
+
+    requestAnimationFrame(animate);
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+document.getElementById("start-overlay").addEventListener("click", () => {
+    const overlay = document.getElementById("start-overlay");
+    overlay.style.opacity = "0";
+    setTimeout(() => overlay.style.display = "none", 1000);
+    audio.start();
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+    save.visits = (save.visits || 0) + 1;
+    saveData(save);
+    updateUI();
+    bindCreatures();
+    bindUtilBar();
+    initBiomes();
+    initLumenTentacles();
+    spawnParticles();
+    
+    document.body.addEventListener("click", (e) => {
+        if (e.target.tagName === "IMG" || e.target.id === "solon-group") return;
+        if (e.target.id === "btn-feed" || e.target.id === "btn-sleep" || e.target.id === "btn-dim" || e.target.id === "btn-vol" || e.target.id === "btn-menu") return;
+        if (e.target.classList.contains("biome-btn")) return;
+        handleWorldTap();
+    });
+
+    requestAnimationFrame(animate);
+});
