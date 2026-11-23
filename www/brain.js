@@ -9,7 +9,7 @@ class EdenshoreBrain {
         this.motion = 0.0;
         this.battery = 1.0;
         this.timeElapsed = 0;
-        
+
         this.initSensors();
         this.updateUI();
     }
@@ -41,7 +41,7 @@ class EdenshoreBrain {
 
     update(dt) {
         this.timeElapsed += dt;
-        
+
         // Mood Logic
         if (this.motion > 0.4) {
             this.mood = "PLAYFUL";
@@ -49,6 +49,11 @@ class EdenshoreBrain {
             this.mood = "SLEEPY";
         } else {
             this.mood = "NORMAL";
+        }
+
+        // Tell Audio Engine about Mood Change
+        if (window.audio) {
+            window.audio.setMood(this.mood);
         }
     }
 
@@ -62,7 +67,7 @@ class EdenshoreBrain {
         if (this.bond >= 10) title = "Acquaintance";
         if (this.bond >= 50) title = "Friend";
         if (this.bond >= 100) title = "Council Member";
-        
+
         const el = document.getElementById("bond-text");
         if (el) {
             el.innerText = "BOND: " + this.bond + " - " + title;
