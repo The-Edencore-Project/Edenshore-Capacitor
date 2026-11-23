@@ -4,9 +4,8 @@ import { audio } from './audio.js';
 
 let save = loadSave();
 let brain = new Brain(save);
-let lastTime = 0;
+let lastTime = performance.now() / 1000;
 
-// THE UPSIDE DOWN PENTAGON LAYOUT (Base Coordinates)
 const CREATURES = [
     { id: "solon",  name: "Solon",  x: 0.30, y: 0.45, speed: 0.5, phase: 0,   talkTimer: 0, blinkTimer: 3.0, isBlinking: false },
     { id: "prism",  name: "Prism",  x: 0.70, y: 0.45, speed: 1.2, phase: 1.5, talkTimer: 0, blinkTimer: 4.0, isBlinking: false },
@@ -27,10 +26,9 @@ let finFrame = 1;
 let finTimer = 0;
 let lumenTentacleEls = [];
 
-// THEATRE STATE
-let theatreState = "IDLE"; // IDLE, FEEDING, SLEEPING
+let theatreState = "IDLE"; 
 let theatreTimer = 0;
-let foodParticles = []; // {x, y, vx, vy, phase}
+let foodParticles = []; 
 let sleepDialogueIndex = 0;
 
 const SLEEP_DIALOGUE = [
@@ -43,7 +41,6 @@ const SLEEP_DIALOGUE = [
     ["Lumen", "Goodnight, Vertex."]
 ];
 
-// CANVAS SETUP
 const canvas = document.getElementById("fx-canvas");
 const ctx = canvas.getContext("2d");
 
@@ -53,11 +50,6 @@ function resizeCanvas() {
 }
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
-
-// Wait for fonts to load before drawing
-if (document.fonts) {
-    document.fonts.ready.then(() => { console.log("Fonts loaded"); });
-}
 
 // ============================================================
 // THE VOICE: 14-char chunking
@@ -81,8 +73,9 @@ function chunkText(text) {
 }
 
 function queueScene(scene) {
-    if (!scene) return;
+    if (!scene || !Array.isArray(scene)) return;
     scene.forEach(line => {
+        if (!line || line.length < 2) return;
         const speaker = line[0];
         const text = line[1];
         const chunks = chunkText(text);
@@ -91,7 +84,7 @@ function queueScene(scene) {
 }
 
 // ============================================================
-// THE BUBBLE: Canvas Rendering (Bulletproof)
+// THE BUBBLE (FIXED for WebView)
 // ============================================================
 function spawnBubble(speaker, text) {
     const c = CREATURES.find(x => x.name === speaker) || CREATURES.find(x => x.name === "Vertex");
@@ -104,32 +97,32 @@ function spawnBubble(speaker, text) {
     let cx = rect.left + (rect.width / 2);
     let spawnY = Math.max(100, rect.top - 60);
 
-    // Ensure font is set before measuring
-    ctx.font = "600 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-    const tw = Math.max(ctx.measureText(text).width, 20); // Minimum width 20px
-    const th = 20; 
-    
-    const diag = Math.sqrt(tw * tw + th * th);
-    const refSize = Math.min(window.innerWidth, window.innerHeight);
-    const diameter = Math.max(diag + (refSize * 0.08), 100); // Minimum diameter 100px
-    const radius = diameter / 2;
+    // Use requestAnimationFrame to ensure text is measured AFTER DOM is ready
+    requestAnimationFrame(() => {
+        ctx.font = "600 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        const tw = Math.max(ctx.measureText(text).width, 20);
+        const th = 20; 
+        const diag = Math.sqrt(tw * tw + th * th);
+        const refSize = Math.min(window.innerWidth, window.innerHeight);
+        const diameter = Math.max(diag + (refSize * 0.08), 100);
+        const radius = diameter / 2;
 
-    // Clamp X position
-    if (cx - radius < 0) cx = radius;
-    if (cx + radius > window.innerWidth) cx = window.innerWidth - radius;
+        if (cx - radius < 0) cx = radius;
+        if (cx + radius > window.innerWidth) cx = window.innerWidth - radius;
 
-    activeBubbles.push({
-        speaker: speaker,
-        text: text,
-        color: TEXT_COLORS[speaker] || "#ffffff",
-        x: cx,
-        y: spawnY,
-        radius: radius,
-        startTime: performance.now(),
-        life: 6000
+        activeBubbles.push({
+            speaker: speaker,
+            text: text,
+            color: TEXT_COLORS[speaker] || "#ffffff",
+            x: cx,
+            y: spawnY,
+            radius: radius,
+            startTime: performance.now(),
+            life: 6000
+        });
+
+        c.talkTimer = Math.max(1.5, Math.min(6.0, text.length * 0.1));
     });
-
-    c.talkTimer = Math.max(1.5, Math.min(6.0, text.length * 0.1));
 }
 
 function drawBubbles(now) {
@@ -138,7 +131,7 @@ function drawBubbles(now) {
     for (let i = activeBubbles.length - 1; i >= 0; i--) {
         const b = activeBubbles[i];
         const progress = (now - b.startTime) / b.life;
-        
+
         if (progress >= 1.0) {
             activeBubbles.splice(i, 1);
             continue;
@@ -151,24 +144,23 @@ function drawBubbles(now) {
 
         const rise = (canvas.height * 0.48) * progress;
         const sway = Math.sin(progress * Math.PI * 2) * (canvas.width * 0.05);
-        
         const currentX = b.x + sway;
         const currentY = b.y - rise;
 
-        // 1. Draw Circle
+        // Draw Circle
         ctx.beginPath();
         ctx.arc(currentX, currentY, b.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(38, 64, 89, ${0.45 * alpha})`;
         ctx.fill();
 
-        // 2. Draw Highlight Arc
+        // Draw Highlight Arc
         ctx.beginPath();
         ctx.arc(currentX, currentY, b.radius * 0.75, 100 * Math.PI / 180, 140 * Math.PI / 180);
         ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * alpha})`;
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 3. Draw Text
+        // Draw Text
         ctx.font = "600 15px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
         ctx.fillStyle = b.color;
         ctx.textAlign = "center";
@@ -184,9 +176,8 @@ function drawBubbles(now) {
 // ============================================================
 function startFeeding() {
     theatreState = "FEEDING";
-    theatreTimer = 10.0; // 10 seconds of feeding
+    theatreTimer = 10.0; 
     foodParticles = [];
-    // Spawn 15 food particles at the top
     for (let i = 0; i < 15; i++) {
         foodParticles.push({
             x: window.innerWidth * 0.5 + (Math.random() - 0.5) * (window.innerWidth * 0.6),
@@ -199,14 +190,6 @@ function startFeeding() {
     audio.sting("Vertex");
 }
 
-function startSleeping() {
-    theatreState = "SLEEPING";
-    sleepDialogueIndex = 0;
-    theatreTimer = 0;
-    queueScene([SLEEP_DIALOGUE[0]]);
-    sleepDialogueIndex++;
-}
-
 function updateTheatre(dt) {
     if (theatreState === "FEEDING") {
         theatreTimer -= dt;
@@ -214,27 +197,12 @@ function updateTheatre(dt) {
             theatreState = "IDLE";
             foodParticles = [];
         }
-    } 
-    else if (theatreState === "SLEEPING") {
-        theatreTimer += dt;
-        // Trigger next dialogue line every 3 seconds
-        if (sleepDialogueIndex < SLEEP_DIALOGUE.length && theatreTimer > (sleepDialogueIndex * 3.0)) {
-            queueScene([SLEEP_DIALOGUE[sleepDialogueIndex]]);
-            sleepDialogueIndex++;
-        }
-        if (sleepDialogueIndex >= SLEEP_DIALOGUE.length && theatreTimer > (SLEEP_DIALOGUE.length * 3.0) + 2.0) {
-            brain.sleepState = "SLEEPING";
-        }
     }
-
-    // Update Food Particles
     for (let i = foodParticles.length - 1; i >= 0; i--) {
         const f = foodParticles[i];
         f.x += f.vx * dt;
         f.y += f.vy * dt;
-        if (f.y > window.innerHeight) {
-            foodParticles.splice(i, 1);
-        }
+        if (f.y > window.innerHeight) foodParticles.splice(i, 1);
     }
 }
 
@@ -248,37 +216,31 @@ function drawFood() {
 }
 
 // ============================================================
-// HUD Debug Overlay
+// HUD & MILESTONES
 // ============================================================
 function updateDebugHUD() {
     const el = document.getElementById("debug-overlay");
     if (!el) return;
-    const netStr = "[0.5, 1.0, 0.9, 1.0]";
+    const actStr = "[0.5, 1.0, 0.9, 1.0]";
     el.innerText = 
         `Mood: ${brain.currentMood}\n` +
         `Sleep: ${brain.sleepState}\n` +
-        `State: ${theatreState}\n` +
+        `State: ${brain.gameState}\n` +
         `Light: 0.50 | Temp: 0.60\n` +
         `Motion: 0.00 | Shake: 0.00\n` +
         `Rhythm: 1.0s | Heat: ${brain.heat}\n` +
-        `Net: ${netStr}`;
+        `Net: ${actStr}`;
 }
 
-// ============================================================
-// Milestone & Float Text
-// ============================================================
 function triggerMilestoneBurst() {
     const layer = document.getElementById("particle-layer");
+    if (!layer) return;
     for (let i = 0; i < 30; i++) {
         setTimeout(() => {
             const p = document.createElement("div");
             p.className = "gold-particle";
-            const size = Math.random() * 6 + 2;
-            p.style.width = `${size}px`;
-            p.style.height = `${size}px`;
             p.style.left = `${50 + (Math.random() - 0.5) * 20}%`;
             p.style.bottom = `50%`;
-            p.style.animationDuration = `${Math.random() * 2 + 1}s`;
             layer.appendChild(p);
             setTimeout(() => p.remove(), 3000);
         }, i * 50);
@@ -294,7 +256,7 @@ function showMilestone(text) {
 }
 
 // ============================================================
-// Lumen Tentacles
+// LUMEN TENTACLES
 // ============================================================
 function initLumenTentacles() {
     const lumen = document.getElementById("lumen");
@@ -321,222 +283,3 @@ function updateLumenTentacles(now) {
         t.style.left = `${baseX + offsetX + sway}px`;
         t.style.top = `${baseY}px`;
         t.style.height = `${len}px`;
-        t.style.transform = `rotate(${(idx - 2) * 4}deg)`;
-    });
-}
-
-// ============================================================
-// Creature Sprite Update
-// ============================================================
-function updateCreatureSprite(c, now) {
-    const el = document.getElementById(c.id);
-    if (!el) return;
-
-    // Sleep state forces closed eyes
-    if (brain.sleepState === "SLEEPING") {
-        el.src = el.dataset.blink;
-        return;
-    }
-
-    if (c.talkTimer > 0) {
-        el.src = (Math.floor(now * 1000 / 150) % 2 === 0) ? el.dataset.talk : el.dataset.base;
-        return;
-    }
-    if (c.isBlinking) { el.src = el.dataset.blink; return; }
-    el.src = el.dataset.base;
-}
-
-function updateBlink(c, dt) {
-    if (c.talkTimer > 0 || brain.sleepState === "SLEEPING") return;
-    c.blinkTimer -= dt;
-    if (c.blinkTimer <= 0) {
-        if (!c.isBlinking) { c.isBlinking = true; c.blinkTimer = 0.15; }
-        else { c.isBlinking = false; c.blinkTimer = 3.0 + Math.random() * 3.0; }
-    }
-}
-
-function updateSolonFins(dt) {
-    finTimer += dt;
-    if (finTimer < 0.12) return;
-    finTimer = 0;
-    finFrame++;
-    if (finFrame > 5) finFrame = 1;
-    const left = document.getElementById("solonLeftFin");
-    const right = document.getElementById("solonRightFin");
-    if (left) left.src = `assets/images/solon_left_fin_${finFrame}.png`;
-    if (right) right.src = `assets/images/solon_right_fin_${finFrame}.png`;
-}
-
-// ============================================================
-// Interaction & Buttons
-// ============================================================
-function tapCreature(id) {
-    const milestone = addBond(save, 1);
-    if (milestone) {
-        triggerMilestoneBurst();
-        showMilestone(`MILESTONE: ${save.bond_score}`);
-    }
-    const scene = brain.onTap();
-    if (scene) queueScene(scene);
-    audio.sting(id);
-    updateUI();
-}
-
-function bindCreatures() {
-    CREATURES.forEach(c => {
-        const el = document.getElementById(c.id);
-        if (el) el.addEventListener("click", () => tapCreature(c.id));
-    });
-    const solonGroup = document.getElementById("solon-group");
-    if (solonGroup) solonGroup.addEventListener("click", () => tapCreature("solon"));
-}
-
-function bindUtilBar() {
-    document.getElementById("btn-feed").addEventListener("click", () => {
-        startFeeding();
-        const response = brain.onFeed();
-        if (response) queueScene(response);
-    });
-    document.getElementById("btn-sleep").addEventListener("click", () => {
-        if (brain.sleepState === "AWAKE") {
-            startSleeping();
-        } else {
-            brain.sleepState = "AWAKE";
-            theatreState = "IDLE";
-            queueScene([["Vertex", "I'm awake! I'm awake!"]]);
-        }
-    });
-    document.getElementById("btn-dim").addEventListener("click", () => {});
-    document.getElementById("btn-vol").addEventListener("click", () => {
-        audio.volume = audio.volume > 0 ? 0 : 0.30;
-        if (audio.music) audio.music.volume = audio.volume;
-    });
-    document.getElementById("btn-menu").addEventListener("click", () => {});
-}
-
-function updateUI() {
-    const el = document.getElementById("bond-text");
-    if (el) el.textContent = getStatus(save);
-}
-
-function initBiomes() {
-    const bg = document.getElementById("bg-gradient");
-    const map = { lagoonBtn: "biome-lagoon", shoreBtn: "biome-shore", twilightBtn: "biome-twilight", deepBtn: "biome-deep" };
-    Object.entries(map).forEach(([id, cls]) => {
-        document.getElementById(id)?.addEventListener("click", () => {
-            bg.className = cls;
-            document.querySelectorAll(".biome-btn").forEach(b => b.classList.remove("active"));
-            document.getElementById(id).classList.add("active");
-        });
-    });
-}
-
-function spawnParticles() {
-    const layer = document.getElementById("particle-layer");
-    if (!layer) return;
-    setInterval(() => {
-        const p = document.createElement("div");
-        p.className = "particle";
-        const size = Math.random() * 4 + 2;
-        p.style.width = `${size}px`;
-        p.style.height = `${size}px`;
-        p.style.left = `${Math.random() * 100}%`;
-        p.style.bottom = "-10px";
-        p.style.animationDuration = `${Math.random() * 5 + 5}s`;
-        layer.appendChild(p);
-        setTimeout(() => p.remove(), 10000);
-    }, 300);
-}
-
-// ============================================================
-// Main Animation Loop
-// ============================================================
-function animate(time) {
-    const now = time * 0.001;
-    const dt = now - lastTime;
-    lastTime = now;
-
-    // 1. Update Brain
-    const newScene = brain.update(dt);
-    if (newScene) queueScene(newScene);
-
-    // 2. Update Theatre
-    updateTheatre(dt);
-
-    // 3. Handle Speech Queue
-    if (speechQueue.length > 0 && activeBubbles.length < 2) {
-        speechTimer += dt;
-        if (speechTimer >= speechQueue[0].delay) {
-            speechTimer = 0;
-            const item = speechQueue.shift();
-            spawnBubble(item.speaker, item.text);
-        }
-    }
-
-    // 4. Update Creatures
-    CREATURES.forEach((c) => {
-        const el = c.id === "solon" ? document.getElementById("solon-group") : document.getElementById(c.id);
-        if (!el) return;
-
-        if (c.talkTimer > 0) c.talkTimer -= dt;
-        updateBlink(c, dt);
-        if (c.id !== "solon") updateCreatureSprite(c, now);
-
-        // THEATRE POSITIONING
-        let targetX = c.x;
-        let targetY = c.y;
-
-        if (theatreState === "FEEDING") {
-            if (c.name === "Lumen" || c.name === "Prism") {
-                targetY = 0.15; // Rise to top
-            } else if (c.name === "Solon") {
-                targetX = 0.5 + Math.sin(now * 0.8) * 0.3; // Swim across
-                targetY = 0.5;
-            } else if (c.name === "Vertex") {
-                targetY = 0.85; // Stay on sand
-            }
-        } else if (theatreState === "SLEEPING" || brain.sleepState === "SLEEPING") {
-            targetY = 0.85; // Everyone sinks
-            if (c.name === "Vertex") targetY = 0.88;
-        }
-
-        el.style.left = `${targetX * 100}%`;
-        el.style.top = `${targetY * 100}%`;
-
-        const driftX = Math.sin((now * c.speed) + c.phase) * 10;
-        const driftY = Math.cos((now * c.speed * 1.5) + c.phase) * 5;
-        el.style.transform = `translateX(-50%) translate(${driftX}px, ${driftY}px)`;
-    });
-
-    // 5. Update Visuals
-    updateSolonFins(dt);
-    updateLumenTentacles(now);
-    drawBubbles(time);
-    drawFood();
-    updateDebugHUD();
-    
-    requestAnimationFrame(animate);
-}
-
-// ============================================================
-// Boot
-// ============================================================
-document.getElementById("start-overlay").addEventListener("click", () => {
-    const overlay = document.getElementById("start-overlay");
-    overlay.style.opacity = "0";
-    setTimeout(() => overlay.style.display = "none", 1000);
-    audio.start();
-});
-
-window.addEventListener("DOMContentLoaded", () => {
-    save.visits = (save.visits || 0) + 1;
-    saveData(save);
-    updateUI();
-    bindCreatures();
-    bindUtilBar();
-    initBiomes();
-    initLumenTentacles();
-    spawnParticles();
-
-    requestAnimationFrame(animate);
-});
