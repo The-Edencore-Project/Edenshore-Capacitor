@@ -1,16 +1,9 @@
-import { AMBIENT } from './dialogue/ambient.js';
-
-const BANK = {
-    ambient: AMBIENT,
-    jokes: [],
-    stories: [],
-    facts: [],
-    council: [],
-    visitor: [],
-    greetings: [["Vertex", "Hello! You're back!"]], 
-    tap_reactions: [["Solon", "Watch the glass."]]
-};
+import { DIALOGUE } from './dialogue/index.js';
 
 export function getBank(name) {
-    return BANK[name] || [];
+    return DIALOGUE[name] || [];
+}
+
+export function getAllBanks() {
+    return DIALOGUE;
 }
