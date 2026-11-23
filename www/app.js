@@ -1,27 +1,29 @@
 // ============================================================
-// EDENSHORE - APP.JS V2.1 (DEFENSIVE BOOT)
+// EDENSHORE - APP.JS V2.2 (DYNAMIC IMPORT BOOT)
 // ============================================================
 
-// GLOBAL ERROR TRAP (If anything crashes, show it on screen)
+// 1. INJECT A VISIBLE CRASH CONSOLE
 window.addEventListener('error', (e) => {
     const errDiv = document.createElement('div');
-    errDiv.style.cssText = "position:absolute;top:10px;left:10px;right:10px;background:red;color:white;z-index:9999;padding:10px;font-size:12px;font-family:monospace;";
-    errDiv.innerText = "CRASH: " + e.message + "\n" + e.filename + ":" + e.lineno;
-    document.body.appendChild(errDiv);
-});
-window.addEventListener('unhandledrejection', (e) => {
-    const errDiv = document.createElement('div');
-    errDiv.style.cssText = "position:absolute;top:10px;left:10px;right:10px;background:red;color:white;z-index:9999;padding:10px;font-size:12px;font-family:monospace;";
-    errDiv.innerText = "PROMISE REJECTION: " + e.reason;
+    errDiv.style.cssText = "position:absolute;top:10px;left:10px;right:10px;background:red;color:white;z-index:9999;padding:15px;font-size:12px;font-family:monospace;overflow:auto;";
+    errDiv.innerText = "GLOBAL CRASH:\n" + e.message + "\n" + (e.filename || "") + ":" + (e.lineno || "");
     document.body.appendChild(errDiv);
 });
 
-import { loadSave, saveData, addBond, getStatus } from './save.js';
-import { Brain } from './brain.js';
-import { audio } from './audio.js';
+const bootLog = (msg, color="lime") => {
+    const el = document.createElement('div');
+    el.style.cssText = `position:absolute;top:${10 + document.querySelectorAll('.boot-msg').length * 20}px;left:10px;background:black;color:${color};z-index:9998;padding:4px;font-size:10px;font-family:monospace;`;
+    el.className = "boot-msg";
+    el.innerText = msg;
+    document.body.appendChild(el);
+};
 
-let save = loadSave();
-let brain = new Brain(save);
+bootLog("app.js reached");
+
+// We do NOT import brain or audio at the top level.
+// They will be loaded dynamically inside DOMContentLoaded.
+
+let save, Brain, audio, brain;
 let lastTime = performance.now() / 1000;
 
 const CREATURES = [
@@ -47,17 +49,6 @@ let lumenTentacleEls = [];
 let theatreState = "IDLE"; 
 let theatreTimer = 0;
 let foodParticles = []; 
-let sleepDialogueIndex = 0;
-
-const SLEEP_DIALOGUE = [
-    ["Lumen", "It is time for rest, little one."],
-    ["Vertex", "I'm not tired! I'm still playing!"],
-    ["Solon", "Kid, the sand is calling you."],
-    ["Vertex", "But the glass is so interesting right now..."],
-    ["Ripple", "Shh. We will be here when you wake."],
-    ["Vertex", "Okay... okay. Just five more minutes."],
-    ["Lumen", "Goodnight, Vertex."]
-];
 
 const canvas = document.getElementById("fx-canvas");
 const ctx = canvas.getContext("2d");
@@ -70,7 +61,7 @@ window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 // ============================================================
-// THE VOICE: 14-char chunking
+// THE VOICE
 // ============================================================
 function chunkText(text) {
     const words = text.split(' ');
@@ -102,7 +93,7 @@ function queueScene(scene) {
 }
 
 // ============================================================
-// THE BUBBLE (FIXED for WebView)
+// THE BUBBLE (FIXED)
 // ============================================================
 function spawnBubble(speaker, text) {
     const c = CREATURES.find(x => x.name === speaker) || CREATURES.find(x => x.name === "Vertex");
@@ -186,7 +177,7 @@ function drawBubbles(now) {
 }
 
 // ============================================================
-// THEATRE ENGINE
+// THEATRE
 // ============================================================
 function startFeeding() {
     theatreState = "FEEDING";
@@ -230,48 +221,24 @@ function drawFood() {
 }
 
 // ============================================================
-// HUD & MILESTONES
+// UI + HUD
 // ============================================================
 function updateDebugHUD() {
     const el = document.getElementById("debug-overlay");
     if (!el) return;
-    const actStr = "[0.5, 1.0, 0.9, 1.0]";
+    if (!brain) return;
     el.innerText = 
         `Mood: ${brain.currentMood}\n` +
         `Sleep: ${brain.sleepState}\n` +
         `State: ${brain.gameState}\n` +
-        `Light: 0.50 | Temp: 0.60\n` +
-        `Motion: 0.00 | Shake: 0.00\n` +
-        `Rhythm: 1.0s | Heat: ${brain.heat}\n` +
-        `Net: ${actStr}`;
+        `Heat: ${brain.heat}`;
 }
 
-function triggerMilestoneBurst() {
-    const layer = document.getElementById("particle-layer");
-    if (!layer) return;
-    for (let i = 0; i < 30; i++) {
-        setTimeout(() => {
-            const p = document.createElement("div");
-            p.className = "gold-particle";
-            p.style.left = `${50 + (Math.random() - 0.5) * 20}%`;
-            p.style.bottom = `50%`;
-            layer.appendChild(p);
-            setTimeout(() => p.remove(), 3000);
-        }, i * 50);
-    }
+function updateUI() {
+    const el = document.getElementById("bond-text");
+    if (el && save) el.textContent = getStatus(save);
 }
 
-function showMilestone(text) {
-    const el = document.getElementById("milestone-overlay");
-    if (!el) return;
-    el.innerText = text;
-    el.classList.add("active");
-    setTimeout(() => el.classList.remove("active"), 3000);
-}
-
-// ============================================================
-// LUMEN TENTACLES
-// ============================================================
 function initLumenTentacles() {
     const lumen = document.getElementById("lumen");
     if (!lumen) return;
@@ -301,14 +268,10 @@ function updateLumenTentacles(now) {
     });
 }
 
-// ============================================================
-// SPRITE UPDATE
-// ============================================================
 function updateCreatureSprite(c, now) {
     const el = document.getElementById(c.id);
     if (!el) return;
-
-    if (brain.sleepState === "SLEEPING") { el.src = el.dataset.blink; return; }
+    if (brain && brain.sleepState === "SLEEPING") { el.src = el.dataset.blink; return; }
     if (c.talkTimer > 0) {
         el.src = (Math.floor(now * 1000 / 150) % 2 === 0) ? el.dataset.talk : el.dataset.base;
         return;
@@ -318,7 +281,7 @@ function updateCreatureSprite(c, now) {
 }
 
 function updateBlink(c, dt) {
-    if (c.talkTimer > 0 || brain.sleepState === "SLEEPING") return;
+    if (c.talkTimer > 0 || (brain && brain.sleepState === "SLEEPING")) return;
     c.blinkTimer -= dt;
     if (c.blinkTimer <= 0) {
         if (!c.isBlinking) { c.isBlinking = true; c.blinkTimer = 0.15; }
@@ -338,35 +301,25 @@ function updateSolonFins(dt) {
     if (right) right.src = `assets/images/solon_right_fin_${finFrame}.png`;
 }
 
-// ============================================================
-// INPUT & UI BINDING
-// ============================================================
 function handleWorldTap() {
-    if (brain.sleepState !== "AWAKE") {
-        brain.wakeUp();
-        return;
-    }
+    if (!brain) return;
+    if (brain.sleepState !== "AWAKE") { brain.wakeUp(); return; }
     if (brain.gameState === "riddle_wait") return;
     const scene = brain.onTap();
     if (scene) queueScene(scene);
-    audio.sting("Vertex");
+    try { audio.sting("Vertex"); } catch(e){}
 }
 
 function handleCreatureTap(id) {
+    if (!brain) return;
     addBond(save, 1);
-    const milestone = addBond(save, 0);
-    if (milestone) {
-        triggerMilestoneBurst();
-        showMilestone(`MILESTONE: ${save.bond_score}`);
-    }
-    
     if (brain.gameState === "riddle_wait") {
         brain.onCreatureTap(id.charAt(0).toUpperCase() + id.slice(1));
     } else {
         const scene = brain.onTap();
         if (scene) queueScene(scene);
     }
-    audio.sting(id);
+    try { audio.sting(id); } catch(e){}
     updateUI();
 }
 
@@ -396,15 +349,12 @@ function bindUtilBar() {
     });
     document.getElementById("btn-dim").addEventListener("click", () => {});
     document.getElementById("btn-vol").addEventListener("click", () => {
-        audio.volume = audio.volume > 0 ? 0 : 0.30;
-        if (audio.music) audio.music.volume = audio.volume;
+        try {
+            audio.volume = audio.volume > 0 ? 0 : 0.30;
+            if (audio.music) audio.music.volume = audio.volume;
+        } catch(e){}
     });
     document.getElementById("btn-menu").addEventListener("click", () => {});
-}
-
-function updateUI() {
-    const el = document.getElementById("bond-text");
-    if (el) el.textContent = getStatus(save);
 }
 
 function initBiomes() {
@@ -415,8 +365,10 @@ function initBiomes() {
             bg.className = cls;
             document.querySelectorAll(".biome-btn").forEach(b => b.classList.remove("active"));
             document.getElementById(id).classList.add("active");
-            const biomeName = cls.replace("biome-", "").toUpperCase();
-            brain.onBiomeSwitch(biomeName);
+            if (brain) {
+                const biomeName = cls.replace("biome-", "").toUpperCase();
+                brain.onBiomeSwitch(biomeName);
+            }
         });
     });
 }
@@ -438,16 +390,15 @@ function spawnParticles() {
     }, 300);
 }
 
-// ============================================================
-// MAIN ANIMATION LOOP
-// ============================================================
 function animate(time) {
     const now = time * 0.001;
     const dt = now - lastTime;
     lastTime = now;
 
-    const newScene = brain.update(dt);
-    if (newScene) queueScene(newScene);
+    if (brain) {
+        const newScene = brain.update(dt);
+        if (newScene) queueScene(newScene);
+    }
 
     updateTheatre(dt);
 
@@ -471,7 +422,7 @@ function animate(time) {
         let targetX = c.x;
         let targetY = c.y;
 
-        if (brain.sleepState === "SLEEPING" || brain.sleepState === "WAKING") {
+        if (brain && (brain.sleepState === "SLEEPING" || brain.sleepState === "WAKING")) {
             targetY = 0.85;
             if (c.name === "Vertex") targetY = 0.88;
         } else if (theatreState === "FEEDING") {
@@ -498,43 +449,71 @@ function animate(time) {
 }
 
 // ============================================================
-// BOOT (Wrapped in try/catch so you can see errors)
+// BOOT (DYNAMIC IMPORT)
 // ============================================================
-try {
+async function boot() {
+    bootLog("boot() started", "yellow");
+    
+    try {
+        bootLog("Loading save.js...", "cyan");
+        const saveModule = await import('./save.js');
+        save = saveModule.loadSave();
+        window.getStatus = saveModule.getStatus;
+        window.addBond = saveModule.addBond;
+        bootLog("save.js loaded", "lime");
+    } catch (e) {
+        bootLog("FAIL save.js: " + e.message, "red");
+        return;
+    }
+
+    try {
+        bootLog("Loading audio.js...", "cyan");
+        const audioModule = await import('./audio.js');
+        audio = audioModule.audio;
+        bootLog("audio.js loaded", "lime");
+    } catch (e) {
+        bootLog("FAIL audio.js: " + e.message, "red");
+        return;
+    }
+
+    try {
+        bootLog("Loading brain.js...", "cyan");
+        const brainModule = await import('./brain.js');
+        Brain = brainModule.Brain;
+        brain = new Brain(save);
+        bootLog("brain.js loaded", "lime");
+    } catch (e) {
+        bootLog("FAIL brain.js: " + e.message, "red");
+        return;
+    }
+
+    // If we got here, all imports succeeded!
+    bootLog("ALL MODULES LOADED", "lime");
+    updateUI();
+    bindCreatures();
+    bindUtilBar();
+    initBiomes();
+    initLumenTentacles();
+    spawnParticles();
+
+    document.body.addEventListener("click", (e) => {
+        if (e.target.tagName === "IMG" || e.target.id === "solon-group") return;
+        if (e.target.id.startsWith("btn-")) return;
+        if (e.target.classList.contains("biome-btn")) return;
+        handleWorldTap();
+    });
+
+    requestAnimationFrame(animate);
+
+    // Splash screen
     const overlay = document.getElementById("start-overlay");
     if (overlay) {
         overlay.addEventListener("click", () => {
             overlay.style.opacity = "0";
             setTimeout(() => overlay.style.display = "none", 1000);
-            try { audio.start(); } catch(e) { console.error("Audio fail", e); }
+            try { audio.start(); } catch(e) { bootLog("Audio fail: " + e.message, "red"); }
         });
     }
-
-    window.addEventListener("DOMContentLoaded", () => {
-        try {
-            save.visits = (save.visits || 0) + 1;
-            saveData(save);
-            updateUI();
-            bindCreatures();
-            bindUtilBar();
-            initBiomes();
-            initLumenTentacles();
-            spawnParticles();
-            
-            document.body.addEventListener("click", (e) => {
-                if (e.target.tagName === "IMG" || e.target.id === "solon-group") return;
-                if (e.target.id.startsWith("btn-")) return;
-                if (e.target.classList.contains("biome-btn")) return;
-                handleWorldTap();
-            });
-
-            requestAnimationFrame(animate);
-        } catch(err) {
-            console.error("BOOT ERROR:", err);
-            alert("Boot Error: " + err.message);
-        }
-    });
-} catch (err) {
-    console.error("GLOBAL ERROR:", err);
-    alert("Global Error: " + err.message);
 }
+
+window.addEventListener("DOMContentLoaded", boot);
