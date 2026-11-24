@@ -8,32 +8,25 @@
 </head>
 <body>
 
-  <!-- THE SPLASH SCREEN -->
   <div id="splash-screen">
     <h1>EDENSHORE</h1>
     <p>Tap anywhere to enter</p>
   </div>
 
-  <!-- THE SCENE -->
   <div id="scene">
     <div id="bg-gradient" class="biome-lagoon"></div>
     
-    <!-- Weather & Cinematics -->
     <div id="god-rays"></div>
     <div id="weather-tint"></div>
 
-    <!-- Parallax Backgrounds -->
     <img src="assets/images/pillars.png" id="pillars" class="parallax" data-speed="0.1">
     <img src="assets/images/mountains.png" id="mountains" class="parallax" data-speed="0.2">
     <img src="assets/images/sand_dunes.png" id="dunes" class="parallax" data-speed="0.4">
     <img src="assets/images/grass.png" id="grass" class="parallax" data-speed="1.0">
 
-    <!-- THE SHADOWS -->
     <div id="shadow-layer"></div>
 
-    <!-- The Council Lives Here -->
     <div id="creature-layer">
-      <!-- Solon is a container to hold his body and flippers -->
       <div id="solon" class="creature" data-scale="0.20">
         <img id="solon-left-fin" src="assets/images/solon_left_fin_1.png" class="solon-fin">
         <img id="solon-body" src="assets/images/solon_body.png" class="solon-body-part">
@@ -47,7 +40,6 @@
     </div>
   </div>
 
-  <!-- THE UI LAYER -->
   <div id="ui-layer">
     <div id="ghost-bubble">
       <div id="bubble-text"></div>
@@ -65,19 +57,24 @@
     </div>
   </div>
 
-  <!-- LOAD MODULES -->
-  <script src="save.js"></script>
-  <script src="audio.js"></script>
-  <script src="neural.js"></script>
-  <script src="brain.js"></script>
-  <script src="dialogue.js"></script>
+  <!-- SYSTEMS (The Mind) -->
+  <script src="systems/save.js"></script>
+  <script src="systems/audio.js"></script>
+  <script src="systems/neural.js"></script>
+  <script src="systems/brain.js"></script>
+  <script src="systems/dialogue.js"></script>
   
-  <!-- THE ENGINE -->
+  <!-- ENGINE (The Rules) -->
   <script src="engine/physics.js"></script>
   <script src="engine/choreography.js"></script>
   <script src="engine/atmosphere.js"></script>
   <script src="engine/cinematics.js"></script>
   
+  <!-- ACTORS (The Visuals) -->
+  <script src="actors/creatures.js"></script>
+  <script src="actors/solon.js"></script>
+  
+  <!-- ORCHESTRATOR -->
   <script src="app.js"></script>
 </body>
 </html>
