@@ -1,4 +1,4 @@
-export const HUDDLE = [
+window.DIALOGUE_HUDDLE = [
 [
 ["Ripple", "Gather close, everyone."],
 ["Solon", "I'm the shield. Get behind me."],
@@ -292,5 +292,5 @@ export const HUDDLE = [
 ["Prism", "No."],
 ["Vertex", "Yes!"],
 ["Ripple", "We are here. That's what matters."]
+]
 ];
-
