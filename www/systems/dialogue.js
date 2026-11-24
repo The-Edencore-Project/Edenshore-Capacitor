@@ -1,20 +1,40 @@
-const dialogueData = {
-    "Solon": ["Tears in the water.", "No one can see.", "Cry if you need.", "Old bones. Old water.", "Rest now."],
-    "Prism": ["Yay!", "Look at this!", "Temporary.", "So bright!", "What is that?", "Shiny."],
-    "Lumen": ["Soft.", "Glowing.", "Feel the pulse.", "Quiet.", "Floating.", "Hush."],
-    "Ripple": ["Hold on.", "Following.", "Safe here.", "Drifting.", "Found it.", "Patience."],
-    "Vertex": ["Watching.", "Solid ground.", "Under the sand.", "Step by step.", "Here.", "Down."]
-};
+// =====================================================================
+// EDENCORE - systems/dialogue.js (The Dialogue Player)
+// =====================================================================
 
 class DialogueEngine {
     constructor() {
         this.queue = [];
         this.isTalking = false;
         this.timer = null;
+        this.conversationIndex = 0;
     }
 
+    // Triggers a specific bank (e.g., 'council', 'jokes', 'ambient')
+    triggerBank(bankName) {
+        if (!window.getBank) return;
+        
+        const bank = window.getBank(bankName);
+        if (!bank || bank.length === 0) {
+            console.warn("Dialogue bank empty or missing:", bankName);
+            return;
+        }
+
+        // Pick a random conversation from the bank
+        const conversation = bank[Math.floor(Math.random() * bank.length)];
+        this.queueSpeech(conversation);
+    }
+
+    // Triggers the old flat random speech (kept as a fallback)
     triggerRandom(speaker) {
-        let lines = dialogueData[speaker];
+        const fallbackData = {
+            "Solon": ["Tears in the water.", "No one can see."],
+            "Prism": ["Yay!", "Look at this!"],
+            "Lumen": ["Soft.", "Glowing."],
+            "Ripple": ["Hold on.", "Following."],
+            "Vertex": ["Watching.", "Solid ground."]
+        };
+        let lines = fallbackData[speaker];
         if (!lines) return;
         let text = lines[Math.floor(Math.random() * lines.length)];
         this.queueSpeech([[speaker, text]]);
@@ -26,20 +46,30 @@ class DialogueEngine {
     }
 
     processNext() {
-        if (this.queue.length === 0) { this.isTalking = false; return; }
+        if (this.queue.length === 0) { 
+            this.isTalking = false; 
+            return; 
+        }
 
         this.isTalking = true;
         const [speaker, text] = this.queue.shift();
 
+        // Play sting
         if (window.audio) window.audio.sting(speaker.toLowerCase());
-        if (window.brain) window.brain.setTalking(speaker, text.length * 0.1);
+        
+        // Set talking state on the brain
+        if (window.brain) window.brain.setTalking(speaker, text.length * 0.08);
 
         this.showBubble(speaker, text);
 
+        // Duration based on text length (approx 60ms per character + buffer)
+        const readTime = Math.max(3000, text.length * 60 + 1000); 
+
         this.timer = setTimeout(() => {
             this.hideBubble();
-            setTimeout(() => { this.processNext(); }, 1000);
-        }, 5000); 
+            // Wait a moment before the next speaker chimes in
+            setTimeout(() => { this.processNext(); }, 1500);
+        }, readTime); 
     }
 
     showBubble(speaker, text) {
