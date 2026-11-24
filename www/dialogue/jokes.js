@@ -1,4 +1,4 @@
-export const JOKES = [
+window.DIALOGUE_JOKES = [
 [
 ["Prism", "I have a joke. But it's okay if you don't laugh."],
 ["Solon", "Just tell it."],
@@ -605,5 +605,5 @@ export const JOKES = [
 ["Ripple", "We still love you, Prism."],
 ["Vertex", "I liked the fsh one!"],
 ["Prism", "Thank you, Vertex."]
+]
 ];
-
