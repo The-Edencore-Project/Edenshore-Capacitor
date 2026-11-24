@@ -1,4 +1,4 @@
-export const BIOME_REACTIONS = {
+window.DIALOGUE_BIOME = {
     "LAGOON": [
         ["Ripple", "The light is soft and blue again."], ["Solon", "It's easier on the eyes."], ["Lumen", "Wavelength normalization."], ["Vertex", "Home!"], ["Prism", "It's less scary here."], ["Ripple", "It feels like a hug."], ["Solon", "It's damp."], ["Vertex", "I love the blue!"], ["Lumen", "Water density is optimal."], ["Prism", "I blend in."], ["Ripple", "Peaceful."], ["Solon", "Quiet."], ["Vertex", "Splash!"], ["Lumen", "Familiar parameters."], ["Prism", "I can breathe."], ["Ripple", "The deep blue."], ["Solon", "It's fine."], ["Vertex", "Swim swim!"], ["Lumen", "Comforting."], ["Prism", "Better."]
     ],
