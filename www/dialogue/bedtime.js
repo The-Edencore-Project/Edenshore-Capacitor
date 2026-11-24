@@ -1,4 +1,4 @@
-export const BEDTIME_RESISTANCE = [
+window.DIALOGUE_BEDTIME_RESISTANCE = [
 [
 ["Solon", "Vertex. Bottom. Now."],
 ["Vertex", "But I'm not tired! The bubbles are still awake!"],
@@ -18,20 +18,20 @@ export const BEDTIME_RESISTANCE = [
 ["Prism", "We are in a terrarium, Vertex. There are no sharks."],
 ["Vertex", "But what if there is a *tiny* shark?"],
 ["Ripple", "We'll keep you safe. Go to sleep."]
+]
 ];
 
-export const WAKING_NUDGE = [
+window.DIALOGUE_WAKING_NUDGE = [
 [["Ripple", "Oh... hello again. Wake up, everyone."]],
 [["Prism", "I'm awake! I'm awake! What did I miss? Wake up!"]],
 [["Solon", "Who dares turn on the lights... Wake up, you lot."]],
 [["Lumen", "The cycle resumes. Wake up."]]
 ];
 
-export const WAKING_OTHERS = [
+window.DIALOGUE_WAKING_OTHERS = [
 [["Vertex", "I'm awake! I'm awake!"]],
 [["Prism", "Five more minutes..."]],
 [["Solon", "I was having a nice dream about silence."]],
 [["Ripple", "Good morning, everyone."]],
 [["Lumen", "Systems rebooting."]]
 ];
-
