@@ -1,25 +1,17 @@
 const state = { time_elapsed: 0, base_scroll: 0 };
 
-const creatures = {
-    solon:  { phase: Math.random() * 6.28, baseX: 0.30, baseY: 0.55 },
-    prism:  { phase: Math.random() * 6.28, baseX: 0.70, baseY: 0.55 },
-    lumen:  { phase: Math.random() * 6.28, baseX: 0.20, baseY: 0.35 },
-    ripple: { phase: Math.random() * 6.28, baseX: 0.75, baseY: 0.35 },
-    vertex: { phase: Math.random() * 6.28, baseX: 0.50, baseY: 0.12 }
-};
-
 function resize() {
     const baseSize = Math.min(window.innerWidth, window.innerHeight);
     document.querySelectorAll('.creature').forEach(el => {
         const scale = parseFloat(el.dataset.scale);
         const size = baseSize * scale;
         el.style.width = size + 'px';
-        el.style.height = 'auto';
-        
-        const id = el.id;
-        if (creatures[id]) {
-            const cx = window.innerWidth * creatures[id].baseX;
-            const cy = window.innerHeight * (1.0 - creatures[id].baseY); 
+        el.style.height = size + 'px'; // Force square container for Solon layers
+
+        const id = el.id.replace("-group", "");
+        if (window.CREATURES[id]) {
+            const cx = window.innerWidth * window.CREATURES[id].x;
+            const cy = window.innerHeight * (1.0 - window.CREATURES[id].y); 
             el.style.left = (cx - size / 2) + 'px';
             el.style.top = (cy - size / 2) + 'px';
         }
@@ -35,11 +27,15 @@ document.getElementById('scene').appendChild(particleLayer);
 let lastTime = performance.now();
 let dialogueCooldown = 0;
 
+// Solon Fin Animation State
+const solonState = { frame: 1, timer: 0 };
+const totalSolonFrames = 5;
+
 function tick(currentTime) {
     const dt = (currentTime - lastTime) / 1000; 
     lastTime = currentTime;
     const safeDt = Math.min(dt, 0.1); 
-    
+
     state.time_elapsed += safeDt;
     if (window.brain) window.brain.update(safeDt); 
 
@@ -51,13 +47,15 @@ function tick(currentTime) {
         el.style.transform = `translateX(${offset}px)`;
     });
 
+    // Mood Multipliers
     let speedMult = 1.0;
     if (window.brain && window.brain.mood === "PLAYFUL") speedMult = 2.0; 
     if (window.brain && window.brain.mood === "SLEEPY") speedMult = 0.3;  
 
-    // CREATURE LOGIC
-    for (const [id, data] of Object.entries(creatures)) {
-        const el = document.getElementById(id);
+    // CREATURE ANIMATION LOOP
+    for (const [id, data] of Object.entries(window.CREATURES)) {
+        const elId = id === 'solon' ? 'solon-group' : id;
+        const el = document.getElementById(elId);
         if (!el) continue;
 
         const breathScale = 1.0 + (Math.sin(state.time_elapsed * 2.5 * speedMult + data.phase) * 0.03);
@@ -70,54 +68,41 @@ function tick(currentTime) {
         // TEXTURE SWAPPING (TALK & BLINK)
         if (window.brain) {
             let stateStr = "";
-            
-            // 1. TALK PRIORITY
+            // TALK PRIORITY
             if (window.brain.talkingCreature === id) {
-                // Animate mouth every 0.15s
                 if (Math.floor(state.time_elapsed / 0.15) % 2 === 0) stateStr = "_talk";
             } 
-            // 2. BLINKING
+            // BLINKING
             else if (window.brain.blinkTimer > 3.0 && window.brain.blinkTimer < 3.2) {
                 stateStr = "_blink";
             }
 
-            // Map IDs to file names (Solon uses _body_ for his files)
-            let filePrefix = id;
-            if (id === "solon") filePrefix = "solon_body";
-
-            if (stateStr) {
-                const newSrc = `assets/images/${filePrefix}${stateStr}.png`;
-                if (el.src.indexOf(newSrc) === -1) {
-                    el.src = newSrc;
+            if (id === 'solon') {
+                // Solon layered logic
+                const bodyEl = document.getElementById('solon-body');
+                const newSrc = `assets/images/solon_body${stateStr}.png`;
+                if (bodyEl && bodyEl.src.indexOf(newSrc) === -1) bodyEl.src = newSrc;
+                
+                // Fin logic
+                solonState.timer += safeDt;
+                if (solonState.timer > 0.15 / speedMult) {
+                    solonState.timer = 0;
+                    solonState.frame = (solonState.frame % totalSolonFrames) + 1;
+                    const lFin = document.getElementById('solon-left-fin');
+                    const rFin = document.getElementById('solon-right-fin');
+                    if (lFin) lFin.src = `assets/images/solon_left_fin_${solonState.frame}.png`;
+                    if (rFin) rFin.src = `assets/images/solon_right_fin_${solonState.frame}.png`;
                 }
             } else {
-                const baseSrc = `assets/images/${filePrefix}.png`;
-                if (el.src.indexOf(baseSrc) === -1) {
-                    el.src = baseSrc;
-                }
+                // Other creatures simple swap
+                const newSrc = stateStr ? `assets/images/${id}${stateStr}.png` : `assets/images/${id}.png`;
+                if (el.src.indexOf(newSrc) === -1) el.src = newSrc;
             }
         }
-
-        // SOLON SWIMMING (Flipper swap)
-        if (id === "solon" && window.solonFins) {
-            window.solonFins.update(state.time_elapsed);
-        }
-
-        // LUMEN TENTACLES
-        if (id === "lumen" && window.lumenTentacles) {
-            window.lumenTentacles.update(el);
-        }
-    }
-
-    // Reset Blink Timer
-    if (window.brain && window.brain.blinkTimer > 3.4) {
-        window.brain.blinkTimer = 0;
     }
 
     // PARTICLES
-    if (Math.random() < 0.1) {
-        spawnParticle();
-    }
+    if (Math.random() < 0.02) spawnParticle(); // Reduced spawn rate
     updateParticles(safeDt);
 
     // DIALOGUE
@@ -153,41 +138,13 @@ function updateParticles(dt) {
         p.el.style.top = p.y + 'px';
         p.life -= dt * 0.05;
         p.el.style.opacity = p.life;
-        
+
         if (p.y < -10 || p.life <= 0) {
             p.el.remove();
             particles.splice(i, 1);
         }
     }
 }
-
-// --- SOLON FINS ENGINE ---
-window.solonFins = {
-    frames: [],
-    currentFrame: 0,
-    timer: 0,
-    init: function() {
-        for (let i = 1; i <= 5; i++) {
-            let l = new Image(); l.src = `assets/images/solon_left_fin_${i}.png`; this.frames.push(l);
-        }
-    },
-    update: function(time) {
-        if (this.timer > 0.15) {
-            this.timer = 0;
-            this.currentFrame = (this.currentFrame + 1) % 5;
-        }
-        this.timer += 0.016; // Approximate dt
-    }
-};
-window.solonFins.init();
-
-// --- LUMEN TENTACLES ENGINE ---
-window.lumenTentacles = {
-    update: function(el) {
-        // In a future update, we draw SVG lines from the Lumen element.
-        // For now, this is a stub to prevent crashes.
-    }
-};
 
 // --- BOOT ---
 document.addEventListener('DOMContentLoaded', () => {
