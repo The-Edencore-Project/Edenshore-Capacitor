@@ -27,12 +27,12 @@ class DialogueEngine {
 
     processNext() {
         if (this.queue.length === 0) { this.isTalking = false; return; }
-        
+
         this.isTalking = true;
         const [speaker, text] = this.queue.shift();
 
         if (window.audio) window.audio.sting(speaker.toLowerCase());
-        if (window.brain) window.brain.setTalking(speaker, text.length * 0.1); // Triggers mouth movement
+        if (window.brain) window.brain.setTalking(speaker, text.length * 0.1);
 
         this.showBubble(speaker, text);
 
@@ -45,27 +45,23 @@ class DialogueEngine {
     showBubble(speaker, text) {
         const bubble = document.getElementById('ghost-bubble');
         const textEl = document.getElementById('bubble-text');
-        const creatureEl = document.getElementById(speaker.toLowerCase());
-        
+        const creatureEl = document.getElementById(speaker.toLowerCase() === 'solon' ? 'solon-group' : speaker.toLowerCase());
+
         if (!bubble || !textEl || !creatureEl) return;
 
-        // Position bubble above creature
         const rect = creatureEl.getBoundingClientRect();
         const startX = rect.left + rect.width / 2;
         const startY = rect.top - 40;
 
         bubble.style.left = startX + 'px';
         bubble.style.top = startY + 'px';
-        
+
         textEl.innerText = text;
         textEl.style.color = this.getSpeakerColor(speaker);
 
-        // Fade in
         bubble.style.opacity = '1';
-        
-        // FLOATING ANIMATION (V4.4 Float Up)
-        bubble.style.animation = 'none'; // Reset
-        void bubble.offsetWidth; // Trigger reflow
+        bubble.style.animation = 'none'; 
+        void bubble.offsetWidth; 
         bubble.style.animation = 'floatUp 5s ease-out forwards';
     }
 
