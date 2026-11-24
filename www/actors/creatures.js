@@ -1,0 +1,49 @@
+const CREATURES = {
+    solon: {
+        id: "solon",
+        base: "assets/images/solon_body.png",
+        blink: "assets/images/solon_body_blink.png",
+        talk: "assets/images/solon_body_talk.png",
+        x: 0.30, y: 0.55,
+        drift: 40, buoyancy: 10, speed: 0.55, phase: 0,
+        blinkCooldown: 5, blinkLength: 0.12, blinkTimer: 4, blinking: false, talkTimer: 0
+    },
+    prism: {
+        id: "prism",
+        base: "assets/images/prism.png",
+        blink: "assets/images/prism_blink.png",
+        talk: "assets/images/prism_talk.png",
+        x: 0.70, y: 0.55,
+        drift: 55, buoyancy: 12, speed: 1.2, phase: 1.5,
+        blinkCooldown: 4, blinkLength: 0.12, blinkTimer: 3, blinking: false, talkTimer: 0
+    },
+    ripple: {
+        id: "ripple",
+        base: "assets/images/ripple.png",
+        blink: "assets/images/ripple_blink.png",
+        talk: "assets/images/ripple_talk.png",
+        x: 0.75, y: 0.35,
+        drift: 15, buoyancy: 18, speed: 0.8, phase: 3,
+        blinkCooldown: 6, blinkLength: 0.12, blinkTimer: 2, blinking: false, talkTimer: 0
+    },
+    lumen: {
+        id: "lumen",
+        base: "assets/images/lumen.png",
+        blink: "assets/images/lumen_blink.png",
+        talk: "assets/images/lumen_talk.png",
+        x: 0.20, y: 0.35,
+        drift: 22, buoyancy: 14, speed: 0.5, phase: 2,
+        blinkCooldown: 8, blinkLength: 0.12, blinkTimer: 5, blinking: false, talkTimer: 0
+    },
+    vertex: {
+        id: "vertex",
+        base: "assets/images/vertex.png",
+        blink: "assets/images/vertex_blink.png",
+        talk: "assets/images/vertex_talk.png",
+        x: 0.50, y: 0.15,
+        drift: 10, buoyancy: 6, speed: 0.38, phase: 4,
+        blinkCooldown: 2, blinkLength: 0.12, blinkTimer: 1, blinking: false, talkTimer: 0
+    }
+};
+
+window.CREATURES = CREATURES;
