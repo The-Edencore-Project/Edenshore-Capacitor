@@ -17,7 +17,7 @@
   <!-- THE SCENE -->
   <div id="scene">
     <div id="bg-gradient" class="biome-lagoon"></div>
-    
+
     <!-- Parallax Backgrounds -->
     <img src="assets/images/pillars.png" id="pillars" class="parallax" data-speed="0.1">
     <img src="assets/images/mountains.png" id="mountains" class="parallax" data-speed="0.2">
@@ -26,7 +26,14 @@
 
     <!-- The Council Lives Here -->
     <div id="creature-layer">
-      <img src="assets/images/solon.png" id="solon" class="creature" data-scale="0.20">
+      <!-- Solon is a layered group -->
+      <div id="solon-group" class="creature" data-scale="0.20">
+        <img id="solon-left-fin" class="solon-layer" src="assets/images/solon_left_fin_1.png">
+        <img id="solon-body" class="solon-layer" src="assets/images/solon_body.png">
+        <img id="solon-right-fin" class="solon-layer" src="assets/images/solon_right_fin_1.png">
+      </div>
+      
+      <!-- Other Creatures -->
       <img src="assets/images/lumen.png" id="lumen" class="creature" data-scale="0.18">
       <img src="assets/images/prism.png" id="prism" class="creature" data-scale="0.26">
       <img src="assets/images/ripple.png" id="ripple" class="creature" data-scale="0.36">
@@ -36,7 +43,6 @@
 
   <!-- THE UI LAYER -->
   <div id="ui-layer">
-    
     <!-- THE GHOST BUBBLE -->
     <div id="ghost-bubble">
       <div id="bubble-text"></div>
@@ -45,7 +51,7 @@
     <div id="top-bar">
       <div id="bond-text">BOND: 0 - Stranger</div>
     </div>
-    
+
     <div id="bottom-bar">
       <div class="biome-btn active" data-biome="LAGOON">LAGOON</div>
       <div class="biome-btn" data-biome="SHORE">SHORE</div>
@@ -54,10 +60,12 @@
     </div>
   </div>
 
-  <!-- LOAD MODULES -->
+  <!-- LOAD MODULES (STRICT ORDER) -->
   <script src="save.js"></script>
   <script src="audio.js"></script>
+  <script src="neural.js"></script>
   <script src="brain.js"></script>
+  <script src="creatures.js"></script>
   <script src="dialogue.js"></script>
   <script src="app.js"></script>
 </body>
