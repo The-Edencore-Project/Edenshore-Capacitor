@@ -31,7 +31,14 @@ body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-seri
 #creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
 .creature { position: absolute; transform-origin: center center; }
 
-/* --- UI LAYER (FIXED) --- */
+/* Solon Stacking Context */
+#solon-group { position: absolute; }
+.solon-layer { position: absolute; top: 0; left: 0; width: 100%; height: auto; }
+#solon-left-fin  { z-index: 1; }
+#solon-body      { z-index: 2; }
+#solon-right-fin { z-index: 3; }
+
+/* --- UI LAYER --- */
 #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
 
 #top-bar {
@@ -51,7 +58,7 @@ body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-seri
 .biome-btn { color: #0f0; font-size: 0.9rem; font-weight: bold; cursor: pointer; padding: 5px 10px; transition: color 0.2s; }
 .biome-btn.active { color: #f00; } 
 
-/* --- GHOST BUBBLE (Floating Animation) --- */
+/* --- GHOST BUBBLE --- */
 #ghost-bubble {
     position: absolute;
     width: 140px; height: 140px;
@@ -77,3 +84,11 @@ body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-seri
 }
 
 #bubble-text { font-size: 1rem; font-weight: bold; text-align: center; padding: 10px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); }
+
+/* --- ANIMATIONS --- */
+@keyframes floatUp {
+    0%   { opacity: 0; transform: translate(-50%, 0px)   scale(0.9); }
+    10%  { opacity: 1; transform: translate(-50%, -10px) scale(1.0); }
+    90%  { opacity: 1; transform: translate(-50%, -60px) scale(1.0); }
+    100% { opacity: 0; transform: translate(-50%, -80px) scale(0.95); }
+}
