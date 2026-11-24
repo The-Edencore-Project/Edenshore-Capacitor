@@ -1,8 +1,13 @@
-export class Arbiter {
+class Arbiter {
     constructor() { this.net = new SeatNet(); }
     getMood(brain) {
         let hour = new Date().getHours();
-        let inputs = [ hour / 24.0, 1.0, 0.0, 0.1, Math.min(brain.heat / 3.0, 1.0), Math.min(brain.save.bond_score / 1000.0, 1.0), 0.0, 0.5, 0.0, 0.0, 0.2, 0.0 ];
+        let inputs = [
+            hour / 24.0, 1.0, 0.0, 0.1,
+            Math.min((brain.heat || 0) / 3.0, 1.0),
+            Math.min((brain.save && brain.save.bond_score || 0) / 1000.0, 1.0),
+            0.0, 0.5, 0.0, 0.0, 0.2, 0.0
+        ];
         let probs = this.net.forward(inputs);
         return ["CRISIS", "SLEEPY", "PLAYFUL", "NORMAL"][probs.indexOf(Math.max(...probs))];
     }
@@ -14,10 +19,13 @@ class SeatNet {
         this.w2 = Array(8).fill(0).map(() => Array(4).fill(0));
         this.b1 = Array(8).fill(0.1);
         this.b2 = Array(4).fill(0.0);
-        this.b2[3] = 2.0; 
-        this.w1[0][0] = 2.0; this.w1[0][1] = 3.0; this.w1[1][0] = -5.0; this.w1[1][1] = 2.0;
-        this.w1[2][2] = 4.0; this.w1[5][2] = 3.0; this.w1[6][2] = 2.0; this.w1[4][0] = 1.5;
-        this.w2[0][0] = 5.0; this.w2[0][1] = 3.0; this.w2[1][1] = 5.0; this.w2[2][2] = 5.0; this.w2[3][3] = 5.0;
+        this.b2[3] = 2.0;
+        this.w1[0][0] = 2.0; this.w1[0][1] = 3.0;
+        this.w1[1][0] = -5.0; this.w1[1][1] = 2.0;
+        this.w1[2][2] = 4.0; this.w1[5][2] = 3.0;
+        this.w1[6][2] = 2.0; this.w1[4][0] = 1.5;
+        this.w2[0][0] = 5.0; this.w2[0][1] = 3.0;
+        this.w2[1][1] = 5.0; this.w2[2][2] = 5.0; this.w2[3][3] = 5.0;
     }
     sigmoid(x) { return 1.0 / (1.0 + Math.exp(-x)); }
     forward(inputs) {
@@ -36,3 +44,5 @@ class SeatNet {
         return outputs;
     }
 }
+
+window.arbiter = new Arbiter();
