@@ -139,13 +139,19 @@ function tick(currentTime) {
     if (Math.random() < 0.05) spawnParticle();
     updateParticles(safeDt);
 
+    // DIALOGUE ENGINE TRIGGER
     dialogueCooldown += safeDt;
-    if (dialogueCooldown > 15.0 && window.dialogue && !window.dialogue.isTalking) {
+    if (dialogueCooldown > 20.0 && window.dialogue && !window.dialogue.isTalking) {
         dialogueCooldown = 0;
-        let speaker = "Solon";
-        if (currentMood === "PLAYFUL") speaker = "Prism";
-        else if (currentMood === "SLEEPY") speaker = "Lumen";
-        window.dialogue.triggerRandom(speaker);
+        
+        // Pick a bank based on current context
+        let bank = "ambient";
+        if (currentMood === "PLAYFUL") bank = "jokes";
+        else if (currentMood === "SLEEPY") bank = "lyrics";
+        else if (currentMood === "CRISIS") bank = "huddle";
+        else if (Math.random() > 0.5) bank = "council"; // 50% chance to just banter
+        
+        window.dialogue.triggerBank(bank);
     }
 
     requestAnimationFrame(tick);
@@ -187,6 +193,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Initialize Dialogue Bridge
+    if (window.initCrosstalk) window.initCrosstalk();
+    
     initShadows();
     resize();
     requestAnimationFrame(tick); 
@@ -195,6 +204,11 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('touchstart', (e) => {
     if (e.target.classList.contains('biome-btn')) return;
     if (window.brain) window.brain.addBond(1);
+    
+    // Tap reaction
+    if (window.dialogue && !window.dialogue.isTalking && Math.random() > 0.7) {
+        window.dialogue.triggerBank("reactions");
+    }
 }, { passive: true });
 
 document.querySelectorAll('.biome-btn').forEach(btn => {
