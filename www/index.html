@@ -57,24 +57,45 @@
     </div>
   </div>
 
-  <!-- SYSTEMS (The Mind) -->
+  <!-- 1. SYSTEMS (The Mind) -->
   <script src="systems/save.js"></script>
   <script src="systems/audio.js"></script>
   <script src="systems/neural.js"></script>
   <script src="systems/brain.js"></script>
   <script src="systems/dialogue.js"></script>
   
-  <!-- ENGINE (The Rules) -->
+  <!-- 2. ENGINE (The Rules) -->
   <script src="engine/physics.js"></script>
   <script src="engine/choreography.js"></script>
   <script src="engine/atmosphere.js"></script>
   <script src="engine/cinematics.js"></script>
   
-  <!-- ACTORS (The Visuals) -->
+  <!-- 3. ACTORS (The Visuals) -->
   <script src="actors/creatures.js"></script>
   <script src="actors/solon.js"></script>
+
+  <!-- 4. DIALOGUE BANKS (The Voice) -->
+  <!-- Note: These must be stripped of 'export const' and attached to window -->
+  <script src="dialogue/ambient.js"></script>
+  <script src="dialogue/bedtime.js"></script>
+  <script src="dialogue/biome.js"></script>
+  <script src="dialogue/council.js"></script>
+  <script src="dialogue/daily.js"></script>
+  <script src="dialogue/dreams.js"></script>
+  <script src="dialogue/facts.js"></script>
+  <script src="dialogue/huddle.js"></script>
+  <script src="dialogue/jokes.js"></script>
+  <script src="dialogue/lyrics.js"></script>
+  <script src="dialogue/poetry.js"></script>
+  <script src="dialogue/reactions.js"></script>
+  <script src="dialogue/requests.js"></script>
+  <script src="dialogue/riddles.js"></script>
+  <script src="dialogue/stories.js"></script>
+  <script src="dialogue/visitor.js"></script>
+  <script src="dialogue/wisdom.js"></script>
   
-  <!-- ORCHESTRATOR -->
+  <!-- 5. THE BRIDGE & ORCHESTRATOR -->
+  <script src="crosstalk.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
