@@ -1,4 +1,4 @@
-export const FACTS = [
+window.DIALOGUE_FACTS = [
 [
 ["Lumen", "A single sheet of paper, folded enough times, can touch the moon."],
 ["Prism", "That feels like a lie."],
