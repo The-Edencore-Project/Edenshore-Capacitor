@@ -1,5 +1,5 @@
 // =====================================================================
-// EDENCORE - app.js (V0.4 Engine Driven)
+// EDENCORE - app.js (V0.5 Engine Driven)
 // =====================================================================
 
 const state = { time_elapsed: 0, base_scroll: 0 };
@@ -59,9 +59,9 @@ function resize() {
     });
     
     if (window.physicsEngine) window.physicsEngine.resize();
+    if (window.choreographyEngine) window.choreographyEngine.resize();
 }
 
-// Particles
 const particleLayer = document.createElement('div');
 particleLayer.id = 'particle-layer';
 particleLayer.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; z-index:4; pointer-events:none;';
@@ -89,10 +89,36 @@ function tick(currentTime) {
         el.style.transform = `translateX(${offset}px)`;
     });
 
-    // Update Physics & Shadows
     const currentMood = window.brain ? window.brain.mood : "NORMAL";
+    
+    // Engine Updates
+    if (window.weatherEngine) window.weatherEngine.update(safeDt, currentMood);
+    if (window.cinematicEngine) window.cinematicEngine.update(safeDt);
+    
+    // Physics & Shadows
     if (window.physicsEngine) {
         window.physicsEngine.update(safeDt, state.time_elapsed, currentMood, shadowElements);
+    }
+
+    // Formation Logic (Choreography)
+    if (window.choreographyEngine) {
+        const formation = window.choreographyEngine.getFormation(
+            currentMood, window.innerWidth, window.innerHeight, state.time_elapsed
+        );
+        
+        // Apply formation targets to physics engine (smoothly)
+        for (let i = 0; i < Object.keys(creatureData).length; i++) {
+            const id = Object.keys(creatureData)[i];
+            if (window.physicsEngine.creatures[id] && formation[i]) {
+                // Move towards formation target
+                const c = window.physicsEngine.creatures[id];
+                c.x += (formation[i].x - c.x) * safeDt * 1.5;
+                c.y += (formation[i].y - c.y) * safeDt * 1.5;
+                
+                const el = document.getElementById(id);
+                if (el) el.style.transform = `translate(${c.x - (window.innerWidth * creatureData[id].baseX)}px, ${c.y - (window.innerHeight * (1.0 - creatureData[id].baseY))}px)`;
+            }
+        }
     }
 
     // Animation & Texture Swaps
@@ -100,7 +126,6 @@ function tick(currentTime) {
         const el = document.getElementById(id);
         if (!el) continue;
 
-        // Solon Flipper Animation
         if (id === "solon" && solonLeftFrames.length > 0) {
             let flapSpeed = 8.0;
             if (currentMood === "PLAYFUL") flapSpeed = 15.0;
@@ -168,7 +193,6 @@ function tick(currentTime) {
     requestAnimationFrame(tick);
 }
 
-// --- PARTICLES LOGIC ---
 const particles = [];
 function spawnParticle() {
     const p = document.createElement('div');
@@ -196,7 +220,6 @@ function updateParticles(dt) {
     }
 }
 
-// --- BOOT ---
 document.addEventListener('DOMContentLoaded', () => {
     const splash = document.getElementById('splash-screen');
     if (splash) {
