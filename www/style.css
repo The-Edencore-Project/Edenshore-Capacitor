@@ -27,16 +27,49 @@ body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-seri
 #dunes { z-index: 4; }
 #grass { z-index: 6; opacity: 0.8; bottom: -2%; }
 
+/* --- SHADOWS --- */
+#shadow-layer {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 4; /* Above dunes, below grass */
+    pointer-events: none;
+}
+.creature-shadow {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3);
+    filter: blur(4px);
+    transition: opacity 0.1s linear, width 0.1s linear, height 0.1s linear;
+}
+
 /* --- CREATURES --- */
 #creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
 .creature { position: absolute; transform-origin: center center; }
 
-/* Solon Stacking Context */
-#solon-group { position: absolute; }
-.solon-layer { position: absolute; top: 0; left: 0; width: 100%; height: auto; }
-#solon-left-fin  { z-index: 1; }
-#solon-body      { z-index: 2; }
-#solon-right-fin { z-index: 3; }
+/* Solon Specific Layering (Constitution Rule) */
+#solon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.solon-fin {
+    position: absolute;
+    width: 32%; /* 0.32 scale_factor from Python code */
+    height: auto;
+}
+#solon-left-fin {
+    z-index: 1;
+    transform: translate(-14%, 17%); /* Offsets from Python code */
+}
+#solon-body {
+    z-index: 2;
+    width: 100%;
+    height: auto;
+}
+#solon-right-fin {
+    z-index: 3;
+    transform: translate(25%, 18%); /* Offsets from Python code */
+}
 
 /* --- UI LAYER --- */
 #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
@@ -58,7 +91,7 @@ body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-seri
 .biome-btn { color: #0f0; font-size: 0.9rem; font-weight: bold; cursor: pointer; padding: 5px 10px; transition: color 0.2s; }
 .biome-btn.active { color: #f00; } 
 
-/* --- GHOST BUBBLE --- */
+/* --- GHOST BUBBLE (Floating Animation) --- */
 #ghost-bubble {
     position: absolute;
     width: 140px; height: 140px;
@@ -85,7 +118,7 @@ body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-seri
 
 #bubble-text { font-size: 1rem; font-weight: bold; text-align: center; padding: 10px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); }
 
-/* --- ANIMATIONS --- */
+/* --- FLOATING ANIMATION --- */
 @keyframes floatUp {
     0%   { opacity: 0; transform: translate(-50%, 0px)   scale(0.9); }
     10%  { opacity: 1; transform: translate(-50%, -10px) scale(1.0); }
