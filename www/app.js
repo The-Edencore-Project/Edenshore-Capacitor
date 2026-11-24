@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let lastTime = performance.now();
-let dialogueCooldown = 0;
+let dialogueCooldown = 10; // Start with a 10-second cooldown so the first talk happens quickly
 
 function tick(currentTime) {
     const dt = (currentTime - lastTime) / 1000; 
@@ -144,12 +144,11 @@ function tick(currentTime) {
     if (dialogueCooldown > 20.0 && window.dialogue && !window.dialogue.isTalking) {
         dialogueCooldown = 0;
         
-        // Pick a bank based on current context
         let bank = "ambient";
         if (currentMood === "PLAYFUL") bank = "jokes";
         else if (currentMood === "SLEEPY") bank = "lyrics";
         else if (currentMood === "CRISIS") bank = "huddle";
-        else if (Math.random() > 0.5) bank = "council"; // 50% chance to just banter
+        else if (Math.random() > 0.5) bank = "council"; 
         
         window.dialogue.triggerBank(bank);
     }
@@ -193,9 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Initialize Dialogue Bridge
-    if (window.initCrosstalk) window.initCrosstalk();
-    
     initShadows();
     resize();
     requestAnimationFrame(tick); 
@@ -205,9 +201,8 @@ window.addEventListener('touchstart', (e) => {
     if (e.target.classList.contains('biome-btn')) return;
     if (window.brain) window.brain.addBond(1);
     
-    // Tap reaction
     if (window.dialogue && !window.dialogue.isTalking && Math.random() > 0.7) {
-        window.dialogue.triggerBank("reactions");
+        window.dialogue.triggerBank("tap_reactions");
     }
 }, { passive: true });
 
