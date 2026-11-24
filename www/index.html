@@ -17,6 +17,10 @@
   <!-- THE SCENE -->
   <div id="scene">
     <div id="bg-gradient" class="biome-lagoon"></div>
+    
+    <!-- Weather & Cinematics -->
+    <div id="god-rays"></div>
+    <div id="weather-tint"></div>
 
     <!-- Parallax Backgrounds -->
     <img src="assets/images/pillars.png" id="pillars" class="parallax" data-speed="0.1">
@@ -45,8 +49,6 @@
 
   <!-- THE UI LAYER -->
   <div id="ui-layer">
-
-    <!-- THE GHOST BUBBLE -->
     <div id="ghost-bubble">
       <div id="bubble-text"></div>
     </div>
@@ -63,15 +65,18 @@
     </div>
   </div>
 
-  <!-- LOAD MODULES (order matters) -->
+  <!-- LOAD MODULES -->
   <script src="save.js"></script>
   <script src="audio.js"></script>
   <script src="neural.js"></script>
   <script src="brain.js"></script>
   <script src="dialogue.js"></script>
   
-  <!-- THE NEW ENGINE -->
+  <!-- THE ENGINE -->
   <script src="engine/physics.js"></script>
+  <script src="engine/choreography.js"></script>
+  <script src="engine/atmosphere.js"></script>
+  <script src="engine/cinematics.js"></script>
   
   <script src="app.js"></script>
 </body>
