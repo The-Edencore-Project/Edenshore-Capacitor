@@ -1,4 +1,4 @@
-export const AMBIENT = [
+window.DIALOGUE_AMBIENT = [
 [
 ["Ripple", "It's quiet today."],
 ["Solon", "Finally."],
@@ -563,5 +563,5 @@ export const AMBIENT = [
 ["Lumen", "The probability of us meeting was low."],
 ["Vertex", "I love you all!"],
 ["Prism", "I'm crying."]
+]
 ];
-
