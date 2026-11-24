@@ -1,4 +1,4 @@
-export const MORNING = [
+window.DIALOGUE_DAILY_MORNING = [
 [["Ripple", "Good morning. Did you sleep well?"], ["Vertex", "The light is back! Good morning!"], ["Solon", "Too early. Turn it off."]],
 [["Lumen", "A new cycle begins. Have you eaten breakfast?"], ["Prism", "Morning. I haven't had my coffee yet. Oh wait, I'm a fish."]],
 [["Vertex", "You're here! Good morning!"], ["Ripple", "We hope you have a wonderful day."], ["Solon", "Don't forget to eat."]],
@@ -16,7 +16,7 @@ export const MORNING = [
 [["Solon", "Another day in the glass."], ["Ripple", "Another day together."], ["Vertex", "Yay!"]]
 ];
 
-export const EVENING = [
+window.DIALOGUE_DAILY_EVENING = [
 [["Ripple", "Good evening. You made it through the day."], ["Lumen", "The sun has set. It is time to wind down."], ["Solon", "Long day? Sit down. Be quiet."]],
 [["Prism", "Time for dinner? I hope it's not flakes again."], ["Vertex", "Are we going to sleep soon? I'm sleepy."]],
 [["Solon", "The work is done. Stop thinking about it."], ["Ripple", "Rest now. We are here."]],
@@ -34,7 +34,7 @@ export const EVENING = [
 [["Solon", "I'm going to sleep."], ["Vertex", "Wait for me!"], ["Ripple", "Sweet dreams, you two."]]
 ];
 
-export const LATE_NIGHT = [
+window.DIALOGUE_DAILY_LATE_NIGHT = [
 [["Lumen", "It is late. Why are you awake?"], ["Prism", "Insomnia? Me too. Let's stare at the glass together."]],
 [["Ripple", "You should be resting. The world is quiet now."], ["Solon", "Go to bed. You have work tomorrow. Don't be an idiot."]],
 [["Vertex", "Is it morning yet? No? Okay, I'll wait."], ["Lumen", "Your circadian rhythm is being disrupted. Sleep."]],
@@ -52,7 +52,7 @@ export const LATE_NIGHT = [
 [["Lumen", "Midnight has passed."], ["Vertex", "Did we miss it?"], ["Ripple", "Just go to sleep, Vertex."]]
 ];
 
-export const ABSENCE = [
+window.DIALOGUE_DAILY_ABSENCE = [
 [["Solon", "Oh. You're back. We thought you died."], ["Ripple", "Welcome back. We kept the light on for you."]],
 [["Vertex", "You were gone forever! Did you bring food?"], ["Lumen", "Your absence was noted. Life continued."]],
 [["Prism", "Did you forget us? That's okay. We're used to it."], ["Ripple", "We missed you. Tell us about your day."]],
@@ -70,7 +70,7 @@ export const ABSENCE = [
 [["Lumen", "The ecosystem stabilized in your absence."], ["Vertex", "Don't leave again!"]]
 ];
 
-export const STRESS = [
+window.DIALOGUE_DAILY_STRESS = [
 [["Ripple", "You seem tense. Breathe. We are here."], ["Lumen", "Increased interaction rate indicates stress. Take a pause."]],
 [["Prism", "Don't break the glass. It's not worth it."], ["Solon", "Calm down. Whatever it is, it can wait."]],
 [["Vertex", "It's okay! We love you!"], ["Ripple", "Put the phone down for a moment. Just breathe."]],
@@ -88,7 +88,7 @@ export const STRESS = [
 [["Vertex", "Breathe! Like me! *inhales dramatically*"], ["Ripple", "There you go."]]
 ];
 
-export const BUSY = [
+window.DIALOGUE_DAILY_BUSY = [
 [["Solon", "Are you working? Stop. Look at us."], ["Prism", "Are you busy? We can just hang out. No pressure."]],
 [["Ripple", "Take your time. We aren't going anywhere."], ["Vertex", "Work is boring! Play with us!"]],
 [["Lumen", "Focus is required. We will remain silent."], ["Solon", "Just don't forget to blink."]],
@@ -106,7 +106,7 @@ export const BUSY = [
 [["Ripple", "Do your best. We're cheering for you."], ["Prism", "Go team!"]]
 ];
 
-export const WEATHER = [
+window.DIALOGUE_DAILY_WEATHER = [
 [["Ripple", "It's cold tonight. Keep warm."], ["Solon", "Your body needs heat. Go get a blanket."]],
 [["Lumen", "Ambient temperature is dropping. Regulate your environment."], ["Prism", "Don't catch a cold. I can't catch a cold. But you could."]],
 [["Vertex", "It's raining outside?"], ["Ripple", "It sounds cozy."], ["Solon", "It sounds wet."]],
@@ -123,4 +123,3 @@ export const WEATHER = [
 [["Ripple", "Keep warm, friend."], ["Lumen", "Thermoregulation is key."], ["Prism", "Wear a sweater."]],
 [["Solon", "The weather is bad. Stay in bed."], ["Lumen", "Agreed."], ["Ripple", "Get some rest."]]
 ];
-
