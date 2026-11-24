@@ -504,5 +504,5 @@ window.DIALOGUE_FACTS = [
 ["Ripple", "They are like us."],
 ["Solon", "Without the common sense."],
 ["Prism", "Or the fins."]
+]
 ];
-
