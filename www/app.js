@@ -1,7 +1,3 @@
-// =====================================================================
-// EDENCORE - app.js (V0.5 Engine Driven)
-// =====================================================================
-
 const state = { time_elapsed: 0, base_scroll: 0 };
 
 const creatureData = {
@@ -13,15 +9,6 @@ const creatureData = {
 };
 
 let shadowElements = {};
-let solonLeftFrames = [];
-let solonRightFrames = [];
-
-function preloadSolonFins() {
-    for (let i = 1; i <= 5; i++) {
-        let l = new Image(); l.src = `assets/images/solon_left_fin_${i}.png`; solonLeftFrames.push(l);
-        let r = new Image(); r.src = `assets/images/solon_right_fin_${i}.png`; solonRightFrames.push(r);
-    }
-}
 
 function initShadows() {
     const shadowLayer = document.getElementById('shadow-layer');
@@ -81,7 +68,6 @@ function tick(currentTime) {
     state.time_elapsed += safeDt;
     if (window.brain) window.brain.update(safeDt); 
 
-    // Parallax
     state.base_scroll += safeDt * 100; 
     document.querySelectorAll('.parallax').forEach(el => {
         const speed = parseFloat(el.dataset.speed);
@@ -91,26 +77,21 @@ function tick(currentTime) {
 
     const currentMood = window.brain ? window.brain.mood : "NORMAL";
     
-    // Engine Updates
     if (window.weatherEngine) window.weatherEngine.update(safeDt, currentMood);
     if (window.cinematicEngine) window.cinematicEngine.update(safeDt);
     
-    // Physics & Shadows
     if (window.physicsEngine) {
         window.physicsEngine.update(safeDt, state.time_elapsed, currentMood, shadowElements);
     }
 
-    // Formation Logic (Choreography)
     if (window.choreographyEngine) {
         const formation = window.choreographyEngine.getFormation(
             currentMood, window.innerWidth, window.innerHeight, state.time_elapsed
         );
         
-        // Apply formation targets to physics engine (smoothly)
         for (let i = 0; i < Object.keys(creatureData).length; i++) {
             const id = Object.keys(creatureData)[i];
             if (window.physicsEngine.creatures[id] && formation[i]) {
-                // Move towards formation target
                 const c = window.physicsEngine.creatures[id];
                 c.x += (formation[i].x - c.x) * safeDt * 1.5;
                 c.y += (formation[i].y - c.y) * safeDt * 1.5;
@@ -121,44 +102,21 @@ function tick(currentTime) {
         }
     }
 
-    // Animation & Texture Swaps
     for (const [id, data] of Object.entries(creatureData)) {
         const el = document.getElementById(id);
         if (!el) continue;
 
-        if (id === "solon" && solonLeftFrames.length > 0) {
-            let flapSpeed = 8.0;
-            if (currentMood === "PLAYFUL") flapSpeed = 15.0;
-            else if (currentMood === "SLEEPY") flapSpeed = 2.0;
+        const isTalking = window.brain && window.brain.talkingCreature === id;
+        const isBlinking = window.brain && window.brain.blinkTimer > 3.0 && window.brain.blinkTimer < 3.2;
 
-            const frameIdx = Math.floor(state.time_elapsed * flapSpeed) % 5;
-            
-            const leftFinEl = document.getElementById('solon-left-fin');
-            const rightFinEl = document.getElementById('solon-right-fin');
-            const bodyEl = document.getElementById('solon-body');
-
-            if (leftFinEl && leftFinEl.src.indexOf(`_${frameIdx + 1}.png`) === -1) {
-                leftFinEl.src = `assets/images/solon_left_fin_${frameIdx + 1}.png`;
-            }
-            if (rightFinEl && rightFinEl.src.indexOf(`_${frameIdx + 1}.png`) === -1) {
-                rightFinEl.src = `assets/images/solon_right_fin_${frameIdx + 1}.png`;
-            }
-
-            let stateStr = "";
-            if (window.brain && window.brain.talkingCreature === "solon") {
-                if (Math.floor(state.time_elapsed / 0.15) % 2 === 0) stateStr = "_talk";
-            } else if (window.brain && window.brain.blinkTimer > 3.0 && window.brain.blinkTimer < 3.2) {
-                stateStr = "_blink";
-            }
-
-            const newBodySrc = stateStr ? `assets/images/solon_body${stateStr}.png` : `assets/images/solon_body.png`;
-            if (bodyEl && bodyEl.src.indexOf(newBodySrc) === -1) bodyEl.src = newBodySrc;
+        if (id === "solon" && window.solonActor) {
+            window.solonActor.update(state.time_elapsed, currentMood, isTalking, isBlinking);
         } else {
             if (window.brain) {
                 let stateStr = "";
-                if (window.brain.talkingCreature === id) {
+                if (isTalking) {
                     if (Math.floor(state.time_elapsed / 0.15) % 2 === 0) stateStr = "_talk";
-                } else if (window.brain.blinkTimer > 3.0 && window.brain.blinkTimer < 3.2) {
+                } else if (isBlinking) {
                     stateStr = "_blink";
                 }
 
@@ -229,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    preloadSolonFins();
     initShadows();
     resize();
     requestAnimationFrame(tick); 
