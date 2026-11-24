@@ -27,9 +27,45 @@ jobs:
         distribution: 'temurin'
         java-version: '21'
 
+    # --- THE FIX: Route Gradle through Google's Maven Mirror ---
+    - name: Configure Gradle to use Google Maven Mirror
+      run: |
+        mkdir -p ~/.gradle/init.d
+        cat << 'EOF' > ~/.gradle/init.d/google-mirror.gradle
+        def mirror = "https://maven-central.storage-download.googleapis.com/maven2/"
+        
+        settingsEvaluated { settings ->
+            settings.pluginManagement {
+                repositories {
+                    maven { url mirror }
+                    gradlePluginPortal()
+                }
+            }
+            settings.dependencyResolutionManagement {
+                repositories {
+                    maven { url mirror }
+                }
+            }
+        }
+        
+        allprojects {
+            buildscript {
+                repositories {
+                    maven { url mirror }
+                }
+            }
+            repositories {
+                maven { url mirror }
+            }
+        }
+        EOF
+
     # THIS IS THE MISSING STEP: Create the native Android project
     - name: Add Android Platform
-      run: npx cap add android
+      run: |
+        if [ ! -d "android" ]; then
+          npx cap add android
+        fi
 
     # NOW you can sync your web files to the newly created Android project
     - name: Sync Capacitor
