@@ -30,4 +30,5 @@ Edenshore is a Neuro-Symbolic "Vibe Engine" for Android. Digital terrarium with 
 - Texture swapping works (Talk/Blink) ✅
 
 ## Asset Notes
-- The old whole-body Solon sprites (`solon.png`, etc.) have been deleted by the architect
+- The old whole-body Solon sprites (`solon.png`, etc.) have been deleted by the architect. Use `solon_body.png`.
+- Ambient beds have been replaced by `monume_lounge_relaxing.mp3` (currently not wired to code, reserved for Phase 2).
