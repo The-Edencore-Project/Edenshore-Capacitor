@@ -24,16 +24,18 @@
     <img src="assets/images/sand_dunes.png" id="dunes" class="parallax" data-speed="0.4">
     <img src="assets/images/grass.png" id="grass" class="parallax" data-speed="1.0">
 
+    <!-- THE SHADOWS -->
+    <div id="shadow-layer"></div>
+
     <!-- The Council Lives Here -->
     <div id="creature-layer">
-      <!-- Solon is a layered group -->
-      <div id="solon-group" class="creature" data-scale="0.20">
-        <img id="solon-left-fin" class="solon-layer" src="assets/images/solon_left_fin_1.png">
-        <img id="solon-body" class="solon-layer" src="assets/images/solon_body.png">
-        <img id="solon-right-fin" class="solon-layer" src="assets/images/solon_right_fin_1.png">
+      <!-- Solon is now a container to hold his body and flippers -->
+      <div id="solon" class="creature" data-scale="0.20">
+        <img id="solon-left-fin" src="assets/images/solon_left_fin_1.png" class="solon-fin">
+        <img id="solon-body" src="assets/images/solon_body.png" class="solon-body-part">
+        <img id="solon-right-fin" src="assets/images/solon_right_fin_1.png" class="solon-fin">
       </div>
       
-      <!-- Other Creatures -->
       <img src="assets/images/lumen.png" id="lumen" class="creature" data-scale="0.18">
       <img src="assets/images/prism.png" id="prism" class="creature" data-scale="0.26">
       <img src="assets/images/ripple.png" id="ripple" class="creature" data-scale="0.36">
@@ -43,6 +45,7 @@
 
   <!-- THE UI LAYER -->
   <div id="ui-layer">
+
     <!-- THE GHOST BUBBLE -->
     <div id="ghost-bubble">
       <div id="bubble-text"></div>
@@ -60,12 +63,11 @@
     </div>
   </div>
 
-  <!-- LOAD MODULES (STRICT ORDER) -->
+  <!-- LOAD MODULES (order matters) -->
   <script src="save.js"></script>
   <script src="audio.js"></script>
   <script src="neural.js"></script>
   <script src="brain.js"></script>
-  <script src="creatures.js"></script>
   <script src="dialogue.js"></script>
   <script src="app.js"></script>
 </body>
