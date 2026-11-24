@@ -4,7 +4,6 @@
 
 const state = { time_elapsed: 0, base_scroll: 0 };
 
-// Data definitions
 const creatureData = {
     solon:  { baseX: 0.30, baseY: 0.55, scale: 0.20 },
     prism:  { baseX: 0.70, baseY: 0.55, scale: 0.26 },
@@ -26,6 +25,8 @@ function preloadSolonFins() {
 
 function initShadows() {
     const shadowLayer = document.getElementById('shadow-layer');
+    if (!shadowLayer) return;
+    
     for (const id in creatureData) {
         const shadow = document.createElement('div');
         shadow.className = 'creature-shadow';
@@ -33,8 +34,9 @@ function initShadows() {
         shadowLayer.appendChild(shadow);
         shadowElements[id] = shadow;
         
-        // Register with physics engine
-        window.physicsEngine.registerCreature(id, creatureData[id].baseX, creatureData[id].baseY, creatureData[id].scale);
+        if (window.physicsEngine) {
+            window.physicsEngine.registerCreature(id, creatureData[id].baseX, creatureData[id].baseY, creatureData[id].scale);
+        }
     }
 }
 
@@ -56,14 +58,17 @@ function resize() {
         }
     });
     
-    window.physicsEngine.resize();
+    if (window.physicsEngine) window.physicsEngine.resize();
 }
 
 // Particles
 const particleLayer = document.createElement('div');
 particleLayer.id = 'particle-layer';
 particleLayer.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; z-index:4; pointer-events:none;';
-document.getElementById('scene').appendChild(particleLayer);
+document.addEventListener('DOMContentLoaded', () => {
+    const scene = document.getElementById('scene');
+    if (scene) scene.appendChild(particleLayer);
+});
 
 let lastTime = performance.now();
 let dialogueCooldown = 0;
@@ -86,7 +91,9 @@ function tick(currentTime) {
 
     // Update Physics & Shadows
     const currentMood = window.brain ? window.brain.mood : "NORMAL";
-    window.physicsEngine.update(safeDt, state.time_elapsed, currentMood, shadowElements);
+    if (window.physicsEngine) {
+        window.physicsEngine.update(safeDt, state.time_elapsed, currentMood, shadowElements);
+    }
 
     // Animation & Texture Swaps
     for (const [id, data] of Object.entries(creatureData)) {
@@ -112,7 +119,6 @@ function tick(currentTime) {
                 rightFinEl.src = `assets/images/solon_right_fin_${frameIdx + 1}.png`;
             }
 
-            // Solon Texture Swap
             let stateStr = "";
             if (window.brain && window.brain.talkingCreature === "solon") {
                 if (Math.floor(state.time_elapsed / 0.15) % 2 === 0) stateStr = "_talk";
@@ -123,7 +129,6 @@ function tick(currentTime) {
             const newBodySrc = stateStr ? `assets/images/solon_body${stateStr}.png` : `assets/images/solon_body.png`;
             if (bodyEl && bodyEl.src.indexOf(newBodySrc) === -1) bodyEl.src = newBodySrc;
         } else {
-            // Standard creatures
             if (window.brain) {
                 let stateStr = "";
                 if (window.brain.talkingCreature === id) {
@@ -217,8 +222,10 @@ document.querySelectorAll('.biome-btn').forEach(btn => {
         document.querySelectorAll('.biome-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
         const bg = document.getElementById('bg-gradient');
-        bg.className = '';
-        bg.classList.add(`biome-${e.target.dataset.biome.toLowerCase()}`);
+        if (bg) {
+            bg.className = '';
+            bg.classList.add(`biome-${e.target.dataset.biome.toLowerCase()}`);
+        }
     });
 });
 
