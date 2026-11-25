@@ -1,6 +1,6 @@
 /* =====================================================================
-   EDENSHORE — STYLE.CSS V3.0
-   Phase 2: Visual & Interactive Restoration
+   EDENSHORE — STYLE.CSS V3.1
+   Phase 2: Visual & Interactive Restoration + Debug HUD
    ===================================================================== */
 
 * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -125,7 +125,7 @@ body, html {
 #solon-right-fin { z-index: 3; transform: translate(25%, 18%); }
 
 /* =====================================================================
-   LUMEN TENTACLES (Phase 2 Addition)
+   LUMEN TENTACLES (Phase 2)
    ===================================================================== */
 .lumen-tentacle {
     position: absolute;
@@ -140,7 +140,7 @@ body, html {
 }
 
 /* =====================================================================
-   RIDDLE PULSE (Phase 2 Addition)
+   RIDDLE PULSE (Phase 2)
    ===================================================================== */
 .creature.riddle-target {
     animation: riddlePulse 1.5s ease-in-out infinite;
@@ -149,8 +149,8 @@ body, html {
 }
 
 @keyframes riddlePulse {
-    0%, 100% { transform: scale(1) translate(var(--tx, 0), var(--ty, 0)); }
-    50% { transform: scale(1.05) translate(var(--tx, 0), var(--ty, 0)); }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 /* =====================================================================
@@ -163,7 +163,7 @@ body, html {
 }
 
 /* =====================================================================
-   HUD - TOP BAR (Bond & Status)
+   HUD - TOP BAR
    ===================================================================== */
 #hud-top {
     position: absolute; top: 0; left: 0; width: 100%;
@@ -193,7 +193,7 @@ body, html {
 }
 
 /* =====================================================================
-   HUD - UTIL BAR (FEED, SLEEP, DIM, VOL, MENU)
+   HUD - UTIL BAR
    ===================================================================== */
 #hud-util {
     position: absolute; 
@@ -222,7 +222,7 @@ body, html {
 }
 
 /* =====================================================================
-   HUD - BOTTOM BAR (Biome Controls)
+   HUD - BOTTOM BAR
    ===================================================================== */
 #bottom-bar {
     position: absolute; bottom: 0; left: 0; width: 100%;
@@ -249,7 +249,7 @@ body, html {
 }
 
 /* =====================================================================
-   GHOST BUBBLE (The Voice)
+   GHOST BUBBLE
    ===================================================================== */
 #ghost-bubble {
     position: absolute;
@@ -282,9 +282,6 @@ body, html {
     overflow-wrap: break-word;
 }
 
-/* =====================================================================
-   RISING BUBBLE ANIMATION
-   ===================================================================== */
 @keyframes riseAndFade {
     0%   { opacity: 0; transform: translate(-50%, 0px) scale(0.8); }
     10%  { opacity: 1; transform: translate(-50%, -10px) scale(1.0); }
@@ -293,7 +290,7 @@ body, html {
 }
 
 /* =====================================================================
-   FOOD PARTICLES (Phase 2 - Spawned by JS)
+   FOOD PARTICLES
    ===================================================================== */
 .food-particle {
     position: absolute;
@@ -307,7 +304,30 @@ body, html {
 }
 
 /* =====================================================================
-   DEBUG SAFETY (Only visible if a JS crash injects an error div)
+   DEBUG HUD (Phase 2 - The Missing Piece)
+   ===================================================================== */
+#debug-overlay {
+    position: absolute;
+    top: 130px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: #ccffcc;
+    z-index: 12;
+    border-radius: 4px;
+    border-left: 2px solid #00ff00;
+    pointer-events: none;
+    white-space: nowrap;
+    line-height: 1.4;
+    text-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
+    max-width: 220px;
+    overflow: hidden;
+}
+
+/* =====================================================================
+   DEBUG SAFETY
    ===================================================================== */
 body > div[style*="background:red"] {
     border-radius: 4px;
