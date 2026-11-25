@@ -10,27 +10,10 @@ class DialogueEngine {
     }
 
     triggerBank(bankName) {
-        if (!window.getBank) return;
-        
-        const bank = window.getBank(bankName);
-        if (!bank || bank.length === 0) {
-            return;
-        }
-
-        const conversation = bank[Math.floor(Math.random() * bank.length)];
+        if (!window.drawFromBank) return;
+        const conversation = window.drawFromBank(bankName);
+        if (!conversation) return;
         this.queueSpeech(conversation);
-    }
-
-    triggerRandom(speaker) {
-        const fallback = {
-            "Solon": ["Tears in the water."],
-            "Prism": ["Yay!"],
-            "Lumen": ["Soft."],
-            "Ripple": ["Hold on."],
-            "Vertex": ["Watching."]
-        };
-        const lines = fallback[speaker] || ["..."];
-        this.queueSpeech([[speaker, lines[Math.floor(Math.random() * lines.length)]]]);
     }
 
     queueSpeech(conversation) {
@@ -53,7 +36,6 @@ class DialogueEngine {
         this.showBubble(speaker, text);
 
         const readTime = Math.max(3000, text.length * 60 + 1000); 
-
         this.timer = setTimeout(() => {
             this.hideBubble();
             setTimeout(() => { this.processNext(); }, 1500);
@@ -80,7 +62,7 @@ class DialogueEngine {
         bubble.style.opacity = '1';
         bubble.style.animation = 'none'; 
         void bubble.offsetWidth; 
-        bubble.style.animation = 'floatUp 5s ease-out forwards';
+        bubble.style.animation = 'riseAndFade 5s ease-out forwards';
     }
 
     hideBubble() {
