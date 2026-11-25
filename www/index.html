@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Edenshore</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -15,7 +15,6 @@
 
   <div id="scene">
     <div id="bg-gradient" class="biome-lagoon"></div>
-    
     <div id="god-rays"></div>
     <div id="weather-tint"></div>
 
@@ -32,7 +31,6 @@
         <img id="solon-body" src="assets/images/solon_body.png" class="solon-body-part">
         <img id="solon-right-fin" src="assets/images/solon_right_fin_1.png" class="solon-fin">
       </div>
-      
       <img src="assets/images/lumen.png" id="lumen" class="creature" data-scale="0.18">
       <img src="assets/images/prism.png" id="prism" class="creature" data-scale="0.26">
       <img src="assets/images/ripple.png" id="ripple" class="creature" data-scale="0.36">
@@ -45,7 +43,6 @@
       <div id="bubble-text"></div>
     </div>
 
-    <!-- NEW HUD -->
     <div id="hud-top">
       <div id="bond-text">BOND: 0 - Stranger</div>
       <div id="status-text"></div>
@@ -67,24 +64,23 @@
     </div>
   </div>
 
-  <!-- 1. SYSTEMS (The Mind) -->
+  <!-- DEBUG HUD (The Missing Piece) -->
+  <div id="debug-overlay"></div>
+
   <script src="systems/save.js"></script>
   <script src="systems/audio.js"></script>
   <script src="systems/neural.js"></script>
   <script src="systems/brain.js"></script>
   <script src="systems/dialogue.js"></script>
   
-  <!-- 2. ENGINE (The Rules) -->
   <script src="engine/physics.js"></script>
   <script src="engine/choreography.js"></script>
   <script src="engine/atmosphere.js"></script>
   <script src="engine/cinematics.js"></script>
   
-  <!-- 3. ACTORS (The Visuals) -->
   <script src="actors/creatures.js"></script>
   <script src="actors/solon.js"></script>
 
-  <!-- 4. DIALOGUE BANKS (The Voice) -->
   <script src="dialogue/ambient.js"></script>
   <script src="dialogue/bedtime.js"></script>
   <script src="dialogue/biome.js"></script>
@@ -103,8 +99,7 @@
   <script src="dialogue/visitor.js"></script>
   <script src="dialogue/wisdom.js"></script>
 
-  <!-- 5. THE BRIDGE & ORCHESTRATOR -->
-  <script src="crosstalk.js"></script>
-  <script src="app.js"></script>
+  <script src="crosstalk.js?v=4"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
