@@ -8,6 +8,15 @@ const creatureData = {
     vertex: { baseX: 0.50, baseY: 0.12, scale: 0.24 }
 };
 
+// Individual blink timers per creature
+const blinkState = {
+    solon:  { timer: 4, max: 5 },
+    prism:  { timer: 3, max: 4 },
+    lumen:  { timer: 5, max: 8 },
+    ripple: { timer: 2, max: 6 },
+    vertex: { timer: 1, max: 2 }
+};
+
 let shadowElements = {};
 
 function initShadows() {
@@ -58,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let lastTime = performance.now();
-let dialogueCooldown = 10; // Start with a 10-second cooldown so the first talk happens quickly
+let dialogueCooldown = 10;
 
 function tick(currentTime) {
     const dt = (currentTime - lastTime) / 1000; 
@@ -106,14 +115,25 @@ function tick(currentTime) {
         const el = document.getElementById(id);
         if (!el) continue;
 
+        // Individual Blink Logic
+        blinkState[id].timer -= safeDt;
+        let isBlinking = false;
+        if (blinkState[id].timer <= 0) {
+            isBlinking = true;
+            // If we've been blinking for 0.15s, reset the timer
+            if (blinkState[id].timer <= -0.15) {
+                blinkState[id].timer = blinkState[id].max + (Math.random() * 2 - 1);
+            }
+        }
+
         const isTalking = window.brain && window.brain.talkingCreature === id;
-        const isBlinking = window.brain && window.brain.blinkTimer > 3.0 && window.brain.blinkTimer < 3.2;
 
         if (id === "solon" && window.solonActor) {
             window.solonActor.update(state.time_elapsed, currentMood, isTalking, isBlinking);
         } else {
             if (window.brain) {
                 let stateStr = "";
+                // Talk priority over blink
                 if (isTalking) {
                     if (Math.floor(state.time_elapsed / 0.15) % 2 === 0) stateStr = "_talk";
                 } else if (isBlinking) {
@@ -130,10 +150,6 @@ function tick(currentTime) {
                 }
             }
         }
-    }
-
-    if (window.brain && window.brain.blinkTimer > 3.4) {
-        window.brain.blinkTimer = 0;
     }
 
     if (Math.random() < 0.05) spawnParticle();
@@ -195,10 +211,52 @@ document.addEventListener('DOMContentLoaded', () => {
     initShadows();
     resize();
     requestAnimationFrame(tick); 
+
+    // Wire up HUD Buttons
+    document.getElementById('btn-feed').addEventListener('click', () => {
+        if (window.dialogue) window.dialogue.triggerBank("feed_reactions");
+        if (window.brain) window.brain.addBond(5); // Bonus bond for feeding
+    });
+
+    document.getElementById('btn-sleep').addEventListener('click', () => {
+        if (window.brain) {
+            // Toggle sleep state (We'll need a real state machine later, but this simulates it)
+            let currentState = window.brain.mood;
+            if (currentState !== "SLEEPY") {
+                window.brain.mood = "SLEEPY";
+                if (window.dialogue) window.dialogue.triggerBank("bedtime_resistance");
+            } else {
+                window.brain.mood = "NORMAL";
+                if (window.dialogue) window.dialogue.triggerBank("waking_nudge");
+            }
+        }
+    });
+
+    document.getElementById('btn-dim').addEventListener('click', () => {
+        // Toggle a dark overlay on the scene
+        const scene = document.getElementById('scene');
+        if (scene.style.filter === 'brightness(0.5)') {
+            scene.style.filter = 'brightness(1.0)';
+        } else {
+            scene.style.filter = 'brightness(0.5)';
+        }
+    });
+
+    document.getElementById('btn-vol').addEventListener('click', (e) => {
+        if (window.audio && window.audio.music) {
+            window.audio.music.volume = window.audio.music.volume > 0 ? 0 : 0.3;
+            e.target.innerText = window.audio.music.volume > 0 ? "VOL HI" : "MUTE";
+            e.target.style.color = window.audio.music.volume > 0 ? "#0f0" : "#f00";
+        }
+    });
+
+    document.getElementById('btn-menu').addEventListener('click', () => {
+        if (window.dialogue) window.dialogue.triggerBank("wisdom");
+    });
 });
 
 window.addEventListener('touchstart', (e) => {
-    if (e.target.classList.contains('biome-btn')) return;
+    if (e.target.classList.contains('biome-btn') || e.target.classList.contains('util-btn')) return;
     if (window.brain) window.brain.addBond(1);
     
     if (window.dialogue && !window.dialogue.isTalking && Math.random() > 0.7) {
@@ -214,6 +272,7 @@ document.querySelectorAll('.biome-btn').forEach(btn => {
         if (bg) {
             bg.className = '';
             bg.classList.add(`biome-${e.target.dataset.biome.toLowerCase()}`);
+            if (window.dialogue) window.dialogue.triggerBank(`biome_${e.target.dataset.biome}`);
         }
     });
 });
