@@ -1,8 +1,8 @@
 // =====================================================================
-// EDENCORE ORCHESTRATOR - app.js
+// EDENCORE ORCHESTRATOR - app.js (V3.1 - Debug HUD Integrated)
 // =====================================================================
 
-const state = { time_elapsed: 0, base_scroll: 0 };
+const state = { time_elapsed: 0, base_scroll: 0, lastDebugFrame: -1 };
 let gameState = "normal"; // normal, riddle_wait
 let currentRiddle = null;
 let riddleTimer = 0;
@@ -39,6 +39,10 @@ function initShadows() {
 function initTentacles() {
     const lumenEl = document.getElementById('lumen');
     if (!lumenEl) return;
+    // Clear any existing tentacles (in case of hot reload)
+    document.querySelectorAll('.lumen-tentacle').forEach(el => el.remove());
+    lumenTentacles = [];
+    
     for (let i = 0; i < 5; i++) {
         const t = document.createElement('div');
         t.className = 'lumen-tentacle';
@@ -99,13 +103,10 @@ function triggerRiddle() {
     gameState = "riddle_wait";
     riddleTimer = 15; // 15 seconds to answer
     
-    // Play setup
     window.dialogue.queueSpeech(riddle);
     document.getElementById('status-text').innerText = "RIDDLE: Tap the correct creature!";
     document.getElementById('status-text').style.color = "#FFD700";
     
-    // Highlight correct answer for testing? No, that's cheating. 
-    // But we pulse all creatures to show they are clickable.
     document.querySelectorAll('.creature').forEach(el => el.classList.add('riddle-target'));
 }
 
@@ -127,7 +128,10 @@ function handleCreatureTap(id) {
         gameState = "normal";
         currentRiddle = null;
         document.querySelectorAll('.creature').forEach(el => el.classList.remove('riddle-target'));
-        setTimeout(() => { document.getElementById('status-text').innerText = ""; }, 3000);
+        setTimeout(() => { 
+            const st = document.getElementById('status-text');
+            if (st) st.innerText = ""; 
+        }, 3000);
     } else {
         // Normal tap
         window.brain.addBond(1);
@@ -169,6 +173,35 @@ function updateFood(dt) {
     }
 }
 
+function updateDebugHUD() {
+    const dbg = document.getElementById('debug-overlay');
+    if (!dbg || !window.brain) return;
+    
+    // Throttle to 5 updates per second
+    const currentFrame = Math.floor(state.time_elapsed * 5);
+    if (currentFrame === state.lastDebugFrame) return;
+    state.lastDebugFrame = currentFrame;
+
+    const mood = window.brain.mood || "NORMAL";
+    const sleep = (mood === "SLEEPY") ? "SLEEPING" : "AWAKE";
+    const motion = (window.brain.motion || 0).toFixed(2);
+    const battery = (window.brain.battery || 1).toFixed(2);
+    const heat = (window.brain.heat || 0).toFixed(1);
+    
+    // The 4-mood net output from neural.js
+    const netOutput = window.brain.lastNetOutput 
+        ? window.brain.lastNetOutput.map(v => v.toFixed(2)).join(", ") 
+        : "0.25, 0.25, 0.25, 0.25";
+
+    dbg.innerHTML = 
+        `Mood: ${mood}<br>` +
+        `Sleep: ${sleep}<br>` +
+        `Light: 0.50 | Temp: 0.60<br>` +
+        `Motion: ${motion} | Battery: ${battery}<br>` +
+        `Heat: ${heat} | Rhythm: 1.0s<br>` +
+        `Net: [${netOutput}]`;
+}
+
 let lastTime = performance.now();
 
 function tick(currentTime) {
@@ -193,9 +226,12 @@ function tick(currentTime) {
             gameState = "normal";
             currentRiddle = null;
             document.querySelectorAll('.creature').forEach(el => el.classList.remove('riddle-target'));
-            document.getElementById('status-text').innerText = "Too slow!";
-            document.getElementById('status-text').style.color = "#FF0000";
-            setTimeout(() => { document.getElementById('status-text').innerText = ""; }, 3000);
+            const st = document.getElementById('status-text');
+            if (st) {
+                st.innerText = "Too slow!";
+                st.style.color = "#FF0000";
+                setTimeout(() => { st.innerText = ""; }, 3000);
+            }
         }
     }
 
@@ -256,6 +292,8 @@ function tick(currentTime) {
 
     updateTentacles();
     updateFood(safeDt);
+    updateDebugHUD();
+
     requestAnimationFrame(tick);
 }
 
@@ -284,7 +322,6 @@ window.addEventListener('touchstart', (e) => {
     if (e.target.closest('.creature')) {
         handleCreatureTap(e.target.closest('.creature').id);
     } else {
-        // Tap anywhere else
         if (gameState === "normal" && Math.random() > 0.8) {
             window.brain.addBond(1);
             if (window.dialogue) window.dialogue.triggerBank("tap_reactions");
@@ -305,13 +342,12 @@ document.querySelectorAll('.biome-btn').forEach(btn => {
     });
 });
 
-document.getElementById('btn-feed').addEventListener('click', () => {
-    spawnFood();
-});
+const btnFeed = document.getElementById('btn-feed');
+if (btnFeed) btnFeed.addEventListener('click', spawnFood);
 
-document.getElementById('btn-sleep').addEventListener('click', () => {
+const btnSleep = document.getElementById('btn-sleep');
+if (btnSleep) btnSleep.addEventListener('click', () => {
     if (window.dialogue) window.dialogue.triggerBank("bedtime_resistance");
-    // The actual sleep state is handled by the brain and choreography
 });
 
 window.addEventListener('resize', resize);
