@@ -4,26 +4,27 @@
 
 class WeatherEngine {
     constructor() {
-        this.currentTint = [0, 0, 0, 0]; // RGBA
+        this.currentTint = [0, 0, 0, 0];
         this.targetTint = [0, 0, 0, 0];
         this.currentRayAlpha = 0.15;
         this.targetRayAlpha = 0.15;
         this.timer = 0;
+        this.rayAngle = 15;
     }
 
     update(dt, mood) {
         this.timer += dt;
 
-        // Every 30 seconds, shift the weather slightly
+        // Shift weather every 30 seconds
         if (this.timer > 30) {
             this.timer = 0;
             
             if (mood === "SLEEPY") {
                 this.targetRayAlpha = 0.05;
-                this.targetTint = [0, 0, 0.1, 0.2]; // Blueish dark tint
+                this.targetTint = [0, 0, 0.1, 0.2];
             } else if (mood === "PLAYFUL") {
                 this.targetRayAlpha = 0.3;
-                this.targetTint = [0.1, 0.1, 0, 0.05]; // Golden tint
+                this.targetTint = [0.1, 0.1, 0, 0.05];
             } else {
                 this.targetRayAlpha = 0.15;
                 this.targetTint = [0, 0, 0, 0];
@@ -36,7 +37,6 @@ class WeatherEngine {
         }
         this.currentRayAlpha += (this.targetRayAlpha - this.currentRayAlpha) * dt * 0.5;
         
-        // Apply to CSS (We will add the god-rays div in HTML)
         const tintEl = document.getElementById('weather-tint');
         if (tintEl) {
             tintEl.style.backgroundColor = `rgba(${this.currentTint[0]*255}, ${this.currentTint[1]*255}, ${this.currentTint[2]*255}, ${this.currentTint[3]})`;
@@ -45,6 +45,9 @@ class WeatherEngine {
         const raysEl = document.getElementById('god-rays');
         if (raysEl) {
             raysEl.style.opacity = this.currentRayAlpha;
+            // Make the rays gently sway
+            this.rayAngle = 15 + Math.sin(this.timer * 0.2) * 10;
+            raysEl.style.background = `linear-gradient(${this.rayAngle}deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 220, 0.15) 40%, rgba(255, 255, 255, 0) 70%)`;
         }
     }
 }
