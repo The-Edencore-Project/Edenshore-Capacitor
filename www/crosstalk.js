@@ -1,7 +1,49 @@
 // =====================================================================
-// EDENCORE - crosstalk.js (The Dialogue Bridge)
+// EDENCORE - crosstalk.js (The Dialogue Bridge + Anti-Repeat)
 // =====================================================================
 
+class ShuffleBag {
+    constructor(items) {
+        this.items = items || [];
+        this.drawn = [];        // hashes already drawn this cycle
+        this.recent = [];       // last 20 draws to prevent immediate repeats
+        this.isPermanent = true;
+    }
+
+    // Simple hash so we don't compare huge arrays
+    _hash(item) {
+        return JSON.stringify(item).slice(0, 100);
+    }
+
+    draw() {
+        if (this.items.length === 0) return null;
+
+        // Build the set of items not yet drawn this cycle
+        const drawnHashes = new Set(this.drawn.map(i => this._hash(i)));
+        let available = this.items.filter(item => !drawnHashes.has(this._hash(item)));
+
+        // If we've exhausted the bag, reset it
+        if (available.length === 0) {
+            // Roll the drawn hashes into the recent memory
+            this.recent = [...this.recent, ...this.drawn].slice(-20);
+            this.drawn = [];
+
+            // Filter out items in the recent memory
+            const recentHashes = new Set(this.recent.map(i => this._hash(i)));
+            available = this.items.filter(item => !recentHashes.has(this._hash(item)));
+
+            // If everything is in recent memory, fall back to full bank
+            if (available.length === 0) available = [...this.items];
+        }
+
+        // Pick a random item from the available pool
+        const chosen = available[Math.floor(Math.random() * available.length)];
+        this.drawn.push(chosen);
+        return chosen;
+    }
+}
+
+// ---- The Banks ----
 window.getBank = function(name) {
     const banks = {
         ambient: window.DIALOGUE_AMBIENT,
@@ -43,9 +85,22 @@ window.getBank = function(name) {
         biome_DEEP: window.DIALOGUE_BIOME ? window.DIALOGUE_BIOME["DEEP"] : []
     };
     
-    if (banks[name]) {
-        return banks[name];
-    }
+    if (banks[name]) return banks[name];
     console.warn("Bank not found:", name);
     return [];
+};
+
+// ---- ShuffleBag Registry (one bag per bank) ----
+const bags = {};
+function getBag(bankName) {
+    if (!bags[bankName]) {
+        bags[bankName] = new ShuffleBag(window.getBank(bankName));
+    }
+    return bags[bankName];
+}
+
+// ---- The Draw Function (used by dialogue.js) ----
+window.drawFromBank = function(bankName) {
+    const bag = getBag(bankName);
+    return bag.draw();
 };
