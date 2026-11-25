@@ -7,30 +7,69 @@ Format: `https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capaci
 
 ## 🧠 AI Context
 - [Master Hand-Off](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/AI_CONTEXT.md)
+- [Architecture](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/ARCHITECTURE.md)
+- [Roadmap](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/ROADMAP.md)
+- [Pydroid Legacy Hand-off](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/PYDROID_LEGACY_HANDOFF.md)
 - [README](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/README.md)
 
 ---
 
-## 🌐 Web Engine (www/)
+## 🌐 Entry
 - [index.html](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/index.html)
 - [style.css](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/style.css)
+- [app.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/app.js)
+- [crosstalk.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/crosstalk.js)
 
 ---
 
-## ⚙️ JavaScript Modules
-- [app.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/app.js)
-- [brain.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/brain.js)
-- [audio.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/audio.js)
-- [save.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/save.js)
-- [dialogue.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue.js)
-- [creatures.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/creatures.js)
-- [ambient.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/ambient.js)
-- [rocks.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/rocks.js)
+## ⚙️ Systems
+- [brain.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/systems/brain.js)
+- [neural.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/systems/neural.js)
+- [dialogue.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/systems/dialogue.js)
+- [save.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/systems/save.js)
+- [audio.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/systems/audio.js)
+
+---
+
+## 🌍 Engine
+- [physics.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/engine/physics.js)
+- [choreography.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/engine/choreography.js)
+- [atmosphere.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/engine/atmosphere.js)
+- [cinematics.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/engine/cinematics.js)
+
+---
+
+## 🎭 Actors
+- [creatures.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/actors/creatures.js)
+- [solon.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/actors/solon.js)
+
+---
+
+## 💬 Dialogue Banks
+- [ambient.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/ambient.js)
+- [bedtime.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/bedtime.js)
+- [biome.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/biome.js)
+- [council.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/council.js)
+- [daily.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/daily.js)
+- [dreams.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/dreams.js)
+- [facts.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/facts.js)
+- [huddle.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/huddle.js)
+- [jokes.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/jokes.js)
+- [lyrics.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/lyrics.js)
+- [poetry.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/poetry.js)
+- [reactions.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/reactions.js)
+- [requests.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/requests.js)
+- [riddles.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/riddles.js)
+- [stories.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/stories.js)
+- [visitor.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/visitor.js)
+- [wisdom.js](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/dialogue/wisdom.js)
 
 ---
 
 ## 🎨 Assets — Images
-- [solon.png](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/images/solon.png)
+- [solon_body.png](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/images/solon_body.png)
+- [solon_left_fin_1.png](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/images/solon_left_fin_1.png)
+- [solon_right_fin_1.png](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/images/solon_right_fin_1.png)
 - [prism.png](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/images/prism.png)
 - [lumen.png](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/images/lumen.png)
 - [ripple.png](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/images/ripple.png)
@@ -43,11 +82,6 @@ Format: `https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capaci
 ---
 
 ## 🎵 Assets — Audio
-### Beds
-- [water_bed](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/audio/beds/water_bed.ogg)
-- [fairy_dust](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/audio/beds/fairy_dust.mp3)
-- [fairy_wings](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/audio/beds/fairy_wings.mp3)
-
 ### Stings
 - [solon_sting](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/audio/stings/solon_sting.mp3)
 - [prism_sting](https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/www/assets/audio/stings/prism_sting.mp3)
@@ -69,4 +103,5 @@ Format: `https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capaci
 ---
 
 ## 🚀 Usage for AI
-When starting a new thread, paste this single URL:https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/RAW_FILES_ACCESS.md
+When starting a new thread, paste this single URL:
+https://raw.githubusercontent.com/The-Edencore-Project/Edenshore-Capacitor/main/RAW_FILES_ACCESS.md
