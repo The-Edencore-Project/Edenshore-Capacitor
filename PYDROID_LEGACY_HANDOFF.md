@@ -1,12 +1,12 @@
 # EDENCORE: PYDROID (KIVY) LEGACY HANDOFF
-**Version:** 1.0  
+**Version:** 1.1  
 **Status:** Archived Reference (The "Golden Code")  
 **Target for AI:** Context for porting logic from Python/Kivy to JavaScript/Capacitor.
 
 ---
 
 ## 🏛️ The Architectural Evolution
-Edenshore was originally built in **Python using Kivy** via Pydroid 3 on an Android phone. It achieved incredible visual fidelity and complex state management, but **Buildozer** (the cloud APK compiler) constantly failed on the Kirin 710A chipset due to `jnius` dependencies, hardcoded `/storage/emulated/0/` paths, and OpenGL rendering limits.
+Edenshore was originally built in **Python using Kivy** via Pydroid 3 on an Android phone. It achieved incredible visual fidelity and complex state management, but **Buildozer** (the cloud APK compiler) constantly failed on the target hardware due to `jnius` dependencies, hardcoded `/storage/emulated/0/` paths, and heavy OpenGL canvas rendering limits.
 
 To solve the distribution problem, the project shifted to a **Web/Capacitor** stack. This document preserves the Python architecture so the Web engine can match the "Golden Code."
 
@@ -22,6 +22,20 @@ To solve the distribution problem, the project shifted to a **Web/Capacitor** st
 5. **KIVY IS STATEFUL.** Black shadows inherit colors unless explicitly reset. *(Retired on Web, DOM handles this).*
 6. **GHOST BUBBLES.** Kivy caches geometry. Set `alpha=0` AND `size=(0,0)` to flush the canvas. *(Web equivalent: `pointer-events: none`).*
 7. **TALK PRIORITY.** `talk_timer` must be checked before `is_blinking`, or creatures stop talking mid-sentence to blink.
+
+---
+
+## 🚨 THE TARGET HARDWARE (The "Stress Test")
+The Web build is not just targeting "Android." It is targeting the most constrained device in the ecosystem:
+
+*   **Device:** HUAWEI MatePad SE 11"
+*   **Processor:** Kirin 710A (2018 chip, 12nm)
+*   **RAM:** 4.0 GB
+*   **OS:** HarmonyOS 2.0.0 (Runs APKs via an AOSP compatibility layer)
+*   **WebView Engine:** Chromium M99 (Released early 2022)
+
+**Why this matters:**
+The WebView is outdated. Modern CSS `backdrop-filter`, newer JS syntax, and complex `requestAnimationFrame` loops will stutter or fail silently. If the Web build runs smoothly on this tablet, it is guaranteed to run flawlessly on any modern Android or iOS device. Performance is the #1 priority.
 
 ---
 
@@ -60,17 +74,16 @@ The Python build was monolithic in `terrarium.py` (the Kivy Widget), but utilize
 
 ## 🌉 The Porting Bridge: Kivy vs. Web
 
-Here is how the Python architecture translates to the Capacitor/Web repository:
-
 | Python / Kivy | Capacitor / Web | Status |
 | :--- | :--- | :--- |
 | `terrarium.py` (tick loop) | `www/app.js` (requestAnimationFrame) | ✅ Ported |
-| `brain.py` (mood logic) | `www/brain.js` (ES6 Class) | ✅ Ported |
-| `neural.py` (12→8→4 Net) | `www/neural.js` (ES6 Class) | ✅ Ported |
-| `save.py` (bond_score) | `www/save.js` (localStorage) | ✅ Ported |
-| `audio.py` (SoundBank) | `www/audio.js` (HTML5 Audio) | ✅ Ported |
-| `choreography.py` | *(Pending)* | 🚧 Needs Web port |
-| `atmosphere.py` | *(Pending)* | 🚧 Needs Web port |
+| `brain.py` (mood logic) | `www/systems/brain.js` (ES6 Class) | ✅ Ported |
+| `neural.py` (12→8→4 Net) | `www/systems/neural.js` (ES6 Class) | ✅ Ported |
+| `save.py` (bond_score) | `www/systems/save.js` (localStorage) | ✅ Ported |
+| `audio.py` (SoundBank) | `www/systems/audio.js` (HTML5 Audio) | ✅ Ported |
+| `choreography.py` | `www/engine/choreography.js` | ✅ Ported |
+| `atmosphere.py` | `www/engine/atmosphere.js` | ✅ Ported |
+| `cinematics.py` | `www/engine/cinematics.js` | ✅ Ported |
 | Kivy `Line` / `Ellipse` | CSS / SVG / DOM | ⚠️ Replaced by DOM |
 | Kivy `Rotate` | CSS `transform: scale/translate` | ✅ Replaced |
 | Kivy `CoreLabel` | HTML `<div>` / CSS | ✅ Replaced |
@@ -79,6 +92,7 @@ Here is how the Python architecture translates to the Capacitor/Web repository:
 
 ## ⚠️ Notes for Future Threads / AI
 1. **Do not try to rewrite the Python code in JS line-by-line.** The rendering (Kivy Canvas) is gone. We only port the *rules* (Physics, Weather, Choreography).
-2. **The Web Engine is modular.** Do not create a single 3000-line `terrarium.js`. Use the `engine/` folder.
+2. **The Web Engine is modular.** Do not create a single 3000-line `terrarium.js`. Use the `engine/` and `systems/` folders.
 3. **Solon's Body is layered.** `www/index.html` stacks `solon_left_fin`, `solon_body`, and `solon_right_fin`. Do not revert this to a single sprite.
 4. **The Neural Net is live.** `neural.js` is attached to `window.arbiter`. Ensure it is loaded in `index.html` before `brain.js`.
+5. **Dialogue is bridged.** `crosstalk.js` loads the 18 banks from `www/dialogue/`. Do not use `import/export` in the dialogue files, as Capacitor loads classic scripts.
