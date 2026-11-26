@@ -1,9 +1,9 @@
 // =====================================================================
-// EDENCORE ORCHESTRATOR - app.js (V3.1 - Debug HUD Integrated)
+// EDENCORE ORCHESTRATOR - app.js (V3.3 - Final Bug Fix)
 // =====================================================================
 
-const state = { time_elapsed: 0, base_scroll: 0, lastDebugFrame: -1 };
-let gameState = "normal"; // normal, riddle_wait
+const state = { time_elapsed: 0, base_scroll: 0, lastDebugFrame: -1, hasGreeted: false };
+let gameState = "normal";
 let currentRiddle = null;
 let riddleTimer = 0;
 let lumenTentacles = [];
@@ -18,7 +18,6 @@ const creatureData = {
     vertex: { baseX: 0.50, baseY: 0.12, scale: 0.24, name: "Vertex" }
 };
 const creatureKeys = Object.keys(creatureData);
-
 let shadowElements = {};
 
 function initShadows() {
@@ -39,19 +38,11 @@ function initShadows() {
 function initTentacles() {
     const lumenEl = document.getElementById('lumen');
     if (!lumenEl) return;
-    // Clear any existing tentacles (in case of hot reload)
     document.querySelectorAll('.lumen-tentacle').forEach(el => el.remove());
     lumenTentacles = [];
-    
     for (let i = 0; i < 5; i++) {
         const t = document.createElement('div');
         t.className = 'lumen-tentacle';
-        t.style.position = 'absolute';
-        t.style.width = '3px';
-        t.style.background = 'linear-gradient(to bottom, rgba(255,128,179,0.8), rgba(255,128,179,0))';
-        t.style.transformOrigin = 'top center';
-        t.style.zIndex = '4';
-        t.style.pointerEvents = 'none';
         document.getElementById('scene').appendChild(t);
         lumenTentacles.push(t);
     }
@@ -97,23 +88,19 @@ function resize() {
 function triggerRiddle() {
     const bank = window.getBank("riddles");
     if (!bank || bank.length === 0) return;
-    
     const riddle = bank[Math.floor(Math.random() * bank.length)];
     currentRiddle = riddle;
     gameState = "riddle_wait";
-    riddleTimer = 15; // 15 seconds to answer
-    
+    riddleTimer = 15;
     window.dialogue.queueSpeech(riddle);
     document.getElementById('status-text').innerText = "RIDDLE: Tap the correct creature!";
     document.getElementById('status-text').style.color = "#FFD700";
-    
     document.querySelectorAll('.creature').forEach(el => el.classList.add('riddle-target'));
 }
 
 function handleCreatureTap(id) {
     if (gameState === "riddle_wait" && currentRiddle) {
         const speaker = creatureData[id].name;
-        
         if (speaker === currentRiddle.correct_speaker) {
             window.dialogue.queueSpeech(currentRiddle.correct_reply);
             window.brain.addBond(5);
@@ -124,16 +111,11 @@ function handleCreatureTap(id) {
             document.getElementById('status-text').innerText = "WRONG!";
             document.getElementById('status-text').style.color = "#FF0000";
         }
-        
         gameState = "normal";
         currentRiddle = null;
         document.querySelectorAll('.creature').forEach(el => el.classList.remove('riddle-target'));
-        setTimeout(() => { 
-            const st = document.getElementById('status-text');
-            if (st) st.innerText = ""; 
-        }, 3000);
+        setTimeout(() => { document.getElementById('status-text').innerText = ""; }, 3000);
     } else {
-        // Normal tap
         window.brain.addBond(1);
         if (window.dialogue) window.dialogue.triggerBank("tap_reactions");
     }
@@ -144,13 +126,7 @@ function spawnFood() {
     const scene = document.getElementById('scene');
     for (let i = 0; i < 15; i++) {
         const f = document.createElement('div');
-        f.style.position = 'absolute';
-        f.style.width = '6px';
-        f.style.height = '6px';
-        f.style.background = '#FFD700';
-        f.style.borderRadius = '50%';
-        f.style.boxShadow = '0 0 10px #FFD700';
-        f.style.zIndex = '6';
+        f.className = 'food-particle';
         const startX = window.innerWidth * 0.5 + (Math.random() - 0.5) * (window.innerWidth * 0.6);
         f.style.left = startX + 'px';
         f.style.top = '-20px';
@@ -177,18 +153,15 @@ function updateDebugHUD() {
     const dbg = document.getElementById('debug-overlay');
     if (!dbg || !window.brain) return;
     
-    // Throttle to 5 updates per second
     const currentFrame = Math.floor(state.time_elapsed * 5);
     if (currentFrame === state.lastDebugFrame) return;
     state.lastDebugFrame = currentFrame;
 
     const mood = window.brain.mood || "NORMAL";
-    const sleep = (mood === "SLEEPY") ? "SLEEPING" : "AWAKE";
+    const sleep = window.brain.sleepState || "AWAKE";
     const motion = (window.brain.motion || 0).toFixed(2);
     const battery = (window.brain.battery || 1).toFixed(2);
     const heat = (window.brain.heat || 0).toFixed(1);
-    
-    // The 4-mood net output from neural.js
     const netOutput = window.brain.lastNetOutput 
         ? window.brain.lastNetOutput.map(v => v.toFixed(2)).join(", ") 
         : "0.25, 0.25, 0.25, 0.25";
@@ -197,7 +170,7 @@ function updateDebugHUD() {
         `Mood: ${mood}<br>` +
         `Sleep: ${sleep}<br>` +
         `Light: 0.50 | Temp: 0.60<br>` +
-        `Motion: ${motion} | Battery: ${battery}<br>` +
+        `Motion: ${motion} | Batt: ${battery}<br>` +
         `Heat: ${heat} | Rhythm: 1.0s<br>` +
         `Net: [${netOutput}]`;
 }
@@ -227,38 +200,40 @@ function tick(currentTime) {
             currentRiddle = null;
             document.querySelectorAll('.creature').forEach(el => el.classList.remove('riddle-target'));
             const st = document.getElementById('status-text');
-            if (st) {
-                st.innerText = "Too slow!";
-                st.style.color = "#FF0000";
-                setTimeout(() => { st.innerText = ""; }, 3000);
-            }
+            if (st) { st.innerText = "Too slow!"; st.style.color = "#FF0000"; setTimeout(() => { st.innerText = ""; }, 3000); }
         }
     }
 
     const currentMood = window.brain ? window.brain.mood : "NORMAL";
-    
     if (window.weatherEngine) window.weatherEngine.update(safeDt, currentMood);
     if (window.cinematicEngine) window.cinematicEngine.update(safeDt);
-    if (window.physicsEngine) window.physicsEngine.update(safeDt, state.time_elapsed, currentMood, shadowElements);
+    
+    if (window.physicsEngine) {
+        window.physicsEngine.update(safeDt, state.time_elapsed, currentMood, shadowElements);
+    }
 
-    // Choreography
+    // Choreography takes full control of position
     if (window.choreographyEngine && window.physicsEngine) {
         let stateStr = currentMood;
         if (feedingTimer > 0) stateStr = "FEEDING";
         
         const formation = window.choreographyEngine.getFormation(
-            stateStr, window.innerWidth, window.innerHeight, state.time_elapsed, null, feedingTimer
+            stateStr, window.innerWidth, window.innerHeight, state.time_elapsed, feedingTimer
         );
         
         for (let i = 0; i < creatureKeys.length; i++) {
             const id = creatureKeys[i];
             if (window.physicsEngine.creatures[id] && formation[i]) {
                 const c = window.physicsEngine.creatures[id];
-                c.x += (formation[i].x - c.x) * safeDt * 1.5;
-                c.y += (formation[i].y - c.y) * safeDt * 1.5;
+                c.x += (formation[i].x - c.x) * safeDt * 2.0;
+                c.y += (formation[i].y - c.y) * safeDt * 2.0;
                 
                 const el = document.getElementById(id);
-                if (el) el.style.transform = `translate(${c.x - (window.innerWidth * creatureData[id].baseX)}px, ${c.y - (window.innerHeight * (1.0 - creatureData[id].baseY))}px)`;
+                if (el) {
+                    const basePxX = window.innerWidth * creatureData[id].baseX;
+                    const basePxY = window.innerHeight * (1.0 - creatureData[id].baseY);
+                    el.style.transform = `translate(${c.x - basePxX}px, ${c.y - basePxY}px)`;
+                }
             }
         }
     }
@@ -269,30 +244,33 @@ function tick(currentTime) {
         if (!el) continue;
         const isTalking = window.brain && window.brain.talkingCreature === id;
         const isBlinking = window.brain && window.brain.blinkTimer > 3.0 && window.brain.blinkTimer < 3.2;
+        const isSleeping = window.brain && window.brain.sleepState !== "AWAKE";
 
         if (id === "solon" && window.solonActor) {
-            window.solonActor.update(state.time_elapsed, currentMood, isTalking, isBlinking);
+            window.solonActor.update(state.time_elapsed, currentMood, isTalking, isBlinking || isSleeping);
         } else {
             let stateStr = "";
-            if (isTalking) {
-                if (Math.floor(state.time_elapsed / 0.15) % 2 === 0) stateStr = "_talk";
-            } else if (isBlinking) {
-                stateStr = "_blink";
-            }
-            let filePrefix = id;
-            if (stateStr) {
-                const newSrc = `assets/images/${filePrefix}${stateStr}.png`;
-                if (el.src.indexOf(newSrc) === -1) el.src = newSrc;
-            } else {
-                const baseSrc = `assets/images/${filePrefix}.png`;
-                if (el.src.indexOf(baseSrc) === -1) el.src = baseSrc;
-            }
+            if (isSleeping) stateStr = "_blink";
+            else if (isTalking) { if (Math.floor(state.time_elapsed / 0.15) % 2 === 0) stateStr = "_talk"; }
+            else if (isBlinking) stateStr = "_blink";
+            
+            const newSrc = stateStr ? `assets/images/${id}${stateStr}.png` : `assets/images/${id}.png`;
+            if (el.src.indexOf(newSrc) === -1) el.src = newSrc;
         }
     }
 
     updateTentacles();
     updateFood(safeDt);
     updateDebugHUD();
+
+    // Auto-Greeting & Ambient
+    if (!state.hasGreeted && state.time_elapsed > 2.0) {
+        state.hasGreeted = true;
+        if (window.dialogue) window.dialogue.triggerBank("greetings");
+    }
+    if (state.time_elapsed > 15.0 && gameState === "normal" && !window.dialogue.isTalking && Math.random() < 0.005) {
+        if (window.dialogue) window.dialogue.triggerBank("ambient");
+    }
 
     requestAnimationFrame(tick);
 }
@@ -306,19 +284,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.audio) window.audio.start();
         });
     }
-    
     initShadows();
     initTentacles();
     resize();
     requestAnimationFrame(tick); 
 });
 
-// --- UI BINDING ---
+// Input Handling
 window.addEventListener('touchstart', (e) => {
-    if (e.target.classList.contains('biome-btn')) return;
-    if (e.target.classList.contains('util-btn')) return;
-    if (e.target.id === 'splash-screen') return;
-    
+    if (e.target.classList.contains('biome-btn') || e.target.classList.contains('util-btn') || e.target.id === 'splash-screen') return;
     if (e.target.closest('.creature')) {
         handleCreatureTap(e.target.closest('.creature').id);
     } else {
@@ -334,10 +308,7 @@ document.querySelectorAll('.biome-btn').forEach(btn => {
         document.querySelectorAll('.biome-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
         const bg = document.getElementById('bg-gradient');
-        if (bg) {
-            bg.className = '';
-            bg.classList.add(`biome-${e.target.dataset.biome.toLowerCase()}`);
-        }
+        if (bg) { bg.className = ''; bg.classList.add(`biome-${e.target.dataset.biome.toLowerCase()}`); }
         if (window.dialogue) window.dialogue.triggerBank(`biome_${e.target.dataset.biome}`);
     });
 });
@@ -348,6 +319,10 @@ if (btnFeed) btnFeed.addEventListener('click', spawnFood);
 const btnSleep = document.getElementById('btn-sleep');
 if (btnSleep) btnSleep.addEventListener('click', () => {
     if (window.dialogue) window.dialogue.triggerBank("bedtime_resistance");
+    if (window.brain) {
+        window.brain.sleepState = "SLEEPING";
+        window.brain.mood = "SLEEPY";
+    }
 });
 
 window.addEventListener('resize', resize);
