@@ -1,5 +1,5 @@
 // =====================================================================
-// EDENCORE ORCHESTRATOR - app.js (V3.5 - Director Note #5 Compliance)
+// EDENCORE ORCHESTRATOR - app.js (V3.6 - Sprite Scale Fix)
 // =====================================================================
 
 // --- Core State ---
@@ -14,10 +14,6 @@ let riddleTimer = 0;
 let idleTimer = 0; 
 let uiTickTimer = 0;
 let currentMood = "NORMAL";
-
-// THE PACING LOCK (Director Note #5)
-// This timer prevents new chatter or events from firing until the player 
-// has had enough time to read the current dialogue.
 let readCooldown = 0; 
 
 // --- Creature Registry ---
@@ -33,16 +29,9 @@ const creatureState = {
 const sceneEl = document.getElementById('scene');
 const shadowLayer = document.getElementById('shadow-layer');
 const debugOverlay = document.getElementById('debug-overlay');
-const statusText = document.getElementById('status-text');
-const bondText = document.getElementById('bond-text');
-const bgGradient = document.getElementById('bg-gradient');
-const godRays = document.getElementById('god-rays');
-const weatherTint = document.getElementById('weather-tint');
-const bubbleEl = document.getElementById('ghost-bubble');
-const bubbleText = document.getElementById('bubble-text');
 
 // =====================================================================
-// INITIALIZATION
+// INITIALIZATION & SPRITE SCALING
 // =====================================================================
 
 function initShadows() {
@@ -67,14 +56,39 @@ function initTentacles() {
     }
 }
 
+function applySpriteScaling() {
+    // The 512 Math Rule
+    for (const key in creatureState) {
+        const c = creatureState[key];
+        if (c.el && c.el.dataset.scale) {
+            const scaleFactor = parseFloat(c.el.dataset.scale);
+            // 512 is the base width in your Constitution
+            const renderWidth = 512 * scaleFactor; 
+            
+            // If it's an IMG tag, set width directly. 
+            // If it's Solon (a DIV), let the CSS handle his inner layers, but scale the container.
+            if (c.el.tagName === 'IMG') {
+                c.el.style.width = `${renderWidth}px`;
+                c.el.style.height = 'auto';
+            } else if (key === 'solon') {
+                // Solon is already hardcoded to 150px in CSS, but we can scale him here too if needed.
+                // For now, let's keep his specific CSS size to avoid breaking his fins.
+            }
+        }
+    }
+}
+
 function init() {
     console.log("[Edencore] Initializing Orchestrator...");
-    
+
     creatureState.solon.el = document.getElementById('solon');
     creatureState.prism.el = document.getElementById('prism');
     creatureState.lumen.el = document.getElementById('lumen');
     creatureState.ripple.el = document.getElementById('ripple');
     creatureState.vertex.el = document.getElementById('vertex');
+
+    // APPLY SCALING IMMEDIATELY
+    applySpriteScaling();
 
     if (window.loadSave) {
         const save = window.loadSave();
@@ -105,11 +119,9 @@ function init() {
 // PACING LOGIC (Director Note #5)
 // =====================================================================
 
-// The engine will call this when a new conversation is dispatched.
-// We estimate reading time based on the number of words.
 window.calculateReadTime = function(conversation) {
     if (!conversation || !Array.isArray(conversation)) return 0;
-    
+
     let totalWords = 0;
     conversation.forEach(line => {
         if (line[1]) {
@@ -117,15 +129,8 @@ window.calculateReadTime = function(conversation) {
         }
     });
 
-    // Reading speed: ~3 words per second (180 WPM for a calm pace)
-    // Plus 2.5 seconds per line for the animation/transition, and a 2s buffer.
     let time = (totalWords / 3) + (conversation.length * 2.5) + 2;
-    
-    // Set the cooldown, minimum 5 seconds
     readCooldown = Math.max(5, time);
-    console.log(`[Pacing] Read cooldown set for ${readCooldown.toFixed(1)} seconds.`);
-    
-    // Reset idle timer to prevent immediate chatter right after this finishes
     idleTimer = -10; 
 };
 
@@ -134,6 +139,8 @@ window.calculateReadTime = function(conversation) {
 // =====================================================================
 
 function resize() {
+    // Re-apply scaling in case of orientation change
+    applySpriteScaling();
     if (window.physicsEngine) window.physicsEngine.resize();
     if (window.choreographyEngine) window.choreographyEngine.resize();
 }
@@ -145,12 +152,10 @@ window.addEventListener('resize', resize);
 // =====================================================================
 
 function handleCreatureTap(id) {
-    // Don't process taps if we are currently in a reading cooldown
     if (readCooldown > 0) return;
-
     if (window.audioManager) window.audioManager.sting(id);
     if (window.brain) window.brain.addBond(1);
-    
+
     idleTimer = 0;
 
     if (window.dialogueEngine) {
@@ -169,14 +174,14 @@ function handleCreatureTap(id) {
 }
 
 function spawnFood() {
-    if (readCooldown > 0) return; // Lock food during reading
+    if (readCooldown > 0) return;
 
     const foodEl = document.createElement('div');
     foodEl.className = 'food-particle';
     foodEl.style.left = `${20 + Math.random() * 60}%`;
     foodEl.style.top = `-20px`;
     sceneEl.appendChild(foodEl);
-    
+
     if (window.dialogueEngine) {
         const feedReaction = window.drawFromBank('reactions_feed');
         if (feedReaction) {
@@ -208,11 +213,11 @@ function updateDebugHUD() {
         return;
     }
     debugOverlay.style.display = 'block';
-    
+
     const netOutput = window.arbiter && window.arbiter.lastOutput ? window.arbiter.lastOutput.map(n => n.toFixed(2)).join(', ') : "N/A";
-    
+
     debugOverlay.innerHTML = `
-        <div style="color: #0f0; font-family: monospace; font-size: 12px; line-height: 1.4; padding: 10px; background: rgba(0,0,0,0.7); border: 1px solid #0f0; border-radius: 5px; width: fit-content; position: absolute; top: 60px; left: 10px; pointer-events: none;">
+        <div style="color: #0f0; font-family: monospace; font-size: 12px; line-height: 1.4; padding: 10px; background: rgba(0,0,0,0.7); border: 1px solid #0f0; border-radius: 5px; width: fit-content; position: absolute; top: 120px; left: 10px; pointer-events: none;">
             Mood: ${currentMood}<br>
             Sleep: ${window.brain ? window.brain.sleepState : 'N/A'}<br>
             Read Lock: ${readCooldown > 0 ? readCooldown.toFixed(1) + 's' : 'OFF'}<br>
@@ -232,16 +237,14 @@ function tick(currentTime) {
     if (!lastTime) lastTime = currentTime;
     let dt = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
-    
+
     if (dt > 0.1) dt = 0.1; 
     time_elapsed += dt;
 
-    // 1. Update Timers
     if (readCooldown > 0) {
         readCooldown -= dt;
     }
 
-    // 2. Update Systems
     if (window.brain) {
         window.brain.update(dt);
         currentMood = window.brain.currentMood || "NORMAL";
@@ -256,13 +259,12 @@ function tick(currentTime) {
         window.dialogueEngine.update(dt);
     }
 
-    // 3. Update Engines
     if (window.choreographyEngine) {
         const formation = window.choreographyEngine.getFormation(
             window.brain && window.brain.sleepState === "SLEEPING" ? "HUDDLE" : "NORMAL", 
             window.innerWidth, window.innerHeight, time_elapsed
         );
-        
+
         for (const key in formation) {
             if (creatureState[key]) {
                 creatureState[key].targetX = formation[key].x * window.innerWidth;
@@ -276,9 +278,8 @@ function tick(currentTime) {
         window.physicsEngine.update(dt, time_elapsed, currentMood, document.querySelectorAll('.creature-shadow'));
     }
 
-    // 4. Creature Updates
     let activeTalker = null;
-    
+
     for (const key in creatureState) {
         const c = creatureState[key];
         if (!c.el) continue;
@@ -314,27 +315,23 @@ function tick(currentTime) {
         }
     }
 
-    // 5. The Chatter Trigger (Director Note #5 Compliance)
-    // We ONLY start counting idle time if the reading cooldown is over.
     if (readCooldown <= 0 && currentMood === "NORMAL" && !activeTalker && time_elapsed > 15) {
         idleTimer += dt;
-        
+
         if (idleTimer > 25) {
             if (window.dialogueEngine) {
                 const chatter = window.drawFromBank('chatter');
                 if (chatter) {
                     window.dialogueEngine.queueSpeech(chatter);
-                    // Calculate the read time for this new chatter immediately
                     if (window.calculateReadTime) window.calculateReadTime(chatter);
                 }
             }
             idleTimer = 0; 
         }
     } else if (readCooldown > 0 || activeTalker) {
-        idleTimer = 0; // Freeze idle timer while reading or talking
+        idleTimer = 0; 
     }
 
-    // 6. UI Updates
     uiTickTimer += dt;
     if (uiTickTimer > 0.5) {
         updateDebugHUD();
