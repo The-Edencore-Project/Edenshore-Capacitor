@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Edenshore</title>
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -39,9 +39,6 @@
   </div>
 
   <div id="ui-layer">
-    <div id="ghost-bubble">
-      <div id="bubble-text"></div>
-    </div>
     <div id="hud-top">
       <div id="bond-text">BOND: 0 - Stranger</div>
       <div id="status-text"></div>
@@ -61,6 +58,7 @@
     </div>
   </div>
 
+  <!-- Debug overlay moved here to avoid overlapping UI -->
   <div id="debug-overlay"></div>
 
   <script src="systems/save.js"></script>
@@ -94,8 +92,11 @@
   <script src="dialogue/stories.js"></script>
   <script src="dialogue/visitor.js"></script>
   <script src="dialogue/wisdom.js"></script>
+  
+  <!-- THE NEW CHATTER BANK -->
+  <script src="dialogue/chatter.js"></script>
 
-  <script src="crosstalk.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="crosstalk.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
