@@ -1,5 +1,5 @@
 // =====================================================================
-// EDENCORE ENGINE - choreography.js (The Formation Engine)
+// EDENCORE ENGINE - choreography.js
 // =====================================================================
 
 class ChoreographyEngine {
@@ -12,10 +12,9 @@ class ChoreographyEngine {
         this.sandY = window.innerHeight * 0.95;
     }
 
-    getFormation(stateName, width, height, time, leaderName = null, feedingTimer = 0) {
+    getFormation(stateName, width, height, time, feedingTimer = 0) {
         const coords = [];
         
-        // Base idle positions
         const basePos = [
             { x: 0.30, y: 0.55 }, // Solon
             { x: 0.70, y: 0.55 }, // Prism
@@ -24,41 +23,29 @@ class ChoreographyEngine {
             { x: 0.50, y: 0.12 }  // Vertex
         ];
 
-        if (stateName === "SLEEPING") {
+        // THE SLEEP FIX: If the brain says SLEEPING, force the huddle
+        const isSleeping = (window.brain && window.brain.sleepState !== "AWAKE") || stateName === "SLEEPING";
+
+        if (isSleeping) {
             const huddleX = width * 0.5;
             const huddleY = this.sandY - (height * 0.15);
             for (let i = 0; i < 5; i++) {
                 coords.push({
-                    x: huddleX + Math.sin(time + i) * (width * 0.1),
-                    y: huddleY + Math.cos(time + i) * (height * 0.05)
+                    x: huddleX + Math.sin(time + i) * (width * 0.05),
+                    y: huddleY + Math.cos(time + i) * (height * 0.03)
                 });
             }
         } 
-        else if (stateName === "WAKING") {
-            for (let i = 0; i < 5; i++) {
-                const isLeader = (this.creatureKeys[i] === leaderName);
-                const delay = isLeader ? 0 : 1.5; 
-                const progress = Math.max(0, Math.min(1, (time - delay) / 2.0));
-                
-                const targetY = height * (1.0 - basePos[i].y);
-                const startY = this.sandY - (height * 0.15);
-                
-                coords.push({
-                    x: width * basePos[i].x,
-                    y: startY + ((targetY - startY) * progress)
-                });
-            }
-        }
         else if (stateName === "FEEDING") {
+            // The Theatre of Feeding (Circle Formation)
             const centerX = width * 0.5;
-            const centerY = height * 0.55;
-            const radius = width * 0.2;
-            
-            // Shrink the circle as they eat
-            const currentRadius = radius * Math.max(0.4, (feedingTimer / 10.0));
+            const centerY = height * 0.65;
+            const radius = width * 0.20;
             
             for (let i = 0; i < 5; i++) {
-                const angle = (i / 5) * Math.PI * 2 + (time * 0.8);
+                const angle = (i / 5) * Math.PI * 2 + (time * 0.5);
+                // Contract the circle as the timer runs down
+                const currentRadius = radius * Math.max(0.4, (feedingTimer / 10.0));
                 coords.push({
                     x: centerX + Math.cos(angle) * currentRadius,
                     y: centerY + Math.sin(angle) * currentRadius
@@ -77,7 +64,7 @@ class ChoreographyEngine {
             // NORMAL
             for (let i = 0; i < 5; i++) {
                 coords.push({
-                    x: width * basePos[i].x + Math.sin(time * 0.5 + i) * (width * 0.05),
+                    x: width * basePos[i].x + Math.sin(time * 0.5 + i) * (width * 0.03),
                     y: height * (1.0 - basePos[i].y) + Math.cos(time * 0.5 + i) * (height * 0.02)
                 });
             }
