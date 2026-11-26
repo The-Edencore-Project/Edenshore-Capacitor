@@ -5,78 +5,154 @@
 class DialogueEngine {
     constructor() {
         this.queue = [];
-        this.isTalking = false;
-        this.timer = null;
+        this.activeConversation = null;
+        this.lineIndex = 0;
+        this.lineTimer = 0;
+        this.isPlaying = false;
+        this.activeBubble = null;
     }
 
     triggerBank(bankName) {
-        if (!window.drawFromBank) return;
-        const conversation = window.drawFromBank(bankName);
-        if (!conversation) return;
-        this.queueSpeech(conversation);
+        // In the new architecture, app.js usually calls drawFromBank directly.
+        // This is a fallback for event-driven triggers.
+        if (window.drawFromBank) {
+            const conversation = window.drawFromBank(bankName);
+            if (conversation) this.queueSpeech(conversation);
+        }
     }
 
     queueSpeech(conversation) {
-        this.queue = this.queue.concat(conversation);
-        if (!this.isTalking) this.processNext();
+        if (!conversation || conversation.length === 0) return;
+
+        // If we are already playing, we can either queue or interrupt.
+        // For now, let's queue it so we don't break mid-sentence.
+        if (this.isPlaying) {
+            this.queue.push(conversation);
+            return;
+        }
+
+        this.activeConversation = conversation;
+        this.lineIndex = 0;
+        this.isPlaying = true;
+        this.processNext();
     }
 
     processNext() {
-        if (this.queue.length === 0) { 
-            this.isTalking = false; 
-            return; 
+        if (!this.activeConversation || this.lineIndex >= this.activeConversation.length) {
+            this.finishConversation();
+            return;
         }
 
-        this.isTalking = true;
-        const [speaker, text] = this.queue.shift();
-
-        if (window.audio) window.audio.sting(speaker.toLowerCase());
-        if (window.brain) window.brain.setTalking(speaker, text.length * 0.08);
+        const line = this.activeConversation[this.lineIndex];
+        const speaker = line[0];
+        const text = line[1];
 
         this.showBubble(speaker, text);
 
-        const readTime = Math.max(3000, text.length * 60 + 1000); 
-        this.timer = setTimeout(() => {
+        // Set talk timer on the creature
+        const creatureKey = speaker.toLowerCase();
+        const creatureState = window.creatureState ? window.creatureState[creatureKey] : null;
+        
+        if (creatureState) {
+            // Talk for however long it takes to read the line (min 2s)
+            const talkDuration = Math.max(2, text.split(' ').length * 0.3);
+            creatureState.talkTimer = talkDuration;
+            this.lineTimer = talkDuration + 1.5; // Add a 1.5s pause between lines
+        } else {
+            this.lineTimer = 3; // Fallback
+        }
+
+        this.lineIndex++;
+    }
+
+    update(dt) {
+        if (!this.isPlaying) {
+            if (this.queue.length > 0) {
+                this.activeConversation = this.queue.shift();
+                this.lineIndex = 0;
+                this.isPlaying = true;
+                this.processNext();
+            }
+            return;
+        }
+
+        this.lineTimer -= dt;
+        if (this.lineTimer <= 0) {
             this.hideBubble();
-            setTimeout(() => { this.processNext(); }, 1500);
-        }, readTime); 
-    }
-
-    showBubble(speaker, text) {
-        const bubble = document.getElementById('ghost-bubble');
-        const textEl = document.getElementById('bubble-text');
-        const creatureEl = document.getElementById(speaker.toLowerCase());
-
-        if (!bubble || !textEl || !creatureEl) return;
-
-        const rect = creatureEl.getBoundingClientRect();
-        const startX = rect.left + rect.width / 2;
-        const startY = rect.top - 40;
-
-        bubble.style.left = startX + 'px';
-        bubble.style.top = startY + 'px';
-
-        textEl.innerText = text;
-        textEl.style.color = this.getSpeakerColor(speaker);
-
-        bubble.style.opacity = '1';
-        bubble.style.animation = 'none'; 
-        void bubble.offsetWidth; 
-        bubble.style.animation = 'riseAndFade 5s ease-out forwards';
-    }
-
-    hideBubble() {
-        const bubble = document.getElementById('ghost-bubble');
-        if (bubble) {
-            bubble.style.opacity = '0';
-            bubble.style.animation = 'none';
+            this.processNext();
         }
     }
 
+    showBubble(speaker, text) {
+        this.hideBubble(); // Remove old bubble
+
+        const creatureKey = speaker.toLowerCase();
+        const creatureEl = document.getElementById(creatureKey);
+        
+        if (!creatureEl) {
+            console.warn(`[Dialogue] Cannot find element for speaker: ${speaker}`);
+            return;
+        }
+
+        // Create the bubble
+        this.activeBubble = document.createElement('div');
+        this.activeBubble.className = 'speech-bubble';
+        this.activeBubble.textContent = text;
+        
+        // Get position of the creature
+        const rect = creatureEl.getBoundingClientRect();
+        
+        // Position the bubble above the creature
+        // We use translate(-50%, -100%) in CSS to center it and push it up
+        this.activeBubble.style.left = `${rect.left + (rect.width / 2)}px`;
+        this.activeBubble.style.top = `${rect.top - 10}px`; // 10px gap above head
+
+        document.getElementById('scene').appendChild(this.activeBubble);
+
+        // Add a slight animation class after a frame
+        requestAnimationFrame(() => {
+            if (this.activeBubble) this.activeBubble.classList.add('visible');
+        });
+    }
+
+    hideBubble() {
+        if (this.activeBubble) {
+            this.activeBubble.classList.remove('visible');
+            const bubbleToRemove = this.activeBubble;
+            setTimeout(() => {
+                if (bubbleToRemove.parentNode) {
+                    bubbleToRemove.parentNode.removeChild(bubbleToRemove);
+                }
+            }, 300); // Wait for fade out transition
+            this.activeBubble = null;
+        }
+    }
+
+    finishConversation() {
+        this.isPlaying = false;
+        this.activeConversation = null;
+        this.hideBubble();
+
+        // CRITICAL: Tell app.js the conversation is done so it can calculate read time
+        if (window.calculateReadTime && this.activeConversation) {
+            window.calculateReadTime(this.activeConversation);
+        }
+        
+        // But wait, the conversation just ended. The read timer should have been 
+        // calculated at the start. Let's fix that by calculating it when it's queued.
+    }
+
     getSpeakerColor(speaker) {
-        const colors = { "Vertex": "#ff7366", "Solon": "#8cd98c", "Lumen": "#ff99cc", "Ripple": "#80ccff", "Prism": "#ffd980" };
-        return colors[speaker] || "#ffffff";
+        // Returns a hex color for the speaker
+        const colors = {
+            'Solon': '#4A7A5D',   // Green
+            'Prism': '#D97D54',   // Orange
+            'Lumen': '#B58BD4',   // Purple
+            'Ripple': '#E39EA5',  // Pink
+            'Vertex': '#E35252'   // Red
+        };
+        return colors[speaker] || '#FFFFFF';
     }
 }
 
-window.dialogue = new DialogueEngine();
+window.dialogueEngine = new DialogueEngine();
