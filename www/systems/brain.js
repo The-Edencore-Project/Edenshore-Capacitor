@@ -2,6 +2,7 @@ class EdenshoreBrain {
     constructor() {
         this.bond = 0;
         this.mood = "NORMAL";
+        this.sleepState = "AWAKE"; // AWAKE, SLEEPING, WAKING
         this.motion = 0.0;
         this.battery = 1.0;
         this.timeElapsed = 0;
@@ -9,9 +10,13 @@ class EdenshoreBrain {
         this.talkingCreature = null;
         this.talkTimer = 0;
         this.blinkTimer = 0;
+        this.lastNetOutput = [0.25, 0.25, 0.25, 0.25];
 
         this.save = window.loadSave ? window.loadSave() : { bond_score: 0, next_milestone: 50, visits: 0 };
         this.bond = this.save.bond_score;
+
+        // Force awake for the first 30 seconds so the app doesn't instantly sleep
+        this.forceAwakeUntil = 30.0; 
 
         this.initSensors();
         this.updateUI();
@@ -51,12 +56,40 @@ class EdenshoreBrain {
         this.blinkTimer += dt;
         if (this.blinkTimer > 3.4) this.blinkTimer = 0;
 
-        if (this.motion > 0.4) this.mood = "PLAYFUL";
-        else if (this.battery < 0.15) this.mood = "SLEEPY";
-        else this.mood = "NORMAL";
-
+        // Mood logic from Neural Net
         if (window.arbiter) {
             this.mood = window.arbiter.getMood(this);
+            if (window.arbiter.net && window.arbiter.net.lastOutput) {
+                this.lastNetOutput = window.arbiter.net.lastOutput;
+            }
+        } else {
+            if (this.motion > 0.4) this.mood = "PLAYFUL";
+            else if (this.battery < 0.15) this.mood = "SLEEPY";
+            else this.mood = "NORMAL";
+        }
+
+        // Force Awake Override
+        if (this.forceAwakeUntil > 0) {
+            this.forceAwakeUntil -= dt;
+            this.mood = "NORMAL";
+            this.sleepState = "AWAKE";
+            return;
+        }
+
+        // Sleep State logic
+        if (this.mood === "SLEEPY" && this.sleepState === "AWAKE") {
+            this.sleepState = "SLEEPING";
+        } else if (this.mood !== "SLEEPY" && this.sleepState === "SLEEPING") {
+            this.sleepState = "WAKING"; // Wake up over 12 seconds
+            this.wakeTimer = 12.0;
+        }
+
+        // Waking timer
+        if (this.sleepState === "WAKING") {
+            this.wakeTimer -= dt;
+            if (this.wakeTimer <= 0) {
+                this.sleepState = "AWAKE";
+            }
         }
     }
 
