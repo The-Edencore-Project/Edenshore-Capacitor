@@ -1,4 +1,240 @@
 // =====================================================================
+// EDENCORE ORCHESTRATOR - app.js (V3.8 - Bulletproof Loop)
+// =====================================================================
+
+let lastTime = 0;
+let time_elapsed = 0;
+let debugMode = false;
+
+let idleTimer = 0; 
+let uiTickTimer = 0;
+let currentMood = "NORMAL";
+let readCooldown = 0; 
+
+const creatureState = {
+    solon:  { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0, fallbackX: 0.2, fallbackY: 0.6 },
+    prism:  { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0, fallbackX: 0.8, fallbackY: 0.6 },
+    lumen:  { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0, fallbackX: 0.2, fallbackY: 0.3 },
+    ripple: { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0, fallbackX: 0.8, fallbackY: 0.3 },
+    vertex: { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0, fallbackX: 0.5, fallbackY: 0.8 }
+};
+
+const sceneEl = document.getElementById('scene');
+const shadowLayer = document.getElementById('shadow-layer');
+const debugOverlay = document.getElementById('debug-overlay');
+
+function initShadows() {
+    for (const key in creatureState) {
+        const shadow = document.createElement('div');
+        shadow.className = 'creature-shadow';
+        shadow.id = `shadow-${key}`;
+        if(shadowLayer) shadowLayer.appendChild(shadow);
+    }
+}
+
+function initTentacles() {
+    const lumenEl = document.getElementById('lumen');
+    if (!lumenEl) return;
+    for (let i = 0; i < 6; i++) {
+        const tentacle = document.createElement('div');
+        tentacle.className = 'lumen-tentacle';
+        tentacle.style.left = `${15 + (i * 12)}%`;
+        tentacle.style.height = `${20 + Math.random() * 20}px`;
+        tentacle.style.animationDelay = `${Math.random() * 2}s`;
+        lumenEl.appendChild(tentacle);
+    }
+}
+
+function init() {
+    console.log("[Edencore] Initializing Orchestrator...");
+
+    creatureState.solon.el = document.getElementById('solon');
+    creatureState.prism.el = document.getElementById('prism');
+    creatureState.lumen.el = document.getElementById('lumen');
+    creatureState.ripple.el = document.getElementById('ripple');
+    creatureState.vertex.el = document.getElementById('vertex');
+
+    // Set initial positions based on fallback so they aren't stuck top-left
+    for (const key in creatureState) {
+        const c = creatureState[key];
+        if (c.el) {
+            c.x = c.fallbackX * window.innerWidth;
+            c.y = c.fallbackY * window.innerHeight;
+            c.el.style.transform = `translate(${c.x}px, ${c.y}px)`;
+        }
+    }
+
+    if (window.loadSave) {
+        const save = window.loadSave();
+        if (window.updateBondUI) window.updateBondUI(save.bond || 0);
+    }
+
+    initShadows();
+    initTentacles();
+
+    for (const key in creatureState) {
+        creatureState[key].nextBlink = time_elapsed + Math.random() * 5;
+    }
+
+    requestAnimationFrame(tick);
+
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+        splash.addEventListener('click', () => {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.remove(), 500);
+            if (window.audioManager) window.audioManager.start();
+        });
+    }
+}
+
+window.calculateReadTime = function(conversation) {
+    if (!conversation || !Array.isArray(conversation)) return 0;
+    let totalWords = 0;
+    conversation.forEach(line => {
+        if (line[1]) totalWords += line[1].split(' ').length;
+    });
+    let time = (totalWords / 3) + (conversation.length * 2.5) + 2;
+    readCooldown = Math.max(5, time);
+    idleTimer = -10; 
+};
+
+function resize() {
+    if (window.physicsEngine && window.physicsEngine.resize) window.physicsEngine.resize();
+    if (window.choreographyEngine && window.choreographyEngine.resize) window.choreographyEngine.resize();
+}
+window.addEventListener('resize', resize);
+
+function handleCreatureTap(id) {
+    if (readCooldown > 0) return;
+    if (window.audioManager) window.audioManager.sting(id);
+    if (window.brain) window.brain.addBond(1);
+    idleTimer = 0;
+    // Reactions logic...
+}
+
+function updateDebugHUD() {
+    // ... (keep existing debug HUD logic)
+}
+
+// =====================================================================
+// MASTER TICK LOOP (BULLETPROOF)
+// =====================================================================
+function tick(currentTime) {
+    requestAnimationFrame(tick);
+
+    try {
+        if (!lastTime) lastTime = currentTime;
+        let dt = (currentTime - lastTime) / 1000;
+        lastTime = currentTime;
+        if (dt > 0.1) dt = 0.1; 
+        time_elapsed += dt;
+
+        if (readCooldown > 0) readCooldown -= dt;
+
+        if (window.brain) {
+            window.brain.update(dt);
+            currentMood = window.brain.currentMood || "NORMAL";
+        }
+
+        if (window.dialogueEngine) window.dialogueEngine.update(dt);
+
+        // FORMATION LOGIC
+        let formation = null;
+        if (window.choreographyEngine && window.choreographyEngine.getFormation) {
+            formation = window.choreographyEngine.getFormation(
+                window.brain && window.brain.sleepState === "SLEEPING" ? "HUDDLE" : "NORMAL", 
+                window.innerWidth, window.innerHeight, time_elapsed
+            );
+        }
+
+        // Update Creatures
+        let activeTalker = null;
+        for (const key in creatureState) {
+            const c = creatureState[key];
+            if (!c.el) continue;
+
+            // Target calculation (either from engine or fallback)
+            let targetX, targetY;
+            if (formation && formation[key]) {
+                const rect = c.el.getBoundingClientRect();
+                targetX = (formation[key].x * window.innerWidth) - (rect.width / 2);
+                targetY = (formation[key].y * window.innerHeight) - (rect.height / 2);
+            } else {
+                targetX = c.fallbackX * window.innerWidth;
+                targetY = c.fallbackY * window.innerHeight;
+            }
+
+            // Smooth movement
+            c.x += (targetX - c.x) * 2 * dt;
+            c.y += (targetY - c.y) * 2 * dt;
+            c.el.style.transform = `translate(${c.x}px, ${c.y}px)`;
+
+            // Blinking & Talking
+            c.nextBlink -= dt;
+            if (c.nextBlink <= 0) {
+                c.blinkTimer = 0.15; 
+                c.nextBlink = 3 + Math.random() * 5; 
+            }
+
+            const isTalking = c.talkTimer > 0;
+            if (isTalking) {
+                c.talkTimer -= dt;
+                activeTalker = key;
+            }
+
+            if (c.el.tagName === 'IMG') {
+                const baseSrc = `assets/images/${key}`;
+                if (isTalking) c.el.src = `${baseSrc}_talk.png`;
+                else if (c.blinkTimer > 0) {
+                    c.el.src = `${baseSrc}_blink.png`;
+                    c.blinkTimer -= dt;
+                } else c.el.src = `${baseSrc}.png`;
+            }
+        }
+
+        // Engines
+        if (window.atmosphereEngine && window.atmosphereEngine.update) {
+            window.atmosphereEngine.update(dt, currentMood);
+        }
+        if (window.physicsEngine && window.physicsEngine.update) {
+            window.physicsEngine.update(dt, time_elapsed, currentMood, document.querySelectorAll('.creature-shadow'));
+        }
+
+        // Chatter
+        if (readCooldown <= 0 && currentMood === "NORMAL" && !activeTalker && time_elapsed > 15) {
+            idleTimer += dt;
+            if (idleTimer > 25) {
+                if (window.dialogueEngine && window.drawFromBank) {
+                    const chatter = window.drawFromBank('chatter');
+                    if (chatter) {
+                        window.dialogueEngine.queueSpeech(chatter);
+                        if (window.calculateReadTime) window.calculateReadTime(chatter);
+                    }
+                }
+                idleTimer = 0; 
+            }
+        } else if (readCooldown > 0 || activeTalker) {
+            idleTimer = 0; 
+        }
+
+        uiTickTimer += dt;
+        if (uiTickTimer > 0.5) {
+            // updateDebugHUD();
+            uiTickTimer = 0;
+        }
+
+    } catch (e) {
+        console.error("CRITICAL TICK ERROR:", e);
+        // The loop continues because requestAnimationFrame is at the top
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+} =====================================================================
 // EDENCORE ORCHESTRATOR - app.js (V3.7 - Final Fix)
 // =====================================================================
 
