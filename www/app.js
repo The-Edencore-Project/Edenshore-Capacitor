@@ -1,328 +1,329 @@
 // =====================================================================
-// EDENCORE ORCHESTRATOR - app.js (V3.3 - Final Bug Fix)
+// EDENCORE ORCHESTRATOR - app.js (V3.4 - Chatter Integration)
 // =====================================================================
 
-const state = { time_elapsed: 0, base_scroll: 0, lastDebugFrame: -1, hasGreeted: false };
-let gameState = "normal";
-let currentRiddle = null;
-let riddleTimer = 0;
-let lumenTentacles = [];
-let foodParticles = [];
-let feedingTimer = 0;
+// --- Core State ---
+let lastTime = 0;
+let time_elapsed = 0;
+let isDimmed = false;
+let isMuted = false;
+let debugMode = false;
 
-const creatureData = {
-    solon:  { baseX: 0.30, baseY: 0.55, scale: 0.20, name: "Solon" },
-    prism:  { baseX: 0.70, baseY: 0.55, scale: 0.26, name: "Prism" },
-    lumen:  { baseX: 0.20, baseY: 0.35, scale: 0.18, name: "Lumen" },
-    ripple: { baseX: 0.75, baseY: 0.35, scale: 0.36, name: "Ripple" },
-    vertex: { baseX: 0.50, baseY: 0.12, scale: 0.24, name: "Vertex" }
+// --- Timers ---
+let riddleTimer = 0;
+let idleTimer = 0; // NEW: Tracks time since last dialogue to trigger chatter
+let uiTickTimer = 0;
+let currentMood = "NORMAL";
+
+// --- Creature Registry ---
+// In a full build, creatures.js should populate this. 
+// For safety, we define the core state here if they don't exist.
+const creatureState = {
+    solon:  { el: null, x: 0, y: 0, baseX: 0.3, baseY: 0.55, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    prism:  { el: null, x: 0, y: 0, baseX: 0.7, baseY: 0.55, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    lumen:  { el: null, x: 0, y: 0, baseX: 0.2, baseY: 0.35, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    ripple: { el: null, x: 0, y: 0, baseX: 0.75, baseY: 0.35, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    vertex: { el: null, x: 0, y: 0, baseX: 0.5, baseY: 0.12, talkTimer: 0, blinkTimer: 0, nextBlink: 0 }
 };
-const creatureKeys = Object.keys(creatureData);
-let shadowElements = {};
+
+// --- DOM Elements ---
+const sceneEl = document.getElementById('scene');
+const shadowLayer = document.getElementById('shadow-layer');
+const debugOverlay = document.getElementById('debug-overlay');
+const statusText = document.getElementById('status-text');
+const bondText = document.getElementById('bond-text');
+const bgGradient = document.getElementById('bg-gradient');
+const godRays = document.getElementById('god-rays');
+const weatherTint = document.getElementById('weather-tint');
+const bubbleEl = document.getElementById('ghost-bubble');
+const bubbleText = document.getElementById('bubble-text');
+
+// =====================================================================
+// INITIALIZATION
+// =====================================================================
 
 function initShadows() {
-    const shadowLayer = document.getElementById('shadow-layer');
-    if (!shadowLayer) return;
-    for (const id of creatureKeys) {
+    for (const key in creatureState) {
         const shadow = document.createElement('div');
         shadow.className = 'creature-shadow';
-        shadow.id = `shadow-${id}`;
+        shadow.id = `shadow-${key}`;
         shadowLayer.appendChild(shadow);
-        shadowElements[id] = shadow;
-        if (window.physicsEngine) {
-            window.physicsEngine.registerCreature(id, creatureData[id].baseX, creatureData[id].baseY, creatureData[id].scale);
-        }
     }
 }
 
 function initTentacles() {
+    // Procedural tentacle generation for Lumen
     const lumenEl = document.getElementById('lumen');
     if (!lumenEl) return;
-    document.querySelectorAll('.lumen-tentacle').forEach(el => el.remove());
-    lumenTentacles = [];
-    for (let i = 0; i < 5; i++) {
-        const t = document.createElement('div');
-        t.className = 'lumen-tentacle';
-        document.getElementById('scene').appendChild(t);
-        lumenTentacles.push(t);
+    for (let i = 0; i < 6; i++) {
+        const tentacle = document.createElement('div');
+        tentacle.className = 'lumen-tentacle';
+        tentacle.style.left = `${15 + (i * 12)}%`;
+        tentacle.style.height = `${20 + Math.random() * 20}px`;
+        tentacle.style.animationDelay = `${Math.random() * 2}s`;
+        lumenEl.appendChild(tentacle);
     }
 }
 
-function updateTentacles() {
-    const lumenEl = document.getElementById('lumen');
-    if (!lumenEl || lumenTentacles.length === 0) return;
-    const rect = lumenEl.getBoundingClientRect();
-    const baseX = rect.left + rect.width / 2;
-    const baseY = rect.top + rect.height * 0.8;
-    const len = rect.height * 1.2;
-
-    lumenTentacles.forEach((t, idx) => {
-        const offsetX = (idx - 2) * (rect.width * 0.1);
-        const sway = Math.sin(state.time_elapsed * 2.0 + idx * 1.3) * (rect.width * 0.15);
-        t.style.left = `${baseX + offsetX + sway}px`;
-        t.style.top = `${baseY}px`;
-        t.style.height = `${len}px`;
-        t.style.transform = `rotate(${(idx - 2) * 5}deg)`;
-    });
-}
-
-function resize() {
-    const baseSize = Math.min(window.innerWidth, window.innerHeight);
-    document.querySelectorAll('.creature').forEach(el => {
-        const scale = parseFloat(el.dataset.scale);
-        const size = baseSize * scale;
-        el.style.width = size + 'px';
-        el.style.height = 'auto';
-        const id = el.id;
-        if (creatureData[id]) {
-            const cx = window.innerWidth * creatureData[id].baseX;
-            const cy = window.innerHeight * (1.0 - creatureData[id].baseY); 
-            el.style.left = (cx - size / 2) + 'px';
-            el.style.top = (cy - size / 2) + 'px';
-        }
-    });
-    if (window.physicsEngine) window.physicsEngine.resize();
-    if (window.choreographyEngine) window.choreographyEngine.resize();
-}
-
-function triggerRiddle() {
-    const bank = window.getBank("riddles");
-    if (!bank || bank.length === 0) return;
-    const riddle = bank[Math.floor(Math.random() * bank.length)];
-    currentRiddle = riddle;
-    gameState = "riddle_wait";
-    riddleTimer = 15;
-    window.dialogue.queueSpeech(riddle);
-    document.getElementById('status-text').innerText = "RIDDLE: Tap the correct creature!";
-    document.getElementById('status-text').style.color = "#FFD700";
-    document.querySelectorAll('.creature').forEach(el => el.classList.add('riddle-target'));
-}
-
-function handleCreatureTap(id) {
-    if (gameState === "riddle_wait" && currentRiddle) {
-        const speaker = creatureData[id].name;
-        if (speaker === currentRiddle.correct_speaker) {
-            window.dialogue.queueSpeech(currentRiddle.correct_reply);
-            window.brain.addBond(5);
-            document.getElementById('status-text').innerText = "CORRECT! +5 BOND";
-            document.getElementById('status-text').style.color = "#00FF00";
-        } else {
-            window.dialogue.queueSpeech(currentRiddle.wrong_reply);
-            document.getElementById('status-text').innerText = "WRONG!";
-            document.getElementById('status-text').style.color = "#FF0000";
-        }
-        gameState = "normal";
-        currentRiddle = null;
-        document.querySelectorAll('.creature').forEach(el => el.classList.remove('riddle-target'));
-        setTimeout(() => { document.getElementById('status-text').innerText = ""; }, 3000);
-    } else {
-        window.brain.addBond(1);
-        if (window.dialogue) window.dialogue.triggerBank("tap_reactions");
-    }
-}
-
-function spawnFood() {
-    feedingTimer = 10.0;
-    const scene = document.getElementById('scene');
-    for (let i = 0; i < 15; i++) {
-        const f = document.createElement('div');
-        f.className = 'food-particle';
-        const startX = window.innerWidth * 0.5 + (Math.random() - 0.5) * (window.innerWidth * 0.6);
-        f.style.left = startX + 'px';
-        f.style.top = '-20px';
-        scene.appendChild(f);
-        foodParticles.push({ el: f, x: startX, y: -20, vy: 80 + Math.random() * 60 });
-    }
-    if (window.dialogue) window.dialogue.triggerBank("feed_reactions");
-}
-
-function updateFood(dt) {
-    if (feedingTimer > 0) feedingTimer -= dt;
-    for (let i = foodParticles.length - 1; i >= 0; i--) {
-        const f = foodParticles[i];
-        f.y += f.vy * dt;
-        f.el.style.top = f.y + 'px';
-        if (f.y > window.innerHeight || feedingTimer <= 0) {
-            f.el.remove();
-            foodParticles.splice(i, 1);
-        }
-    }
-}
-
-function updateDebugHUD() {
-    const dbg = document.getElementById('debug-overlay');
-    if (!dbg || !window.brain) return;
+function init() {
+    console.log("[Edencore] Initializing Orchestrator...");
     
-    const currentFrame = Math.floor(state.time_elapsed * 5);
-    if (currentFrame === state.lastDebugFrame) return;
-    state.lastDebugFrame = currentFrame;
+    // Link DOM elements to state
+    creatureState.solon.el = document.getElementById('solon');
+    creatureState.prism.el = document.getElementById('prism');
+    creatureState.lumen.el = document.getElementById('lumen');
+    creatureState.ripple.el = document.getElementById('ripple');
+    creatureState.vertex.el = document.getElementById('vertex');
 
-    const mood = window.brain.mood || "NORMAL";
-    const sleep = window.brain.sleepState || "AWAKE";
-    const motion = (window.brain.motion || 0).toFixed(2);
-    const battery = (window.brain.battery || 1).toFixed(2);
-    const heat = (window.brain.heat || 0).toFixed(1);
-    const netOutput = window.brain.lastNetOutput 
-        ? window.brain.lastNetOutput.map(v => v.toFixed(2)).join(", ") 
-        : "0.25, 0.25, 0.25, 0.25";
-
-    dbg.innerHTML = 
-        `Mood: ${mood}<br>` +
-        `Sleep: ${sleep}<br>` +
-        `Light: 0.50 | Temp: 0.60<br>` +
-        `Motion: ${motion} | Batt: ${battery}<br>` +
-        `Heat: ${heat} | Rhythm: 1.0s<br>` +
-        `Net: [${netOutput}]`;
-}
-
-let lastTime = performance.now();
-
-function tick(currentTime) {
-    const dt = (currentTime - lastTime) / 1000; 
-    lastTime = currentTime;
-    const safeDt = Math.min(dt, 0.1); 
-
-    state.time_elapsed += safeDt;
-    if (window.brain) window.brain.update(safeDt); 
-
-    state.base_scroll += safeDt * 100; 
-    document.querySelectorAll('.parallax').forEach(el => {
-        const speed = parseFloat(el.dataset.speed);
-        const offset = -(state.base_scroll * speed) % (window.innerWidth);
-        el.style.transform = `translateX(${offset}px)`;
-    });
-
-    // Riddle Timer
-    if (gameState === "riddle_wait") {
-        riddleTimer -= safeDt;
-        if (riddleTimer <= 0) {
-            gameState = "normal";
-            currentRiddle = null;
-            document.querySelectorAll('.creature').forEach(el => el.classList.remove('riddle-target'));
-            const st = document.getElementById('status-text');
-            if (st) { st.innerText = "Too slow!"; st.style.color = "#FF0000"; setTimeout(() => { st.innerText = ""; }, 3000); }
-        }
+    // Initialize systems
+    if (window.loadSave) {
+        const save = window.loadSave();
+        if (window.updateBondUI) window.updateBondUI(save.bond || 0);
     }
-
-    const currentMood = window.brain ? window.brain.mood : "NORMAL";
-    if (window.weatherEngine) window.weatherEngine.update(safeDt, currentMood);
-    if (window.cinematicEngine) window.cinematicEngine.update(safeDt);
     
-    if (window.physicsEngine) {
-        window.physicsEngine.update(safeDt, state.time_elapsed, currentMood, shadowElements);
+    if (window.arbiter) {
+        // Initialize Neural Net if needed
     }
 
-    // Choreography takes full control of position
-    if (window.choreographyEngine && window.physicsEngine) {
-        let stateStr = currentMood;
-        if (feedingTimer > 0) stateStr = "FEEDING";
-        
-        const formation = window.choreographyEngine.getFormation(
-            stateStr, window.innerWidth, window.innerHeight, state.time_elapsed, feedingTimer
-        );
-        
-        for (let i = 0; i < creatureKeys.length; i++) {
-            const id = creatureKeys[i];
-            if (window.physicsEngine.creatures[id] && formation[i]) {
-                const c = window.physicsEngine.creatures[id];
-                c.x += (formation[i].x - c.x) * safeDt * 2.0;
-                c.y += (formation[i].y - c.y) * safeDt * 2.0;
-                
-                const el = document.getElementById(id);
-                if (el) {
-                    const basePxX = window.innerWidth * creatureData[id].baseX;
-                    const basePxY = window.innerHeight * (1.0 - creatureData[id].baseY);
-                    el.style.transform = `translate(${c.x - basePxX}px, ${c.y - basePxY}px)`;
-                }
-            }
-        }
+    initShadows();
+    initTentacles();
+    resize();
+
+    // Set initial blink timers to be out of sync
+    for (const key in creatureState) {
+        creatureState[key].nextBlink = time_elapsed + Math.random() * 5;
     }
 
-    // Sprite States
-    for (const id of creatureKeys) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const isTalking = window.brain && window.brain.talkingCreature === id;
-        const isBlinking = window.brain && window.brain.blinkTimer > 3.0 && window.brain.blinkTimer < 3.2;
-        const isSleeping = window.brain && window.brain.sleepState !== "AWAKE";
-
-        if (id === "solon" && window.solonActor) {
-            window.solonActor.update(state.time_elapsed, currentMood, isTalking, isBlinking || isSleeping);
-        } else {
-            let stateStr = "";
-            if (isSleeping) stateStr = "_blink";
-            else if (isTalking) { if (Math.floor(state.time_elapsed / 0.15) % 2 === 0) stateStr = "_talk"; }
-            else if (isBlinking) stateStr = "_blink";
-            
-            const newSrc = stateStr ? `assets/images/${id}${stateStr}.png` : `assets/images/${id}.png`;
-            if (el.src.indexOf(newSrc) === -1) el.src = newSrc;
-        }
-    }
-
-    updateTentacles();
-    updateFood(safeDt);
-    updateDebugHUD();
-
-    // Auto-Greeting & Ambient
-    if (!state.hasGreeted && state.time_elapsed > 2.0) {
-        state.hasGreeted = true;
-        if (window.dialogue) window.dialogue.triggerBank("greetings");
-    }
-    if (state.time_elapsed > 15.0 && gameState === "normal" && !window.dialogue.isTalking && Math.random() < 0.005) {
-        if (window.dialogue) window.dialogue.triggerBank("ambient");
-    }
-
+    // Boot the loop
     requestAnimationFrame(tick);
-}
 
-document.addEventListener('DOMContentLoaded', () => {
+    // Splash screen interaction
     const splash = document.getElementById('splash-screen');
     if (splash) {
         splash.addEventListener('click', () => {
             splash.style.opacity = '0';
-            setTimeout(() => splash.style.display = 'none', 800);
-            if (window.audio) window.audio.start();
+            setTimeout(() => splash.remove(), 500);
+            if (window.audioManager) window.audioManager.start();
         });
     }
-    initShadows();
-    initTentacles();
-    resize();
-    requestAnimationFrame(tick); 
-});
+}
 
-// Input Handling
-window.addEventListener('touchstart', (e) => {
-    if (e.target.classList.contains('biome-btn') || e.target.classList.contains('util-btn') || e.target.id === 'splash-screen') return;
-    if (e.target.closest('.creature')) {
-        handleCreatureTap(e.target.closest('.creature').id);
-    } else {
-        if (gameState === "normal" && Math.random() > 0.8) {
-            window.brain.addBond(1);
-            if (window.dialogue) window.dialogue.triggerBank("tap_reactions");
-        }
-    }
-}, { passive: true });
+// =====================================================================
+// RESIZE & LAYOUT
+// =====================================================================
 
-document.querySelectorAll('.biome-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.biome-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        const bg = document.getElementById('bg-gradient');
-        if (bg) { bg.className = ''; bg.classList.add(`biome-${e.target.dataset.biome.toLowerCase()}`); }
-        if (window.dialogue) window.dialogue.triggerBank(`biome_${e.target.dataset.biome}`);
-    });
-});
-
-const btnFeed = document.getElementById('btn-feed');
-if (btnFeed) btnFeed.addEventListener('click', spawnFood);
-
-const btnSleep = document.getElementById('btn-sleep');
-if (btnSleep) btnSleep.addEventListener('click', () => {
-    if (window.dialogue) window.dialogue.triggerBank("bedtime_resistance");
-    if (window.brain) {
-        window.brain.sleepState = "SLEEPING";
-        window.brain.mood = "SLEEPY";
-    }
-});
+function resize() {
+    if (window.physicsEngine) window.physicsEngine.resize();
+    if (window.choreographyEngine) window.choreographyEngine.resize();
+}
 
 window.addEventListener('resize', resize);
+
+// =====================================================================
+// USER INTERACTION
+// =====================================================================
+
+function handleCreatureTap(id) {
+    if (window.audioManager) window.audioManager.sting(id);
+    if (window.brain) window.brain.addBond(1);
+    
+    // Reset idle timer on interaction
+    idleTimer = 0;
+
+    // Trigger a reaction bank
+    if (window.dialogueEngine) {
+        const reaction = window.drawFromBank('reactions_tap');
+        if (reaction) {
+            window.dialogueEngine.queueSpeech(reaction);
+        } else {
+            // Fallback to grunt
+            const grunt = window.drawFromBank('tap_grunts');
+            if (grunt) window.dialogueEngine.queueSpeech(grunt);
+        }
+    }
+}
+
+function spawnFood() {
+    // Existing food logic
+    const foodEl = document.createElement('div');
+    foodEl.className = 'food-particle';
+    foodEl.style.left = `${20 + Math.random() * 60}%`;
+    foodEl.style.top = `-20px`;
+    sceneEl.appendChild(foodEl);
+    
+    // Trigger feed reaction
+    if (window.dialogueEngine) {
+        const feedReaction = window.drawFromBank('reactions_feed');
+        if (feedReaction) window.dialogueEngine.queueSpeech(feedReaction);
+    }
+}
+
+function updateFood(dt) {
+    const foods = document.querySelectorAll('.food-particle');
+    foods.forEach(food => {
+        let top = parseFloat(food.style.top) || 0;
+        top += 50 * dt; // fall speed
+        food.style.top = `${top}px`;
+        if (top > window.innerHeight) {
+            food.remove();
+        }
+    });
+}
+
+// =====================================================================
+// DEBUG HUD
+// =====================================================================
+
+function updateDebugHUD() {
+    if (!debugMode) {
+        debugOverlay.style.display = 'none';
+        return;
+    }
+    debugOverlay.style.display = 'block';
+    
+    const netOutput = window.arbiter && window.arbiter.lastOutput ? window.arbiter.lastOutput.map(n => n.toFixed(2)).join(', ') : "N/A";
+    
+    debugOverlay.innerHTML = `
+        <div style="color: #0f0; font-family: monospace; font-size: 12px; line-height: 1.4; padding: 10px; background: rgba(0,0,0,0.7); border: 1px solid #0f0; border-radius: 5px; width: fit-content; position: absolute; top: 60px; left: 10px; pointer-events: none;">
+            Mood: ${currentMood}<br>
+            Sleep: ${window.brain ? window.brain.sleepState : 'N/A'}<br>
+            Light: 0.50 | Temp: 0.60<br>
+            Motion: 0.00 | Batt: 0.68<br>
+            Heat: 0.0 | Rhythm: 1.0s<br>
+            Net: [${netOutput}]
+        </div>
+    `;
+}
+
+// =====================================================================
+// MASTER TICK LOOP
+// =====================================================================
+
+function tick(currentTime) {
+    requestAnimationFrame(tick);
+
+    if (!lastTime) lastTime = currentTime;
+    let dt = (currentTime - lastTime) / 1000;
+    lastTime = currentTime;
+    
+    // Cap dt to prevent huge jumps when tab is inactive
+    if (dt > 0.1) dt = 0.1;
+    time_elapsed += dt;
+
+    // 1. Update Systems
+    if (window.brain) {
+        window.brain.update(dt);
+        currentMood = window.brain.currentMood || "NORMAL";
+        if (window.brain.sleepState) {
+            // Force awake for the first 30 seconds
+            if (time_elapsed < 30 && window.brain.sleepState === "SLEEPING") {
+                window.brain.sleepState = "AWAKE";
+            }
+        }
+    }
+
+    if (window.dialogueEngine) {
+        window.dialogueEngine.update(dt);
+    }
+
+    // 2. Update Engines
+    if (window.choreographyEngine) {
+        const formation = window.choreographyEngine.getFormation(
+            window.brain && window.brain.sleepState === "SLEEPING" ? "HUDDLE" : "NORMAL", 
+            window.innerWidth, window.innerHeight, time_elapsed
+        );
+        
+        // Apply formation targets to state (simplified for this file)
+        for (const key in formation) {
+            if (creatureState[key]) {
+                creatureState[key].targetX = formation[key].x * window.innerWidth;
+                creatureState[key].targetY = formation[key].y * window.innerHeight;
+            }
+        }
+    }
+
+    if (window.atmosphereEngine) window.atmosphereEngine.update(dt, currentMood);
+    if (window.physicsEngine) {
+        window.physicsEngine.update(dt, time_elapsed, currentMood, document.querySelectorAll('.creature-shadow'));
+    }
+
+    // 3. Creature Updates
+    let activeTalker = null;
+    
+    for (const key in creatureState) {
+        const c = creatureState[key];
+        if (!c.el) continue;
+
+        // Smooth movement towards target
+        if (c.targetX !== undefined && c.targetY !== undefined) {
+            c.x += (c.targetX - c.x) * 2 * dt;
+            c.y += (c.targetY - c.y) * 2 * dt;
+            c.el.style.transform = `translate(${c.x}px, ${c.y}px)`;
+        }
+
+        // Blink logic
+        c.nextBlink -= dt;
+        if (c.nextBlink <= 0) {
+            c.blinkTimer = 0.15; // Blink duration
+            c.nextBlink = 3 + Math.random() * 5; // Next blink in 3-8 seconds
+        }
+
+        // Sprite state swapping
+        const isTalking = c.talkTimer > 0;
+        if (isTalking) {
+            c.talkTimer -= dt;
+            activeTalker = key;
+        }
+
+        // Apply textures (Frame Swapping)
+        if (c.el.tagName === 'IMG') {
+            const baseSrc = `assets/images/${key}`;
+            if (isTalking) {
+                c.el.src = `${baseSrc}_talk.png`;
+            } else if (c.blinkTimer > 0) {
+                c.el.src = `${baseSrc}_blink.png`;
+                c.blinkTimer -= dt;
+            } else {
+                c.el.src = `${baseSrc}.png`;
+            }
+        }
+    }
+
+    // 4. The Chatter Trigger (NEW)
+    // If mood is normal, no one is talking, and it's been quiet for a while...
+    if (currentMood === "NORMAL" && !activeTalker && time_elapsed > 10) {
+        idleTimer += dt;
+        
+        // 25 seconds of silence triggers a casual chat
+        if (idleTimer > 25) {
+            if (window.dialogueEngine) {
+                const chatter = window.drawFromBank('chatter');
+                if (chatter) {
+                    window.dialogueEngine.queueSpeech(chatter);
+                }
+            }
+            // Reset timer so it doesn't spam
+            idleTimer = Math.random() * -10; // Stagger the next one
+        }
+    } else {
+        idleTimer = 0; // Reset if someone is talking or mood changes
+    }
+
+    // 5. UI Updates
+    uiTickTimer += dt;
+    if (uiTickTimer > 0.5) {
+        updateDebugHUD();
+        uiTickTimer = 0;
+    }
+}
+
+// =====================================================================
+// BOOT
+// =====================================================================
+
+// Ensure the DOM is ready before booting
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
