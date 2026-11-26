@@ -1,16 +1,13 @@
 // =====================================================================
-// EDENCORE ORCHESTRATOR - app.js (V3.6 - Sprite Scale Fix)
+// EDENCORE ORCHESTRATOR - app.js (V3.7 - Final Fix)
 // =====================================================================
 
 // --- Core State ---
 let lastTime = 0;
 let time_elapsed = 0;
-let isDimmed = false;
-let isMuted = false;
 let debugMode = false;
 
 // --- Timers ---
-let riddleTimer = 0;
 let idleTimer = 0; 
 let uiTickTimer = 0;
 let currentMood = "NORMAL";
@@ -18,14 +15,14 @@ let readCooldown = 0;
 
 // --- Creature Registry ---
 const creatureState = {
-    solon:  { el: null, x: 0, y: 0, baseX: 0.3, baseY: 0.55, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
-    prism:  { el: null, x: 0, y: 0, baseX: 0.7, baseY: 0.55, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
-    lumen:  { el: null, x: 0, y: 0, baseX: 0.2, baseY: 0.35, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
-    ripple: { el: null, x: 0, y: 0, baseX: 0.75, baseY: 0.35, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
-    vertex: { el: null, x: 0, y: 0, baseX: 0.5, baseY: 0.12, talkTimer: 0, blinkTimer: 0, nextBlink: 0 }
+    solon:  { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    prism:  { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    lumen:  { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    ripple: { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    vertex: { el: null, x: 0, y: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 }
 };
 
-// --- DOM Elements ---
+// --- DOM Elements (Removed dead ghost-bubble refs) ---
 const sceneEl = document.getElementById('scene');
 const shadowLayer = document.getElementById('shadow-layer');
 const debugOverlay = document.getElementById('debug-overlay');
@@ -39,7 +36,7 @@ function initShadows() {
         const shadow = document.createElement('div');
         shadow.className = 'creature-shadow';
         shadow.id = `shadow-${key}`;
-        shadowLayer.appendChild(shadow);
+        if(shadowLayer) shadowLayer.appendChild(shadow);
     }
 }
 
@@ -65,14 +62,10 @@ function applySpriteScaling() {
             // 512 is the base width in your Constitution
             const renderWidth = 512 * scaleFactor; 
             
-            // If it's an IMG tag, set width directly. 
-            // If it's Solon (a DIV), let the CSS handle his inner layers, but scale the container.
             if (c.el.tagName === 'IMG') {
                 c.el.style.width = `${renderWidth}px`;
                 c.el.style.height = 'auto';
-            } else if (key === 'solon') {
-                // Solon is already hardcoded to 150px in CSS, but we can scale him here too if needed.
-                // For now, let's keep his specific CSS size to avoid breaking his fins.
+                console.log(`[Scale] Applied to ${key}: ${renderWidth}px`);
             }
         }
     }
@@ -121,14 +114,10 @@ function init() {
 
 window.calculateReadTime = function(conversation) {
     if (!conversation || !Array.isArray(conversation)) return 0;
-
     let totalWords = 0;
     conversation.forEach(line => {
-        if (line[1]) {
-            totalWords += line[1].split(' ').length;
-        }
+        if (line[1]) totalWords += line[1].split(' ').length;
     });
-
     let time = (totalWords / 3) + (conversation.length * 2.5) + 2;
     readCooldown = Math.max(5, time);
     idleTimer = -10; 
@@ -139,7 +128,6 @@ window.calculateReadTime = function(conversation) {
 // =====================================================================
 
 function resize() {
-    // Re-apply scaling in case of orientation change
     applySpriteScaling();
     if (window.physicsEngine) window.physicsEngine.resize();
     if (window.choreographyEngine) window.choreographyEngine.resize();
@@ -155,7 +143,6 @@ function handleCreatureTap(id) {
     if (readCooldown > 0) return;
     if (window.audioManager) window.audioManager.sting(id);
     if (window.brain) window.brain.addBond(1);
-
     idleTimer = 0;
 
     if (window.dialogueEngine) {
@@ -163,24 +150,17 @@ function handleCreatureTap(id) {
         if (reaction) {
             window.dialogueEngine.queueSpeech(reaction);
             if (window.calculateReadTime) window.calculateReadTime(reaction);
-        } else {
-            const grunt = window.drawFromBank('tap_grunts');
-            if (grunt) {
-                window.dialogueEngine.queueSpeech(grunt);
-                if (window.calculateReadTime) window.calculateReadTime(grunt);
-            }
         }
     }
 }
 
 function spawnFood() {
     if (readCooldown > 0) return;
-
     const foodEl = document.createElement('div');
     foodEl.className = 'food-particle';
     foodEl.style.left = `${20 + Math.random() * 60}%`;
     foodEl.style.top = `-20px`;
-    sceneEl.appendChild(foodEl);
+    if(sceneEl) sceneEl.appendChild(foodEl);
 
     if (window.dialogueEngine) {
         const feedReaction = window.drawFromBank('reactions_feed');
@@ -197,9 +177,7 @@ function updateFood(dt) {
         let top = parseFloat(food.style.top) || 0;
         top += 50 * dt; 
         food.style.top = `${top}px`;
-        if (top > window.innerHeight) {
-            food.remove();
-        }
+        if (top > window.innerHeight) food.remove();
     });
 }
 
@@ -208,12 +186,11 @@ function updateFood(dt) {
 // =====================================================================
 
 function updateDebugHUD() {
-    if (!debugMode) {
-        debugOverlay.style.display = 'none';
+    if (!debugMode || !debugOverlay) {
+        if (debugOverlay) debugOverlay.style.display = 'none';
         return;
     }
     debugOverlay.style.display = 'block';
-
     const netOutput = window.arbiter && window.arbiter.lastOutput ? window.arbiter.lastOutput.map(n => n.toFixed(2)).join(', ') : "N/A";
 
     debugOverlay.innerHTML = `
@@ -241,23 +218,17 @@ function tick(currentTime) {
     if (dt > 0.1) dt = 0.1; 
     time_elapsed += dt;
 
-    if (readCooldown > 0) {
-        readCooldown -= dt;
-    }
+    if (readCooldown > 0) readCooldown -= dt;
 
     if (window.brain) {
         window.brain.update(dt);
         currentMood = window.brain.currentMood || "NORMAL";
-        if (window.brain.sleepState) {
-            if (time_elapsed < 30 && window.brain.sleepState === "SLEEPING") {
-                window.brain.sleepState = "AWAKE";
-            }
+        if (window.brain.sleepState && time_elapsed < 30 && window.brain.sleepState === "SLEEPING") {
+            window.brain.sleepState = "AWAKE";
         }
     }
 
-    if (window.dialogueEngine) {
-        window.dialogueEngine.update(dt);
-    }
+    if (window.dialogueEngine) window.dialogueEngine.update(dt);
 
     if (window.choreographyEngine) {
         const formation = window.choreographyEngine.getFormation(
@@ -267,16 +238,16 @@ function tick(currentTime) {
 
         for (const key in formation) {
             if (creatureState[key]) {
-                creatureState[key].targetX = formation[key].x * window.innerWidth;
-                creatureState[key].targetY = formation[key].y * window.innerHeight;
+                // Center the sprite on the coordinate
+                const rect = creatureState[key].el ? creatureState[key].el.getBoundingClientRect() : {width: 0, height: 0};
+                creatureState[key].targetX = (formation[key].x * window.innerWidth) - (rect.width / 2);
+                creatureState[key].targetY = (formation[key].y * window.innerHeight) - (rect.height / 2);
             }
         }
     }
 
     if (window.atmosphereEngine) window.atmosphereEngine.update(dt, currentMood);
-    if (window.physicsEngine) {
-        window.physicsEngine.update(dt, time_elapsed, currentMood, document.querySelectorAll('.creature-shadow'));
-    }
+    if (window.physicsEngine) window.physicsEngine.update(dt, time_elapsed, currentMood, document.querySelectorAll('.creature-shadow'));
 
     let activeTalker = null;
 
@@ -285,6 +256,7 @@ function tick(currentTime) {
         if (!c.el) continue;
 
         if (c.targetX !== undefined && c.targetY !== undefined) {
+            // Smooth movement
             c.x += (c.targetX - c.x) * 2 * dt;
             c.y += (c.targetY - c.y) * 2 * dt;
             c.el.style.transform = `translate(${c.x}px, ${c.y}px)`;
@@ -317,7 +289,6 @@ function tick(currentTime) {
 
     if (readCooldown <= 0 && currentMood === "NORMAL" && !activeTalker && time_elapsed > 15) {
         idleTimer += dt;
-
         if (idleTimer > 25) {
             if (window.dialogueEngine) {
                 const chatter = window.drawFromBank('chatter');
