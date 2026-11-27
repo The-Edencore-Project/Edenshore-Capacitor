@@ -1,5 +1,5 @@
 // =====================================================================
-// EDENCORE - systems/dialogue.js (The Dialogue Player)
+// EDENCORE - systems/dialogue.js (The Dialogue Player V2)
 // =====================================================================
 
 class DialogueEngine {
@@ -13,8 +13,6 @@ class DialogueEngine {
     }
 
     triggerBank(bankName) {
-        // In the new architecture, app.js usually calls drawFromBank directly.
-        // This is a fallback for event-driven triggers.
         if (window.drawFromBank) {
             const conversation = window.drawFromBank(bankName);
             if (conversation) this.queueSpeech(conversation);
@@ -23,14 +21,10 @@ class DialogueEngine {
 
     queueSpeech(conversation) {
         if (!conversation || conversation.length === 0) return;
-
-        // If we are already playing, we can either queue or interrupt.
-        // For now, let's queue it so we don't break mid-sentence.
         if (this.isPlaying) {
             this.queue.push(conversation);
             return;
         }
-
         this.activeConversation = conversation;
         this.lineIndex = 0;
         this.isPlaying = true;
@@ -49,7 +43,6 @@ class DialogueEngine {
 
         this.showBubble(speaker, text);
 
-        // Set talk timer on the creature
         const creatureKey = speaker.toLowerCase();
         const creatureState = window.creatureState ? window.creatureState[creatureKey] : null;
         
@@ -57,9 +50,9 @@ class DialogueEngine {
             // Talk for however long it takes to read the line (min 2s)
             const talkDuration = Math.max(2, text.split(' ').length * 0.3);
             creatureState.talkTimer = talkDuration;
-            this.lineTimer = talkDuration + 1.5; // Add a 1.5s pause between lines
+            this.lineTimer = talkDuration + 1.0; // Add a 1s pause between lines
         } else {
-            this.lineTimer = 3; // Fallback
+            this.lineTimer = 3; 
         }
 
         this.lineIndex++;
@@ -78,52 +71,50 @@ class DialogueEngine {
 
         this.lineTimer -= dt;
         if (this.lineTimer <= 0) {
-            this.hideBubble();
             this.processNext();
         }
     }
 
     showBubble(speaker, text) {
-        this.hideBubble(); // Remove old bubble
+        // 1. Remove any existing bubble
+        this.hideBubble();
 
         const creatureKey = speaker.toLowerCase();
         const creatureEl = document.getElementById(creatureKey);
         
-        if (!creatureEl) {
-            console.warn(`[Dialogue] Cannot find element for speaker: ${speaker}`);
-            return;
-        }
+        if (!creatureEl) return;
 
-        // Create the bubble
-        this.activeBubble = document.createElement('div');
-        this.activeBubble.className = 'speech-bubble';
-        this.activeBubble.textContent = text;
+        // 2. Create the bubble
+        const bubble = document.createElement('div');
+        bubble.className = 'speech-bubble';
+        bubble.textContent = text;
         
-        // Get position of the creature
+        // 3. Position it above the creature
         const rect = creatureEl.getBoundingClientRect();
+        // We use left/top for absolute positioning, and the CSS animation handles the rest
+        bubble.style.left = `${rect.left + (rect.width / 2)}px`;
+        bubble.style.top = `${rect.top - 10}px`; 
+
+        document.getElementById('scene').appendChild(bubble);
         
-        // Position the bubble above the creature
-        // We use translate(-50%, -100%) in CSS to center it and push it up
-        this.activeBubble.style.left = `${rect.left + (rect.width / 2)}px`;
-        this.activeBubble.style.top = `${rect.top - 10}px`; // 10px gap above head
+        // 4. Trigger the CSS animation
+        // We use a tiny timeout to ensure the DOM has rendered before adding the class
+        setTimeout(() => {
+            bubble.classList.add('rising');
+        }, 10);
 
-        document.getElementById('scene').appendChild(this.activeBubble);
-
-        // Add a slight animation class after a frame
-        requestAnimationFrame(() => {
-            if (this.activeBubble) this.activeBubble.classList.add('visible');
-        });
+        this.activeBubble = bubble;
     }
 
     hideBubble() {
         if (this.activeBubble) {
-            this.activeBubble.classList.remove('visible');
             const bubbleToRemove = this.activeBubble;
+            // Wait for the CSS animation to finish (4 seconds) before removing from DOM
             setTimeout(() => {
                 if (bubbleToRemove.parentNode) {
                     bubbleToRemove.parentNode.removeChild(bubbleToRemove);
                 }
-            }, 300); // Wait for fade out transition
+            }, 4000); 
             this.activeBubble = null;
         }
     }
@@ -131,27 +122,7 @@ class DialogueEngine {
     finishConversation() {
         this.isPlaying = false;
         this.activeConversation = null;
-        this.hideBubble();
-
-        // CRITICAL: Tell app.js the conversation is done so it can calculate read time
-        if (window.calculateReadTime && this.activeConversation) {
-            window.calculateReadTime(this.activeConversation);
-        }
-        
-        // But wait, the conversation just ended. The read timer should have been 
-        // calculated at the start. Let's fix that by calculating it when it's queued.
-    }
-
-    getSpeakerColor(speaker) {
-        // Returns a hex color for the speaker
-        const colors = {
-            'Solon': '#4A7A5D',   // Green
-            'Prism': '#D97D54',   // Orange
-            'Lumen': '#B58BD4',   // Purple
-            'Ripple': '#E39EA5',  // Pink
-            'Vertex': '#E35252'   // Red
-        };
-        return colors[speaker] || '#FFFFFF';
+        // The readCooldown in app.js handles the pacing now, so we don't need to do anything here.
     }
 }
 
