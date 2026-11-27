@@ -43,14 +43,14 @@
     #creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 7; }
     .creature { position: absolute; left: 0; top: 0; pointer-events: auto; cursor: pointer; transform-origin: center center; will-change: transform; }
 
-    /* EXACT SIZING (Eyes match) */
+    /* EXACT SIZING */
     #solon { width: 160px; height: 160px; display: flex; justify-content: center; align-items: center; }
     #lumen { width: 90px; }
     #prism { width: 120px; }
     #ripple { width: 170px; }
     #vertex { width: 120px; }
 
-    /* SOLON FINS (Strict Z-Order and Size) */
+    /* SOLON FINS */
     .solon-fin { position: absolute; width: 45%; height: auto; pointer-events: none; }
     #solon-left-fin { z-index: 1; transform: translate(-20%, 20%); }
     #solon-body { z-index: 2; width: 100%; height: auto; pointer-events: auto; }
@@ -69,35 +69,49 @@
     .biome-btn { color: rgba(225,240,255,0.75); font-weight: 600; font-size: 0.9rem; letter-spacing: 1px; cursor: pointer; padding: 10px; transition: color 0.3s ease; }
     .biome-btn.active { color: #ff9a86; border-bottom: 2px solid #ff9a86; }
 
-    /* ROUND SPEECH BUBBLES (Forced) */
+    /* SPEECH BUBBLES (The Golden Code Fix) */
     .speech-bubble {
         position: absolute;
-        transform: translate(-50%, -100%) scale(0.85);
-        background: rgba(20, 30, 45, 0.75);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 30px; /* Forces roundness */
+        /* The pill shape */
+        border-radius: 50px; 
         padding: 12px 20px;
+        background: rgba(20, 30, 45, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         max-width: 250px;
         text-align: center;
         font-size: 1rem;
-        line-height: 1.3;
+        line-height: 1.4;
         color: #fff;
         pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         z-index: 200;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        
+        /* The Rise and Fade Animation */
+        opacity: 0;
+        transform: translate(-50%, -100%) translateY(0);
     }
-    .speech-bubble.visible { opacity: 1; transform: translate(-50%, -100%) scale(1); }
-    .speech-bubble::after {
-        content: '';
-        position: absolute;
-        bottom: -8px;
-        left: 50%;
-        transform: translateX(-50%);
-        border-width: 8px 8px 0;
-        border-style: solid;
-        border-color: rgba(20, 30, 45, 0.75) transparent transparent transparent;
+
+    .speech-bubble.rising {
+        animation: floatUp 4s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+        0% {
+            opacity: 0;
+            transform: translate(-50%, -100%) translateY(0) scale(0.8);
+        }
+        10% {
+            opacity: 1;
+            transform: translate(-50%, -100%) translateY(-10px) scale(1);
+        }
+        80% {
+            opacity: 1;
+            transform: translate(-50%, -100%) translateY(-60px) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -100%) translateY(-80px) scale(0.9);
+        }
     }
 
     /* FOOD */
@@ -190,6 +204,6 @@
   <script src="dialogue/wisdom.js"></script>
   <script src="dialogue/chatter.js"></script>
   <script src="crosstalk.js?v=6"></script>
-  <script src="app.js?v=11"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>
