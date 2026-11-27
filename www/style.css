@@ -1,81 +1,192 @@
+/* ==============================================
+GLOBAL RESET
+============================================== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-body {
-    overflow: hidden;
+
+html, body {
     width: 100vw;
     height: 100vh;
+    overflow: hidden;
+    font-family: sans-serif;
 }
+
+/* ==============================================
+SPLASH SCREEN (NEW)
+============================================== */
 #splashScreen {
     position: fixed;
-    z-index: 200;
+    z-index: 300;
     width: 100%;
     height: 100%;
     background: #051830;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     color: #72d6ff;
-    font-size: 32px;
-    font-family: sans‑serif;
 }
-#gameCanvas {
+
+#splashScreen h1 {
+    font-size: 42px;
+    margin-bottom:16px;
+}
+
+#splashScreen p {
+    font-size:22px;
+}
+
+/* ==============================================
+MAIN GAME SCENE
+============================================== */
+#scene {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ==============================================
+BIOME GRADIENTS
+============================================== */
+.biome‑lagoon {
+    background: linear-gradient(180deg,#08345c,#146899,#208fb8);
+}
+.biome‑shore {
+    background: linear-gradient(180deg,#b86b32,#e8974f,#ffc873);
+}
+.biome‑twilight {
+    background: linear-gradient(180deg,#2b1b47,#502f7a,#7249a8);
+}
+.biome‑deep {
+    background: linear-gradient(180deg,#020514,#040b2b,#071547);
+}
+
+#bg-gradient {
     width:100%;
     height:100%;
-    position: relative;
-    overflow:hidden;
+    position:absolute;
 }
+
+#god‑rays {
+    width:100%;
+    height:100%;
+    position:absolute;
+    opacity:0.25;
+}
+
+#particle‑layer {
+    width:100%;
+    height:100%;
+    position:absolute;
+}
+
+#shadow‑layer {
+    width:100%;
+    height:100%;
+    position:absolute;
+}
+
+/* ==============================================
+PARALLAX BACKGROUND ASSETS
+============================================== */
+.parallax {
+    position:absolute;
+    width:100%;
+    bottom:0;
+}
+
+#pillars {
+    opacity:0.55;
+}
+#mountains {
+    opacity:0.65;
+}
+#dunes {
+    opacity:0.75;
+}
+#grass {
+    opacity:0.85;
+}
+
+/* ==============================================
+CREATURES + SOLON SPECIAL FIN SPRITES
+============================================== */
+#creature‑layer {
+    width:100%;
+    height:100%;
+    position:absolute;
+}
+
 .creature {
     position:absolute;
-    transform-origin:center center;
 }
-#solonWrapper {
-    width:140px;
-    height:140px;
+
+.solon‑fin {
+    position:absolute;
 }
-#solon {
-    width:100%;
-    height:100%;
+
+.solon‑body‑part {
+    position:absolute;
 }
+
+/* ==============================================
+SPEECH BUBBLE (NEW)
+============================================== */
 .speechBubble {
     position:absolute;
     background:rgba(30,30,40,0.85);
     color:white;
     padding:14px 20px;
     border-radius:999px;
-    font-family:sans‑serif;
     font-size:20px;
     opacity:0;
-    animation: bubbleRise 3.2s ease forwards;
 }
+
 @keyframes bubbleRise {
     0% { opacity:0; transform:translateY(24px) scale(0.92); }
     15% { opacity:1; transform:translateY(0px) scale(1); }
     85% { opacity:1; transform:translateY(0px) scale(1); }
     100% { opacity:0; transform:translateY(-18px) scale(0.95); }
 }
-.hud {
+
+/* ==============================================
+USER INTERFACE
+============================================== */
+#ui‑layer {
+    width:100%;
+    height:100%;
+    position:absolute;
+    pointer-events:none;
+}
+
+#hud‑top {
+    pointer-events:none;
     position:absolute;
     top:20px;
     width:100%;
     text-align:center;
     color:#b3e6ff;
-    font-family:sans‑serif;
     font-size:36px;
 }
-.buttonRow {
+
+#hud‑util {
+    pointer-events:auto;
     display:flex;
     justify-content:space-around;
-    margin-top:20px;
+    margin-top:24px;
 }
-.btn {
+
+.util‑btn {
     color:white;
     font-size:28px;
-    font-family:sans‑serif;
 }
-.biomeBar {
+
+#bottom‑bar {
+    pointer-events:auto;
     position:absolute;
     bottom:12px;
     width:100%;
@@ -83,5 +194,19 @@ body {
     justify-content:space-around;
     color:white;
     font-size:26px;
-    font-family:sans‑serif;
+}
+
+.biome‑btn.active {
+    color:#72d6ff;
+}
+
+/* ==============================================
+DEBUG OVERLAY
+============================================== */
+#debug‑overlay {
+    position:absolute;
+    top:80px;
+    left:12px;
+    color:#ffffff;
+    font-size:14px;
 }
