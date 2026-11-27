@@ -8,59 +8,50 @@
     * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
     body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #fff; }
 
-    /* SPLASH */
     #splash-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #021a30; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
     #splash-screen h1 { font-size: 2.5rem; letter-spacing: 4px; color: #4dc3ff; margin-bottom: 20px; }
     #splash-screen p { font-size: 1rem; color: #a0d8ef; animation: pulse 2s infinite; }
 
-    /* SCENE */
-    #scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 1; }
+    #scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 1; will-change: transform; }
     #bg-gradient { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: background 2s ease; }
     .biome-lagoon { background: linear-gradient(180deg, #06061c 0%, #0c1040 35%, #0a2a5e 70%, #0d5878 100%); }
     .biome-shore { background: linear-gradient(180deg, #2a1a40 0%, #a04060 40%, #e07050 70%, #f0d090 100%); }
     .biome-twilight { background: linear-gradient(180deg, #0a0510 0%, #1a1028 40%, #2a1838 70%, #3a2048 100%); }
     .biome-deep { background: linear-gradient(180deg, #000000 0%, #050010 40%, #0a0020 70%, #100030 100%); }
 
-    /* GOD RAYS */
     #god-rays { position: absolute; top: 0; left: -15%; width: 130%; height: 100%; background: linear-gradient(100deg, transparent 0%, rgba(180,220,255,0.10) 30%, transparent 45%, rgba(180,220,255,0.08) 70%, transparent 100%); pointer-events: none; z-index: 1; opacity: 0.35; }
     #weather-tint { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
 
-    /* PARTICLES */
     #particle-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: hidden; }
     .bubble { position: absolute; bottom: -30px; border-radius: 50%; border: 1px solid rgba(190, 235, 255, 0.55); background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%); opacity: 0; animation: bubbleRise linear infinite; }
     @keyframes bubbleRise { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 10% { opacity: 0.8; } 90% { opacity: 0.6; } 100% { transform: translate3d(var(--dx, 20px), -105vh, 0); opacity: 0; } }
 
-    /* PARALLAX */
     .parallax { position: absolute; left: 0; width: 120%; height: auto; pointer-events: none; }
     #pillars { bottom: 5%; opacity: 0.9; z-index: 2; }
     #mountains { bottom: 2%; opacity: 0.6; z-index: 3; }
     #dunes { z-index: 4; bottom: 0; }
     #grass { z-index: 6; opacity: 0.8; bottom: -2%; }
 
-    /* CREATURES */
     #shadow-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
     .creature-shadow { position: absolute; left: 0; top: 0; width: 100px; height: 20px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%); opacity: 0; }
     #creature-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 7; }
     .creature { position: absolute; left: 0; top: 0; pointer-events: auto; cursor: pointer; transform-origin: center center; will-change: transform; }
 
-    /* EXACT SIZING */
     #solon { width: 160px; height: 160px; display: flex; justify-content: center; align-items: center; }
     #lumen { width: 90px; }
     #prism { width: 120px; }
     #ripple { width: 170px; }
     #vertex { width: 120px; }
 
-    /* SOLON FINS */
     .solon-fin { position: absolute; width: 45%; height: auto; pointer-events: none; }
     #solon-left-fin { z-index: 1; transform: translate(-20%, 20%); }
     #solon-body { z-index: 2; width: 100%; height: auto; pointer-events: auto; }
     #solon-right-fin { z-index: 3; transform: translate(20%, 20%); }
 
-    /* UI */
     #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; display: flex; flex-direction: column; justify-content: flex-start; padding: 12px; }
     #hud-top { display: flex; flex-direction: column; align-items: center; margin-top: 6px; }
     #bond-text { font-size: 1.3rem; font-weight: 600; color: #a9dcff; letter-spacing: 1px; text-shadow: 0 0 12px rgba(120,190,255,0.55), 0 2px 4px rgba(0,0,0,0.8); }
-    
+
     #hud-util { display: flex; justify-content: space-around; width: 100%; pointer-events: auto; padding: 10px 0; margin-top: 6px; }
     .util-btn { color: rgba(205,238,255,0.85); font-weight: 600; font-size: 0.9rem; letter-spacing: 1px; cursor: pointer; padding: 10px; text-shadow: 0 0 8px rgba(120,200,255,0.45); }
     .util-btn:active { transform: scale(0.95); color: #fff; }
@@ -69,10 +60,8 @@
     .biome-btn { color: rgba(225,240,255,0.75); font-weight: 600; font-size: 0.9rem; letter-spacing: 1px; cursor: pointer; padding: 10px; transition: color 0.3s ease; }
     .biome-btn.active { color: #ff9a86; border-bottom: 2px solid #ff9a86; }
 
-    /* SPEECH BUBBLES (The Golden Code Fix) */
     .speech-bubble {
         position: absolute;
-        /* The pill shape */
         border-radius: 50px; 
         padding: 12px 20px;
         background: rgba(20, 30, 45, 0.85);
@@ -85,39 +74,31 @@
         pointer-events: none;
         z-index: 200;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        
-        /* The Rise and Fade Animation */
         opacity: 0;
         transform: translate(-50%, -100%) translateY(0);
     }
-
+    .speech-bubble::after {
+        content: "";
+        position: absolute;
+        bottom: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 14px 10px 0;
+        border-style: solid;
+        border-color: rgba(20, 30, 45, 0.85) transparent transparent;
+    }
     .speech-bubble.rising {
         animation: floatUp 4s ease-out forwards;
     }
-
     @keyframes floatUp {
-        0% {
-            opacity: 0;
-            transform: translate(-50%, -100%) translateY(0) scale(0.8);
-        }
-        10% {
-            opacity: 1;
-            transform: translate(-50%, -100%) translateY(-10px) scale(1);
-        }
-        80% {
-            opacity: 1;
-            transform: translate(-50%, -100%) translateY(-60px) scale(1);
-        }
-        100% {
-            opacity: 0;
-            transform: translate(-50%, -100%) translateY(-80px) scale(0.9);
-        }
+        0% { opacity: 0; transform: translate(-50%, -100%) translateY(0) scale(0.8); }
+        10% { opacity: 1; transform: translate(-50%, -100%) translateY(-10px) scale(1); }
+        80% { opacity: 1; transform: translate(-50%, -100%) translateY(-60px) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -100%) translateY(-80px) scale(0.9); }
     }
 
-    /* FOOD */
     .food-particle { position: absolute; left: 0; top: 0; width: 6px; height: 6px; background: #ffbb33; border-radius: 50%; box-shadow: 0 0 6px #ffaa00; pointer-events: none; z-index: 6; }
 
-    /* DEBUG */
     #debug-overlay { position: absolute; top: 120px; left: 10px; pointer-events: none; z-index: 150; display: none; }
   </style>
 </head>
@@ -204,6 +185,6 @@
   <script src="dialogue/wisdom.js"></script>
   <script src="dialogue/chatter.js"></script>
   <script src="crosstalk.js?v=6"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>
