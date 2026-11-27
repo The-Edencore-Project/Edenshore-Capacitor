@@ -1,11 +1,23 @@
 // =====================================================================
-// EDENCORE ENGINE - choreography.js
+// EDENCORE ENGINE - choreography.js (V2 - Formation Engine)
+// Returns an OBJECT keyed by creature id. Every position is a CENTER
+// point in PIXELS, so app.js can use it directly.
 // =====================================================================
 
 class ChoreographyEngine {
     constructor() {
         this.sandY = 0;
         this.creatureKeys = ["solon", "prism", "lumen", "ripple", "vertex"];
+
+        // Home positions as fractions of the screen, measured from the TOP.
+        // Layout matches the "AI Screensaver" reference video.
+        this.home = {
+            solon:  { x: 0.36, y: 0.36 },  // turtle, upper centre-left
+            prism:  { x: 0.74, y: 0.42 },  // goldfish, upper right
+            lumen:  { x: 0.24, y: 0.66 },  // jellyfish, lower left
+            ripple: { x: 0.78, y: 0.60 },  // seahorse, mid right
+            vertex: { x: 0.56, y: 0.80 }   // crab, on the sand
+        };
     }
 
     resize() {
@@ -13,65 +25,7 @@ class ChoreographyEngine {
     }
 
     getFormation(stateName, width, height, time, feedingTimer = 0) {
-        const coords = [];
-        
-        const basePos = [
-            { x: 0.30, y: 0.55 }, // Solon
-            { x: 0.70, y: 0.55 }, // Prism
-            { x: 0.20, y: 0.35 }, // Lumen
-            { x: 0.75, y: 0.35 }, // Ripple
-            { x: 0.50, y: 0.12 }  // Vertex
-        ];
+        const out = {};
+        const keys = this.creatureKeys;
 
-        // THE SLEEP FIX: If the brain says SLEEPING, force the huddle
         const isSleeping = (window.brain && window.brain.sleepState !== "AWAKE") || stateName === "SLEEPING";
-
-        if (isSleeping) {
-            const huddleX = width * 0.5;
-            const huddleY = this.sandY - (height * 0.15);
-            for (let i = 0; i < 5; i++) {
-                coords.push({
-                    x: huddleX + Math.sin(time + i) * (width * 0.05),
-                    y: huddleY + Math.cos(time + i) * (height * 0.03)
-                });
-            }
-        } 
-        else if (stateName === "FEEDING") {
-            // The Theatre of Feeding (Circle Formation)
-            const centerX = width * 0.5;
-            const centerY = height * 0.65;
-            const radius = width * 0.20;
-            
-            for (let i = 0; i < 5; i++) {
-                const angle = (i / 5) * Math.PI * 2 + (time * 0.5);
-                // Contract the circle as the timer runs down
-                const currentRadius = radius * Math.max(0.4, (feedingTimer / 10.0));
-                coords.push({
-                    x: centerX + Math.cos(angle) * currentRadius,
-                    y: centerY + Math.sin(angle) * currentRadius
-                });
-            }
-        }
-        else if (stateName === "PLAYFUL") {
-            for (let i = 0; i < 5; i++) {
-                coords.push({
-                    x: width * basePos[i].x + Math.sin(time * 3 + i) * (width * 0.15),
-                    y: height * (1.0 - basePos[i].y) + Math.cos(time * 3 + i) * (height * 0.1)
-                });
-            }
-        }
-        else {
-            // NORMAL
-            for (let i = 0; i < 5; i++) {
-                coords.push({
-                    x: width * basePos[i].x + Math.sin(time * 0.5 + i) * (width * 0.03),
-                    y: height * (1.0 - basePos[i].y) + Math.cos(time * 0.5 + i) * (height * 0.02)
-                });
-            }
-        }
-
-        return coords;
-    }
-}
-
-window.choreographyEngine = new ChoreographyEngine();
