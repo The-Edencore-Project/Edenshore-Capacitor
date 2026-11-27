@@ -28,3 +28,27 @@ class PhysicsEngine {
         for (const id in states) {
             const c = states[id];
             if (!c || !c.el) continue;
+
+            const phase = this.phases[id] || 0;
+            const bobY = Math.sin(time_elapsed * 2.0 * speedMult + phase) * (H * 0.015);
+            const driftX = Math.cos(time_elapsed * 1.5 * speedMult + phase) * (window.innerWidth * 0.015);
+
+            c.offX = driftX;
+            c.offY = (id === "vertex") ? 0 : bobY;   // the crab stays on the sand
+
+            const sh = shadows ? shadows[id] : null;
+            if (sh) {
+                const cy = c.y + c.offY;
+                const dist = Math.max(0, sandY - cy);
+                const alpha = Math.max(0.1, 0.5 - (dist / maxH));
+                const scale = Math.max(0.4, 1.0 - (dist / maxH));
+                const sx = (c.w * 0.8 / 100) * scale;   // shadow base size is 100 x 20 px
+                const sy = scale;
+                sh.style.opacity = alpha;
+                sh.style.transform = `translate(${c.x + c.offX - 50}px, ${sandY - 10}px) scale(${sx}, ${sy})`;
+            }
+        }
+    }
+}
+
+window.physicsEngine = new PhysicsEngine();
