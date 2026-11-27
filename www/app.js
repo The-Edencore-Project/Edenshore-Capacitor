@@ -1,5 +1,5 @@
 // =====================================================================
-// EDENCORE ORCHESTRATOR - app.js (V5.2 - Everything Wired)
+// EDENCORE ORCHESTRATOR - app.js (V5.3 - Final Visual Fixes)
 // =====================================================================
 
 let lastTime = 0;
@@ -9,13 +9,14 @@ let idleTimer = 0;
 let uiTickTimer = 0;
 let currentMood = "NORMAL";
 let readCooldown = 0; 
+let flipperTimer = 0;
 
 const creatureState = {
-    solon:  { el: null, x: 0, y: 0, w: 180, h: 180, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
-    prism:  { el: null, x: 0, y: 0, w: 140, h: 140, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
-    lumen:  { el: null, x: 0, y: 0, w: 100, h: 100, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
-    ripple: { el: null, x: 0, y: 0, w: 190, h: 190, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
-    vertex: { el: null, x: 0, y: 0, w: 130, h: 130, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 }
+    solon:  { el: null, x: 0, y: 0, w: 160, h: 160, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    prism:  { el: null, x: 0, y: 0, w: 120, h: 120, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    lumen:  { el: null, x: 0, y: 0, w: 90, h: 90, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    ripple: { el: null, x: 0, y: 0, w: 170, h: 170, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 },
+    vertex: { el: null, x: 0, y: 0, w: 120, h: 120, offX: 0, offY: 0, talkTimer: 0, blinkTimer: 0, nextBlink: 0 }
 };
 window.creatureState = creatureState;
 
@@ -25,13 +26,12 @@ const bgGradient = document.getElementById('bg-gradient');
 const debugOverlay = document.getElementById('debug-overlay');
 
 function init() {
-    console.log("[Edencore] Initializing V5.2...");
+    console.log("[Edencore] Initializing V5.3...");
 
     for (const key in creatureState) {
         creatureState[key].el = document.getElementById(key);
     }
 
-    // 1. Wire Biomes
     document.querySelectorAll('.biome-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.biome-btn').forEach(b => b.classList.remove('active'));
@@ -45,14 +45,11 @@ function init() {
         });
     });
 
-    // 2. Wire Buttons
     document.getElementById('btn-feed').addEventListener('click', spawnFood);
     document.getElementById('btn-sleep').addEventListener('click', toggleSleep);
     document.getElementById('btn-menu').addEventListener('click', () => debugMode = !debugMode);
 
-    // 3. Spawn Ambient Bubbles
     spawnAmbientBubbles();
-
     requestAnimationFrame(tick);
 }
 
@@ -74,12 +71,17 @@ function spawnAmbientBubbles() {
 
 function spawnFood() {
     if (readCooldown > 0) return;
-    const foodEl = document.createElement('div');
-    foodEl.className = 'food-particle';
-    foodEl.style.left = `${20 + Math.random() * 60}%`;
-    foodEl.style.top = `-20px`;
-    foodEl.dataset.falling = "true";
-    if (sceneEl) sceneEl.appendChild(foodEl);
+    
+    // Spawn multiple pellets
+    for (let i = 0; i < 8; i++) {
+        setTimeout(() => {
+            const foodEl = document.createElement('div');
+            foodEl.className = 'food-particle';
+            foodEl.style.left = `${30 + Math.random() * 40}%`;
+            foodEl.style.top = `-20px`;
+            if (sceneEl) sceneEl.appendChild(foodEl);
+        }, i * 150); // Stagger them slightly
+    }
     
     if (window.drawFromBank && window.dialogueEngine) {
         const convo = window.drawFromBank('reactions_feed');
@@ -90,9 +92,9 @@ function spawnFood() {
 function updateFood(dt) {
     document.querySelectorAll('.food-particle').forEach(food => {
         let top = parseFloat(food.style.top) || 0;
-        top += 150 * dt; 
+        top += 120 * dt; 
         food.style.top = `${top}px`;
-        if (top > window.innerHeight) food.remove();
+        if (top > window.innerHeight - 50) food.remove(); // Remove when hitting sand
     });
 }
 
@@ -142,6 +144,17 @@ function tick(now) {
             formation = window.choreographyEngine.getFormation(state, window.innerWidth, window.innerHeight, time_elapsed);
         }
 
+        // SOLON FLIPPER ANIMATION
+        flipperTimer += dt;
+        if (flipperTimer > 0.4) {
+            const leftFin = document.getElementById('solon-left-fin');
+            const rightFin = document.getElementById('solon-right-fin');
+            const frame = Math.floor(Math.random() * 5) + 1; // 1 to 5
+            if (leftFin) leftFin.src = `assets/images/solon_left_fin_${frame}.png`;
+            if (rightFin) rightFin.src = `assets/images/solon_right_fin_${frame}.png`;
+            flipperTimer = 0;
+        }
+
         let activeTalker = null;
         for (const key in creatureState) {
             const c = creatureState[key];
@@ -172,7 +185,6 @@ function tick(now) {
             }
         }
 
-        // Physics
         if (window.physicsEngine) {
             const shadows = {};
             for (const key in creatureState) shadows[key] = document.getElementById(`shadow-${key}`);
@@ -181,7 +193,6 @@ function tick(now) {
 
         updateFood(dt);
 
-        // Chatter
         if (readCooldown <= 0 && !activeTalker && time_elapsed > 15) {
             idleTimer += dt;
             if (idleTimer > 25) {
