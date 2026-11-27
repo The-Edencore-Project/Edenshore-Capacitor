@@ -1,7 +1,3 @@
-// =====================================================================
-// EDENCORE - systems/dialogue.js (The Dialogue Player V2)
-// =====================================================================
-
 class DialogueEngine {
     constructor() {
         this.queue = [];
@@ -9,7 +5,7 @@ class DialogueEngine {
         this.lineIndex = 0;
         this.lineTimer = 0;
         this.isPlaying = false;
-        this.activeBubble = null;
+        this.activeBubbles = {};
     }
 
     triggerBank(bankName) {
@@ -36,25 +32,15 @@ class DialogueEngine {
             this.finishConversation();
             return;
         }
-
         const line = this.activeConversation[this.lineIndex];
         const speaker = line[0];
         const text = line[1];
-
         this.showBubble(speaker, text);
-
         const creatureKey = speaker.toLowerCase();
         const creatureState = window.creatureState ? window.creatureState[creatureKey] : null;
-        
-        if (creatureState) {
-            // Talk for however long it takes to read the line (min 2s)
-            const talkDuration = Math.max(2, text.split(' ').length * 0.3);
-            creatureState.talkTimer = talkDuration;
-            this.lineTimer = talkDuration + 1.0; // Add a 1s pause between lines
-        } else {
-            this.lineTimer = 3; 
-        }
-
+        const talkDuration = Math.max(2, text.split(' ').length * 0.3);
+        if (creatureState) creatureState.talkTimer = talkDuration;
+        this.lineTimer = talkDuration + 1.0;
         this.lineIndex++;
     }
 
@@ -68,7 +54,6 @@ class DialogueEngine {
             }
             return;
         }
-
         this.lineTimer -= dt;
         if (this.lineTimer <= 0) {
             this.processNext();
@@ -76,54 +61,33 @@ class DialogueEngine {
     }
 
     showBubble(speaker, text) {
-        // 1. Remove any existing bubble
-        this.hideBubble();
-
         const creatureKey = speaker.toLowerCase();
         const creatureEl = document.getElementById(creatureKey);
-        
         if (!creatureEl) return;
-
-        // 2. Create the bubble
+        if(this.activeBubbles[creatureKey]){
+            this.activeBubbles[creatureKey].remove();
+        }
         const bubble = document.createElement('div');
         bubble.className = 'speech-bubble';
+        bubble.dataset.speaker = creatureKey;
         bubble.textContent = text;
-        
-        // 3. Position it above the creature
         const rect = creatureEl.getBoundingClientRect();
-        // We use left/top for absolute positioning, and the CSS animation handles the rest
         bubble.style.left = `${rect.left + (rect.width / 2)}px`;
-        bubble.style.top = `${rect.top - 10}px`; 
-
+        bubble.style.top = `${rect.top - 10}px`;
         document.getElementById('scene').appendChild(bubble);
-        
-        // 4. Trigger the CSS animation
-        // We use a tiny timeout to ensure the DOM has rendered before adding the class
         setTimeout(() => {
             bubble.classList.add('rising');
         }, 10);
-
-        this.activeBubble = bubble;
-    }
-
-    hideBubble() {
-        if (this.activeBubble) {
-            const bubbleToRemove = this.activeBubble;
-            // Wait for the CSS animation to finish (4 seconds) before removing from DOM
-            setTimeout(() => {
-                if (bubbleToRemove.parentNode) {
-                    bubbleToRemove.parentNode.removeChild(bubbleToRemove);
-                }
-            }, 4000); 
-            this.activeBubble = null;
-        }
+        this.activeBubbles[creatureKey] = bubble;
+        setTimeout(()=>{
+            if(bubble.parentNode) bubble.remove();
+            delete this.activeBubbles[creatureKey];
+        },4500);
     }
 
     finishConversation() {
         this.isPlaying = false;
         this.activeConversation = null;
-        // The readCooldown in app.js handles the pacing now, so we don't need to do anything here.
     }
 }
-
 window.dialogueEngine = new DialogueEngine();
