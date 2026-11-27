@@ -2,7 +2,7 @@ class EdenshoreBrain {
     constructor() {
         this.bond = 0;
         this.mood = "NORMAL";
-        this.sleepState = "AWAKE"; // AWAKE, SLEEPING, WAKING
+        this.sleepState = "AWAKE";
         this.motion = 0.0;
         this.battery = 1.0;
         this.timeElapsed = 0;
@@ -12,12 +12,13 @@ class EdenshoreBrain {
         this.blinkTimer = 0;
         this.lastNetOutput = [0.25, 0.25, 0.25, 0.25];
 
+        this.tankCycle = "NORMAL";
+        this.cycleTimer = 0;
+        this.feedingTimer = 0;
+
         this.save = window.loadSave ? window.loadSave() : { bond_score: 0, next_milestone: 50, visits: 0 };
         this.bond = this.save.bond_score;
-
-        // Force awake for the first 30 seconds so the app doesn't instantly sleep
-        this.forceAwakeUntil = 30.0; 
-
+        this.forceAwakeUntil = 30.0;
         this.initSensors();
         this.updateUI();
     }
@@ -32,7 +33,6 @@ class EdenshoreBrain {
                 this.motion = Math.min(1.0, mov / 10.0);
             }
         });
-
         if (navigator.getBattery) {
             navigator.getBattery().then((b) => {
                 this.battery = b.level;
@@ -45,6 +45,9 @@ class EdenshoreBrain {
         this.timeElapsed += dt;
         this.heat = Math.max(0, this.heat - dt * 0.1);
 
+        this.cycleTimer += dt;
+        if(this.tankCycle === "FEEDING") this.feedingTimer = Math.max(0, this.feedingTimer - dt);
+
         if (this.talkTimer > 0) {
             this.talkTimer -= dt;
             if (this.talkTimer <= 0) {
@@ -52,11 +55,9 @@ class EdenshoreBrain {
                 this.talkTimer = 0;
             }
         }
-
         this.blinkTimer += dt;
         if (this.blinkTimer > 3.4) this.blinkTimer = 0;
 
-        // Mood logic from Neural Net
         if (window.arbiter) {
             this.mood = window.arbiter.getMood(this);
             if (window.arbiter.net && window.arbiter.net.lastOutput) {
@@ -68,7 +69,6 @@ class EdenshoreBrain {
             else this.mood = "NORMAL";
         }
 
-        // Force Awake Override
         if (this.forceAwakeUntil > 0) {
             this.forceAwakeUntil -= dt;
             this.mood = "NORMAL";
@@ -76,15 +76,28 @@ class EdenshoreBrain {
             return;
         }
 
-        // Sleep State logic
-        if (this.mood === "SLEEPY" && this.sleepState === "AWAKE") {
-            this.sleepState = "SLEEPING";
-        } else if (this.mood !== "SLEEPY" && this.sleepState === "SLEEPING") {
-            this.sleepState = "WAKING"; // Wake up over 12 seconds
-            this.wakeTimer = 12.0;
+        if (this.sleepState === "AWAKE") {
+            if(this.tankCycle === "NORMAL" && this.cycleTimer > 22){
+                this.tankCycle = "PLAYFUL";
+                this.cycleTimer = 0;
+            }else if(this.tankCycle === "PLAYFUL" && this.cycleTimer > 18){
+                this.tankCycle = "FEEDING";
+                this.feedingTimer = 10;
+                this.cycleTimer = 0;
+            }else if(this.tankCycle === "FEEDING" && this.cycleTimer >15){
+                this.tankCycle = "DUSK";
+                this.cycleTimer =0;
+            }else if(this.tankCycle === "DUSK" && this.cycleTimer>12){
+                this.tankCycle = "SLEEPING";
+                this.cycleTimer =0;
+            }
         }
-
-        // Waking timer
+        if(this.sleepState === "SLEEPING" && this.cycleTimer>35){
+            this.sleepState = "WAKING";
+            this.wakeTimer =12;
+            this.tankCycle = "NORMAL";
+            this.cycleTimer =0;
+        }
         if (this.sleepState === "WAKING") {
             this.wakeTimer -= dt;
             if (this.wakeTimer <= 0) {
@@ -111,10 +124,8 @@ class EdenshoreBrain {
         if (this.bond >= 10) title = "Acquaintance";
         if (this.bond >= 50) title = "Friend";
         if (this.bond >= 100) title = "Council Member";
-
         const el = document.getElementById("bond-text");
         if (el) el.innerText = "BOND: " + this.bond + " - " + title;
     }
 }
-
 window.brain = new EdenshoreBrain();
