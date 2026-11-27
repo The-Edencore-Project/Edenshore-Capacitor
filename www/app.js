@@ -1,49 +1,88 @@
+// ==============================================
+// EDENSHORE AQUARIUM — FULL COMPLETE app.js
+// ==============================================
+
+// --------------------------
+// GLOBAL VARIABLES
+// --------------------------
 let lastTime = 0;
 let time_elapsed = 0;
 let debugMode = false;
+
+// NEW FEATURE VARIABLES
 let tankDriftTimer = 0;
 let idleChatTimer = 0;
 
-const creatureState = {
-    solon:  { el: null, x: 0, y: 0, w:140, h:140 },
-    vertex: { el: null, x: 0, y: 0, w:120, h:120 },
-    ripple: { el: null, x: 0, y: 0, w:120, h:120 },
-    prism:  { el: null, x: 0, y: 0, w:120, h:120 },
-    lumen:  { el: null, x: 0, y: 0, w:120, h:120 }
-};
+// --------------------------
+// LOAD ALL OUR MODULES
+// --------------------------
+// actors
+importScripts("actors/creatures.js");
+importScripts("actors/solon.js");
 
-const idleDialoguePool = [
-    "The water feels lovely today.",
-    "I wonder what we will see next?",
-    "Such a beautiful reef!",
-    "Take it easy everyone.",
-    "It is so peaceful down here."
-];
+// dialogue systems
+importScripts("dialogue/ambient.js");
+importScripts("dialogue/bedtime.js");
+importScripts("dialogue/biome.js");
+importScripts("dialogue/council.js");
+importScripts("dialogue/daily.js");
+importScripts("dialogue/dreams.js");
+importScripts("dialogue/facts.js");
+importScripts("dialogue/huddle.js");
+importScripts("dialogue/jokes.js");
+importScripts("dialogue/lyrics.js");
+importScripts("dialogue/poetry.js");
+importScripts("dialogue/reactions.js");
+importScripts("dialogue/requests.js");
+importScripts("dialogue/riddles.js");
+importScripts("dialogue/stories.js");
+importScripts("dialogue/visitor.js");
+importScripts("dialogue/wisdom.js");
 
+// engine core
+importScripts("engine/atmosphere.js");
+importScripts("engine/choreography.js");
+importScripts("engine/cinematics.js");
+importScripts("engine/physics.js");
+
+// game systems
+importScripts("systems/audio.js");
+importScripts("systems/brain.js");
+importScripts("systems/dialogue.js");
+importScripts("systems/neural.js");
+importScripts("systems/save.js");
+
+// cross talk
+importScripts("crosstalk.js");
+
+// --------------------------
+// NEW FEATURE FUNCTIONS
+// --------------------------
 function hideSplash(){
-    document.getElementById("splashScreen").style.display = "none";
+    const splash = document.getElementById("splashScreen");
+    if(splash) splash.style.display = "none";
 }
 
-function spawnSpeechBubble(text, x, y){
-    const bubble = document.createElement("div");
-    bubble.className = "speechBubble";
-    bubble.innerText = text;
-    bubble.style.left = x + "px";
-    bubble.style.top = y + "px";
-    document.getElementById("gameCanvas").appendChild(bubble);
-    setTimeout(()=> bubble.remove(), 3500);
-}
-
+// --------------------------
+// INITIALISE GAME
+// --------------------------
 function init() {
+    // NEW: SHOW SPLASH SCREEN FOR 1.8 SECONDS
     setTimeout(hideSplash, 1800);
-    for(const key in creatureState){
-        creatureState[key].el = document.getElementById(key);
-    }
-    document.getElementById("feedBtn").onclick = ()=> spawnSpeechBubble("Eat up, everyone!", window.innerWidth/2 -120, window.innerHeight*0.55);
-    document.getElementById("sleepBtn").onclick = ()=> spawnSpeechBubble("Time to rest now.", window.innerWidth/2 -120, window.innerHeight*0.55);
+
+    // INIT ALL YOUR ORIGINAL GAME SYSTEMS
+    window.brain.init();
+    window.dialogueEngine.init();
+    window.physicsEngine.init();
+    window.choreographyEngine.init();
+    window.atmosphereEngine.init();
+
     requestAnimationFrame(tick);
 }
 
+// --------------------------
+// MAIN GAME LOOP
+// --------------------------
 function tick(now){
     requestAnimationFrame(tick);
     try{
@@ -52,24 +91,28 @@ function tick(now){
         if(dt>0.1) dt =0.1;
         time_elapsed += dt;
 
+        // NEW: TANK SIDE DRIFT
         tankDriftTimer += dt * 0.08;
         const globalDriftX = Math.sin(tankDriftTimer) * 18;
-        document.getElementById("gameCanvas").style.transform = `translateX(${globalDriftX}px)`;
+        const scene = document.getElementById("scene");
+        if(scene) scene.style.transform = `translateX(${globalDriftX}px)`;
 
+        // NEW: IDLE COUNCIL AMBIENT CHAT
         idleChatTimer += dt;
         if(idleChatTimer > 22){
             idleChatTimer = 0;
-            const randomLine = idleDialoguePool[ Math.floor(Math.random() * idleDialoguePool.length) ];
-            spawnSpeechBubble(randomLine, window.innerWidth * 0.25, window.innerHeight * 0.35);
+            window.dialogueEngine.triggerAmbientDialogue();
         }
 
-        for(const key in creatureState){
-            const c = creatureState[key];
-            const wobble = Math.sin(time_elapsed + key.length) * 6;
-            c.el.style.transform = `translate(${c.x}px, ${c.y + wobble}px)`;
-        }
+        // RUN ALL YOUR ORIGINAL GAME ENGINE UPDATES
+        window.brain.update(dt, time_elapsed);
+        window.physicsEngine.update(dt, time_elapsed);
+        window.choreographyEngine.update(dt, time_elapsed);
+        window.atmosphereEngine.update(dt, time_elapsed);
+        window.dialogueEngine.update(dt, time_elapsed);
+
     } catch(err) {
-        console.error(err);
+        console.error("GAME LOOP ERROR: ", err);
     }
 }
 
