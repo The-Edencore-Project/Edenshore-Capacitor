@@ -1,10 +1,13 @@
+// =====================================================================
+// EDENCORE - app.js (COMPLETE FIXED VERSION)
+// =====================================================================
 let lastTime = 0;
 let time_elapsed = 0;
 let debugMode = false;
-let idleTimer = 0; 
+let idleTimer = 0;
 let uiTickTimer = 0;
 let currentMood = "NORMAL";
-let readCooldown = 0; 
+let readCooldown = 0;
 let flipperTimer = 0;
 let tankDriftTimer = 0;
 
@@ -25,7 +28,7 @@ const debugOverlay = document.getElementById('debug-overlay');
 let activeBubbles = [];
 
 function init() {
-    console.log("[Edencore] Initializing V5.6...");
+    console.log("[Edencore] Initializing V5.7...");
     for (const key in creatureState) {
         creatureState[key].el = document.getElementById(key);
     }
@@ -33,7 +36,7 @@ function init() {
         sceneEl.addEventListener('pointerdown', (e) => {
             if (window.brain && window.brain.sleepState === "SLEEPING") {
                 window.brain.sleepState = "WAKING";
-                window.brain.wakeTimer =12;
+                window.brain.wakeTimer = 12;
                 if (window.drawFromBank && window.dialogueEngine) {
                     const wakeConvo = window.drawFromBank('waking_nudge');
                     if (wakeConvo) window.dialogueEngine.queueSpeech(wakeConvo);
@@ -53,9 +56,13 @@ function init() {
             }
         });
     });
-    document.getElementById('btn-feed').addEventListener('click', spawnFood);
-    document.getElementById('btn-sleep').addEventListener('click', toggleSleep);
-    document.getElementById('btn-menu').addEventListener('click', () => debugMode = !debugMode);
+    const feedBtn = document.getElementById('btn-feed');
+    const sleepBtn = document.getElementById('btn-sleep');
+    const menuBtn = document.getElementById('btn-menu');
+    if(feedBtn) feedBtn.addEventListener('click', spawnFood);
+    if(sleepBtn) sleepBtn.addEventListener('click', toggleSleep);
+    if(menuBtn) menuBtn.addEventListener('click', () => debugMode = !debugMode);
+
     spawnAmbientBubbles();
     requestAnimationFrame(tick);
 }
@@ -67,9 +74,9 @@ function spawnAmbientBubbles() {
         bubble.className = 'bubble';
         const size = 6 + Math.random() * 14;
         bubble.style.width = `${size}px`;
-        bubble.style.height = `${size}px`; 
+        bubble.style.height = `${size}px`;
         bubble.style.left = `${Math.random() * 100}%`;
-        bubble.style.bottom = `-30px`; 
+        bubble.style.bottom = `-30px`;
         bubble.style.position = 'absolute';
         activeBubbles.push({
             el: bubble,
@@ -115,9 +122,9 @@ function spawnFood() {
 function updateFood(dt) {
     document.querySelectorAll('.food-particle').forEach(food => {
         let top = parseFloat(food.style.top) || 0;
-        top += 120 * dt; 
+        top += 120 * dt;
         food.style.top = `${top}px`;
-        if (top > window.innerHeight - 50) food.remove(); 
+        if (top > window.innerHeight - 50) food.remove();
     });
 }
 
@@ -155,17 +162,17 @@ function tick(now) {
         if (!lastTime) lastTime = now;
         let dt = (now - lastTime) / 1000;
         lastTime = now;
-        if (dt > 0.1) dt = 0.1; 
+        if (dt > 0.1) dt = 0.1;
         time_elapsed += dt;
 
         tankDriftTimer += dt * 0.08;
         const globalDriftX = Math.sin(tankDriftTimer) * 18;
-        sceneEl.style.transform = `translateX(${globalDriftX}px)`;
+        if(sceneEl) sceneEl.style.transform = `translateX(${globalDriftX}px)`;
 
         if (readCooldown > 0) readCooldown -= dt;
         if (window.brain) {
             window.brain.update(dt);
-            currentMood = window.brain.currentMood || "NORMAL";
+            currentMood = window.brain.mood;
         }
         if (window.dialogueEngine) window.dialogueEngine.update(dt);
 
@@ -179,11 +186,39 @@ function tick(now) {
                 window.brain.feedingTimer
             );
         }
+
         updateBubbles(dt);
-        let activeTalker = null;
+        updateFood(dt);
+
         for (const key in creatureState) {
             const c = creatureState[key];
             if (!c.el) continue;
-            let targetX = window.innerWidth / 2 - c.w/2;
-            let targetY = window.innerHeight / 2 - c.h/2;
+            let targetX = window.innerWidth / 2 - c.w / 2;
+            let targetY = window.innerHeight / 2 - c.h / 2;
             if (formation && formation[key]) {
+                targetX = formation[key].x - c.w / 2;
+                targetY = formation[key].y - c.h / 2;
+            }
+            c.x += (targetX - c.x) * dt * 2.2;
+            c.y += (targetY - c.y) * dt * 2.2;
+        }
+
+        if(window.physicsEngine){
+            window.physicsEngine.update(dt, time_elapsed, currentMood, creatureState, {});
+        }
+
+        for (const key in creatureState) {
+            const c = creatureState[key];
+            if (!c.el) continue;
+            const finalX = c.x + c.offX;
+            const finalY = c.y + c.offY;
+            c.el.style.transform = `translate(${finalX}px, ${finalY}px)`;
+        }
+
+        updateDebugHUD();
+    } catch (err) {
+        console.error("TICK LOOP ERROR: ", err);
+    }
+}
+
+window.addEventListener('load', init);
