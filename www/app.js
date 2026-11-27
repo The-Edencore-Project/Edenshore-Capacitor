@@ -1,5 +1,5 @@
 // =====================================================================
-// EDENCORE ORCHESTRATOR - app.js (V5.3 - Final Visual Fixes)
+// EDENCORE ORCHESTRATOR - app.js (V5.5 - Wake on Tap)
 // =====================================================================
 
 let lastTime = 0;
@@ -25,11 +25,27 @@ const particleLayer = document.getElementById('particle-layer');
 const bgGradient = document.getElementById('bg-gradient');
 const debugOverlay = document.getElementById('debug-overlay');
 
+let activeBubbles = [];
+
 function init() {
-    console.log("[Edencore] Initializing V5.3...");
+    console.log("[Edencore] Initializing V5.5...");
 
     for (const key in creatureState) {
         creatureState[key].el = document.getElementById(key);
+    }
+
+    // --- THE WAKE UP TAP ---
+    if (sceneEl) {
+        sceneEl.addEventListener('pointerdown', (e) => {
+            // If asleep, wake them up
+            if (window.brain && window.brain.sleepState === "SLEEPING") {
+                window.brain.sleepState = "AWAKE";
+                if (window.drawFromBank && window.dialogueEngine) {
+                    const wakeConvo = window.drawFromBank('waking_nudge');
+                    if (wakeConvo) window.dialogueEngine.queueSpeech(wakeConvo);
+                }
+            }
+        });
     }
 
     document.querySelectorAll('.biome-btn').forEach(btn => {
@@ -58,21 +74,43 @@ function spawnAmbientBubbles() {
     for (let i = 0; i < 15; i++) {
         const bubble = document.createElement('div');
         bubble.className = 'bubble';
-        const size = 4 + Math.random() * 12;
+        const size = 6 + Math.random() * 14;
         bubble.style.width = `${size}px`;
-        bubble.style.height = `${size}px`;
+        bubble.style.height = `${size}px`; 
         bubble.style.left = `${Math.random() * 100}%`;
-        bubble.style.animationDuration = `${8 + Math.random() * 10}s`;
-        bubble.style.animationDelay = `${Math.random() * 5}s`;
-        bubble.style.setProperty('--dx', `${(Math.random() - 0.5) * 50}px`);
+        bubble.style.bottom = `-30px`; 
+        bubble.style.position = 'absolute';
+        
+        activeBubbles.push({
+            el: bubble,
+            y: window.innerHeight + Math.random() * 100,
+            speed: 20 + Math.random() * 30,
+            dx: (Math.random() - 0.5) * 40,
+            sway: Math.random() * Math.PI * 2
+        });
+        
         particleLayer.appendChild(bubble);
     }
+}
+
+function updateBubbles(dt) {
+    activeBubbles.forEach(b => {
+        b.y -= b.speed * dt;
+        b.sway += dt * 2;
+        const xOffset = Math.sin(b.sway) * 10;
+        
+        b.el.style.transform = `translate(${xOffset}px, ${b.y - window.innerHeight}px)`;
+        
+        if (b.y < -50) {
+            b.y = window.innerHeight + 50;
+            b.el.style.left = `${Math.random() * 100}%`;
+        }
+    });
 }
 
 function spawnFood() {
     if (readCooldown > 0) return;
     
-    // Spawn multiple pellets
     for (let i = 0; i < 8; i++) {
         setTimeout(() => {
             const foodEl = document.createElement('div');
@@ -80,7 +118,7 @@ function spawnFood() {
             foodEl.style.left = `${30 + Math.random() * 40}%`;
             foodEl.style.top = `-20px`;
             if (sceneEl) sceneEl.appendChild(foodEl);
-        }, i * 150); // Stagger them slightly
+        }, i * 150);
     }
     
     if (window.drawFromBank && window.dialogueEngine) {
@@ -94,7 +132,7 @@ function updateFood(dt) {
         let top = parseFloat(food.style.top) || 0;
         top += 120 * dt; 
         food.style.top = `${top}px`;
-        if (top > window.innerHeight - 50) food.remove(); // Remove when hitting sand
+        if (top > window.innerHeight - 50) food.remove(); 
     });
 }
 
@@ -144,16 +182,7 @@ function tick(now) {
             formation = window.choreographyEngine.getFormation(state, window.innerWidth, window.innerHeight, time_elapsed);
         }
 
-        // SOLON FLIPPER ANIMATION
-        flipperTimer += dt;
-        if (flipperTimer > 0.4) {
-            const leftFin = document.getElementById('solon-left-fin');
-            const rightFin = document.getElementById('solon-right-fin');
-            const frame = Math.floor(Math.random() * 5) + 1; // 1 to 5
-            if (leftFin) leftFin.src = `assets/images/solon_left_fin_${frame}.png`;
-            if (rightFin) rightFin.src = `assets/images/solon_right_fin_${frame}.png`;
-            flipperTimer = 0;
-        }
+        updateBubbles(dt);
 
         let activeTalker = null;
         for (const key in creatureState) {
@@ -168,6 +197,7 @@ function tick(now) {
                 targetY = formation[key].y - c.h / 2;
             }
 
+            // Smooth move (This is what brings them back up)
             c.x += (targetX - c.x) * 2 * dt;
             c.y += (targetY - c.y) * 2 * dt;
             c.el.style.transform = `translate(${c.x + c.offX}px, ${c.y + c.offY}px)`;
