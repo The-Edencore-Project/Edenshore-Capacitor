@@ -76,7 +76,7 @@ class DialogueEngine {
         bubble.style.top = `${rect.top - 10}px`;
         document.getElementById('scene').appendChild(bubble);
         setTimeout(() => {
-            bubble.classList.add('rising');
+            bubble.classList.add('visible');
         }, 10);
         this.activeBubbles[creatureKey] = bubble;
         setTimeout(()=>{
