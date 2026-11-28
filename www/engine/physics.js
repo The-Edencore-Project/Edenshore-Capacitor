@@ -1,8 +1,8 @@
 // =====================================================================
 // EDENCORE ENGINE - physics.js (V3 - Living Drift)
-// Restores the slow wandering "aquarium life" feeling from Kivy.
-// Only writes offX/offY and shadows.
-// app.js remains the sole owner of transforms.
+// Restores the slow wandering aquarium feel of the Golden Code.
+// Writes ONLY offX/offY and shadows.
+// app.js remains the sole owner of creature transforms.
 // =====================================================================
 
 class PhysicsEngine {
@@ -33,11 +33,11 @@ class PhysicsEngine {
         let speedMult = 1.0;
 
         if (mood === "PLAYFUL") {
-            speedMult = 1.6;
+            speedMult = 1.5;
         }
 
         if (mood === "SLEEPY") {
-            speedMult = 0.45;
+            speedMult = 0.4;
         }
 
         for (const id in states) {
@@ -48,50 +48,55 @@ class PhysicsEngine {
 
             const phase = this.phases[id] || 0;
 
-            // -------------------------------------------------
-            // Vertical floating
-            // -------------------------------------------------
+            // --------------------------------------------------
+            // Gentle vertical buoyancy
+            // --------------------------------------------------
 
             const bobY =
                 Math.sin(
                     time_elapsed * 1.4 * speedMult + phase
                 ) * (H * 0.02);
 
-            // -------------------------------------------------
-            // Long horizontal aquarium drift
-            // -------------------------------------------------
+            // --------------------------------------------------
+            // Slow horizontal wandering
+            // --------------------------------------------------
 
-            const wanderX =
+            const longDrift =
                 Math.cos(
-                    time_elapsed * 0.35 * speedMult + phase
-                ) * (W * 0.035);
+                    time_elapsed * 0.30 * speedMult + phase
+                ) * (W * 0.04);
 
-            const swayX =
+            const shortSway =
                 Math.sin(
-                    time_elapsed * 0.9 * speedMult + phase
-                ) * (W * 0.008);
+                    time_elapsed * 1.0 * speedMult + phase
+                ) * (W * 0.01);
 
             const driftX =
-                wanderX + swayX;
+                longDrift + shortSway;
 
-            // -------------------------------------------------
-            // Creature behaviour
-            // -------------------------------------------------
+            // --------------------------------------------------
+            // Apply offsets
+            // --------------------------------------------------
 
             c.offX = driftX;
 
             if (id === "vertex") {
+
+                // Tiny crab breathing movement
+
                 c.offY =
                     Math.sin(
-                        time_elapsed * 2.2 + phase
-                    ) * (H * 0.003);
+                        time_elapsed * 2.5 + phase
+                    ) * (H * 0.0025);
+
             } else {
+
                 c.offY = bobY;
             }
 
-            // -------------------------------------------------
-            // Shadow projection
-            // -------------------------------------------------
+            // --------------------------------------------------
+            // Dynamic shadows
+            // --------------------------------------------------
 
             const sh = shadows ? shadows[id] : null;
 
